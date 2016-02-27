@@ -1,0 +1,70 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>vavi</groupId>
+  <artifactId>vavi-apps-fuse</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>vavi-apps-fuse</name>
+  <url>http://maven.apache.org</url>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>de.tuberlin</id>
+      <url>https://raw.github.com/tawalaya/onedrivejavasdk/mvn-repo/</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+      </snapshots>
+    </repository>
+  </repositories>
+
+  <dependencies>
+    <dependency>
+      <groupId>net.fuse-jna</groupId>
+      <artifactId>fuse-jna</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.ui4j</groupId>
+      <artifactId>ui4j-all</artifactId>
+      <version>2.1.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jfxtras</groupId>
+      <artifactId>openjfx-monocle</artifactId>
+      <version>1.8.0_20</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.httpunit</groupId>
+      <artifactId>httpunit</artifactId>
+      <version>1.7.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>de.tuberlin</groupId>
+      <artifactId>onedrivesdk</artifactId>
+      <version>0.0.3-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>vavi</groupId>
+      <artifactId>vavi-util-screenscraping</artifactId>
+      <version>1.0.2</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

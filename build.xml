@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- ////////////////////////////////////////////////////////////////////// -->
+<!-- Copyright (c) 2016 by Naohide Sano, All rights reserved.               -->
+<!--                                                                        -->
+<!-- Written by Naohide Sano                                                -->
+<!--                                                                        -->
+<!-- vavi-apps-fuse                                                         -->
+<!--                                                                        -->
+<!-- @author	Naohide Sano                                                -->
+<!-- @version	0.00	100119	nsano	initial version                     -->
+<!--                                                                        -->
+<!-- ////////////////////////////////////////////////////////////////////// -->
+
+<project name="" default="run" basedir="."
+         xmlns:ivy="antlib:org.apache.ivy.ant">
+
+  <property file="local.properties" />
+
+  <!-- path definitions -->
+
+  <path id="project.class.path">
+    <fileset dir="${dir.lib}">
+      <include name="*.jar" />
+    </fileset>
+  </path>
+
+  <!-- target definitions -->
+
+  <!-- clean -->
+  <target name="clean" description="Clear build environment">
+    <delete>
+      <fileset dir="${javac.dest}">
+        <include name="**/*" />
+      </fileset>
+      <fileset dir="${javac.dest.test}">
+        <include name="**/*" />
+      </fileset>
+      <!--
+      <fileset dir="${dir.lib}">
+        <include name="*.jar" />
+      </fileset>
+      -->
+    </delete>
+  </target>
+
+  <!-- prepare -->
+  <target name="prepare" description="Prepare to build">
+    <ivy:settings file="ivy-settings.xml" />
+    <ivy:convertpom pomFile="pom.xml" ivyFile="ivy.xml" />
+    <ivy:retrieve />
+  </target>
+
+  <!-- javac -->
+  <target name="compile" depends="prepare" description="Compile java">
+    <javac debug="on" destdir="${javac.dest}" source="${javac.source}" target="${javac.target}" encoding="${encoding}">
+      <classpath refid="project.class.path" />
+      <include name="**/*.java" />
+      <src path="${javac.source}" />
+    </javac>
+
+    <copy todir="${javac.dest}">
+      <fileset dir="${javac.resource}">
+        <include name="**/*" />
+      </fileset>
+    </copy>
+
+    <javac debug="on" destdir="${javac.dest.test}" source="${javac.source}" target="${javac.target}" encoding="${encoding}">
+      <classpath>
+        <path refid="project.class.path" />
+        <pathelement location="${javac.dest}" />
+      </classpath>
+      <include name="**/*.java" />
+      <src path="${javac.source.test}" />
+    </javac>
+
+    <copy todir="${javac.dest.test}">
+      <fileset dir="${javac.resource.test}">
+        <include name="**/*" />
+      </fileset>
+    </copy>
+  </target>
+
+  <!-- run -->
+  <target name="run" depends="compile" description="Run Program">
+    <java classname="App" jvm="${jvm}" fork="yes">
+      <classpath>
+        <path refid="project.class.path" />
+        <pathelement location="${javac.dest}" />
+        <pathelement location="${javac.dest.test}" />
+      </classpath>
+    </java>
+  </target>
+
+  <!-- ivy report -->
+  <target name="ivy-report" depends="prepare">
+    <ivy:report todir="target/ivy-reports"/>
+  </target>
+
+</project>
+
+<!-- -->
