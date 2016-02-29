@@ -4,6 +4,8 @@
  * Programmed by Naohide Sano
  */
 
+package vavi.net.fuse.onedrive;
+
 import java.awt.Dimension;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
@@ -13,9 +15,10 @@ import javax.swing.SwingUtilities;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.html.HTMLInputElement;
+
+import vavi.net.fuse.Authenticator;
 
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -29,52 +32,45 @@ import javafx.scene.web.WebView;
 
 
 /**
- * FxGetter. 
+ * OneDriveAuthenticator. 
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/02/16 umjammer initial version <br>
  */
-public class FxGetter implements Getter {
+public class OneDriveAuthenticator implements Authenticator {
 
+    /** */
     private final String email;
+    /** */
     private transient final String password;
+    /** */
     private final String redirectUrl;
+    /** */
     private transient String code;
     
-    public FxGetter(String email, String password, String redirectUrl) {
+    /** */
+    public OneDriveAuthenticator(String email, String password, String redirectUrl) {
         this.email = email;
         this.password = password;
         this.redirectUrl = redirectUrl;
     }
     
+    /** */
     private CountDownLatch latch = new CountDownLatch(1);
+    /** */
     private volatile Exception exception;
 
     /* @see Getter#get(java.lang.String) */
     @Override
     public String get(String url) throws IOException {
-System.err.println(url);
 
         exception = null;
         
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                initAndShowGUI(url);
-            }
-        });
+        SwingUtilities.invokeLater(() -> { openUI(url); });
         
-        try {
-            System.err.println("wait until sign in...");
-            latch.await();
-        } catch (InterruptedException e) {
-            throw new IllegalStateException(e);
-        }
+        try { latch.await(); } catch (InterruptedException e) { throw new IllegalStateException(e); }
 
-        frame.setVisible(false);
-        frame.dispose();
-        
-Thread.getAllStackTraces().keySet().forEach(System.err::println);
+        closeUI();
         
         if (exception != null) {
             throw new IllegalStateException(exception);
@@ -86,7 +82,7 @@ Thread.getAllStackTraces().keySet().forEach(System.err::println);
     private JFrame frame;
 
     /** Create a JFrame with a JButton and a JFXPanel containing the WebView. */
-    private void initAndShowGUI(String url) {
+    private void openUI(String url) {
         // This method is invoked on Swing thread
         frame = new JFrame("Don't touch me.");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -103,12 +99,13 @@ Thread.getAllStackTraces().keySet().forEach(System.err::println);
         frame.getContentPane().setPreferredSize(new Dimension(480, 640));
         frame.pack();
 
-        Platform.runLater(new Runnable() { // this will run initFX as JavaFX-Thread
-            @Override
-            public void run() {
-                initFX(fxPanel, url);
-            }
-        });
+        Platform.runLater(() -> { initFX(fxPanel, url); });
+    }
+
+    /** */
+    private void closeUI() {
+        frame.setVisible(false);
+        frame.dispose();
     }
 
     /** Creates a WebView and fires up */
@@ -137,23 +134,8 @@ Thread.getAllStackTraces().keySet().forEach(System.err::println);
                         if (!login) { 
                             System.err.println("set email: " + email);
                             Document doc = webEngine.getDocument();
-//                            PrettyPrinter pp = new PrettyPrinter(System.err);
-//                            try {
-//                                pp.print(doc);
-//                                System.err.println();
-//                            } catch (IOException e) {
-//                                throw new IllegalStateException(e);
-//                            }
-        
-//                            try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(System.err); }
 
                             NodeList inputs = doc.getElementsByTagName("INPUT");
-                            for (int i = 0; i < inputs.getLength(); i++) {
-                                Node input = inputs.item(i);
-System.err.println("input: " + ((Element) input).getAttribute("id"));
-//System.err.println("input: " + StringUtil.paramStringDeep(input, 2));
-//System.err.println(com.sun.webkit.dom.HTMLInputElementImpl.class);
-                            }
     
                             ((HTMLInputElement) inputs.item(0)).setValue(email);
 System.err.println("set email: " + email);
@@ -161,29 +143,6 @@ System.err.println("set email: " + email);
 System.err.println("set passwd: " + password);
                             ((Element) inputs.item(2)).setAttribute("checked", "true");
 System.err.println("set checked: " + true);
-
-//                            try {
-//                                // 謎すぎる
-//                                Robot robot = new Robot();
-//                                robot.delay(500);
-//                                robot.keyPress(KeyEvent.VK_ENTER);
-//System.err.println("robot enter");
-//                            } catch (AWTException e) {
-//                                e.printStackTrace(System.err);
-//                            }
-                            
-//                            try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(System.err); }
-                            
-//                            try {
-//                                System.err.println("hit any key then submit...");
-//                                BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-//                                br.readLine();
-//                            } catch (IOException e) {
-//                                throw new IllegalStateException(e);
-//                            }
-                            
-//                            HTMLFormElement form = (HTMLFormElement) doc.getElementsByTagName("FORM").item(0);
-//                            form.submit();
 
                             ((HTMLInputElement) inputs.item(3)).click();
 System.err.println("submit");
@@ -199,8 +158,6 @@ System.err.println("code: " + code);
                         latch.countDown();
                     }
                 }
-
-System.err.println(ov + ", " + newState + ", " + oldState);
             }
         });
         webEngine.load(url);

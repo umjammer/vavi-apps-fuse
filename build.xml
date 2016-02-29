@@ -17,6 +17,9 @@
 
   <property file="local.properties" />
 
+  <xmlproperty file="pom.xml" />
+  <property name="ivy.file" value="${ivy.cache}/${project.groupId}/${project.artifactId}/ivy-${project.version}.xml" />
+
   <!-- path definitions -->
 
   <path id="project.class.path">
@@ -36,11 +39,9 @@
       <fileset dir="${javac.dest.test}">
         <include name="**/*" />
       </fileset>
-      <!--
       <fileset dir="${dir.lib}">
         <include name="*.jar" />
       </fileset>
-      -->
     </delete>
   </target>
 
@@ -53,7 +54,10 @@
 
   <!-- javac -->
   <target name="compile" depends="prepare" description="Compile java">
-    <javac debug="on" destdir="${javac.dest}" source="${javac.source}" target="${javac.target}" encoding="${encoding}">
+    <javac debug="on" destdir="${javac.dest}"
+           source="${project.build.plugins.plugin.configuration.source}"
+           target="${project.build.plugins.plugin.configuration.target}"
+           encoding="${project.build.plugins.plugin.configuration.encoding}">
       <classpath refid="project.class.path" />
       <include name="**/*.java" />
       <src path="${javac.source}" />
@@ -65,7 +69,10 @@
       </fileset>
     </copy>
 
-    <javac debug="on" destdir="${javac.dest.test}" source="${javac.source}" target="${javac.target}" encoding="${encoding}">
+    <javac debug="on" destdir="${javac.dest.test}"
+           source="${project.build.plugins.plugin.configuration.source}"
+           target="${project.build.plugins.plugin.configuration.target}"
+           encoding="${project.build.plugins.plugin.configuration.encoding}">
       <classpath>
         <path refid="project.class.path" />
         <pathelement location="${javac.dest}" />
@@ -82,8 +89,20 @@
   </target>
 
   <!-- run -->
-  <target name="run" depends="compile" description="Run Program">
+  <target name="onedrive" depends="compile" description="Run Program">
     <java classname="App" jvm="${jvm}" fork="yes">
+      <classpath>
+        <path refid="project.class.path" />
+        <pathelement location="${javac.dest}" />
+        <pathelement location="${javac.dest.test}" />
+      </classpath>
+    </java>
+  </target>
+
+  <!-- run -->
+  <target name="run" depends="compile" description="Run Program">
+    <java classname="OneDrive" jvm="${jvm}" fork="yes">
+      <arg value="${user.home}/mnt/onedrive:snaohide@hotmail.com"/>
       <classpath>
         <path refid="project.class.path" />
         <pathelement location="${javac.dest}" />

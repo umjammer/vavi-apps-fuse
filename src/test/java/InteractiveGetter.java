@@ -23,6 +23,7 @@ public class InteractiveGetter implements Getter {
     /* @see Getter#get(java.lang.String) */
     @Override
     public String get(String url) throws IOException {
+        // TODO use processbuilder(chrome)
         Desktop desktop = Desktop.isDesktopSupported() ? Desktop.getDesktop() : null;
         if (desktop != null && desktop.isSupported(Desktop.Action.BROWSE)) {
             try {
