@@ -4,6 +4,8 @@
  * Programmed by Naohide Sano
  */
 
+package vavi.net.fuse.onedrive;
+
 import java.awt.Dimension;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
@@ -16,6 +18,8 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.html.HTMLInputElement;
+
+import vavi.net.fuse.Getter;
 
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;

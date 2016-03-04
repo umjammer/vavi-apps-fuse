@@ -1,3 +1,4 @@
+package vavi.net.fuse;
 /*
  * Copyright (c) 2016 by Naohide Sano, All rights reserved.
  *

@@ -4,10 +4,14 @@
  * Programmed by Naohide Sano
  */
 
+package vavi.net.fuse.onedrive;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import vavi.net.fuse.Getter;
 
 
 /**

@@ -4,6 +4,8 @@
  * Programmed by Naohide Sano
  */
 
+package vavi.net.fuse.onedrive;
+
 import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.HttpCookie;
@@ -17,6 +19,8 @@ import com.ui4j.api.browser.PageConfiguration;
 import com.ui4j.api.interceptor.Interceptor;
 import com.ui4j.api.interceptor.Request;
 import com.ui4j.api.interceptor.Response;
+
+import vavi.net.fuse.Getter;
 
 
 /**

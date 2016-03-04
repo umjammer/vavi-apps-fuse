@@ -4,6 +4,8 @@
  * Programmed by Naohide Sano
  */
 
+package vavi.net.fuse.onedrive;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -18,6 +20,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import com.google.common.collect.Maps;
+
+import vavi.net.fuse.Getter;
 
 import asg.cliche.Command;
 import asg.cliche.Param;
