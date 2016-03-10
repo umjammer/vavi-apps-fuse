@@ -1,13 +1,22 @@
+/*
+ * Copyright (c) 2016 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
 
 package vavi.net.fuse.onedrive;
 
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
-import vavi.net.fuse.Authenticator;
+import vavi.net.auth.oauth2.Authenticator;
+import vavi.net.auth.oauth2.microsoft.OneDriveAuthenticator;
 import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
@@ -17,12 +26,15 @@ import de.tuberlin.onedrivesdk.OneDriveFactory;
 import de.tuberlin.onedrivesdk.OneDriveSDK;
 import de.tuberlin.onedrivesdk.common.OneDriveScope;
 import de.tuberlin.onedrivesdk.common.OneItem;
+import de.tuberlin.onedrivesdk.drive.DriveQuota;
 import de.tuberlin.onedrivesdk.file.OneFile;
 import de.tuberlin.onedrivesdk.folder.OneFolder;
+import de.tuberlin.onedrivesdk.networking.OneDriveAuthenticationException;
 import net.fusejna.DirectoryFiller;
 import net.fusejna.ErrorCodes;
 import net.fusejna.StructFuseFileInfo.FileInfoWrapper;
 import net.fusejna.StructStat.StatWrapper;
+import net.fusejna.StructStatvfs.StatvfsWrapper;
 import net.fusejna.types.TypeMode.ModeWrapper;
 import net.fusejna.types.TypeMode.NodeType;
 import net.fusejna.util.FuseFilesystemAdapterAssumeImplemented;
@@ -31,10 +43,13 @@ import net.fusejna.util.FuseFilesystemAdapterAssumeImplemented;
 /**
  * OneDriveFS. 
  *
+ * @depends "file://${HOME}.vavifuse/onedrive/[email]"
+ *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/02/29 umjammer initial version <br>
+ * @see "https://account.live.com/developers/applications/index"
  */
-@PropsEntity(url = "file://${HOME}/.vavifuse")
+@PropsEntity(url = "classpath:onedrive.properties")
 public class OneDriveFS extends FuseFilesystemAdapterAssumeImplemented {
 
     @Property(name = "onedrive.clientId")
@@ -48,22 +63,38 @@ public class OneDriveFS extends FuseFilesystemAdapterAssumeImplemented {
     private transient OneDriveSDK api;
 
     /** */
-    public OneDriveFS() {
-        try {
-            PropsEntity.Util.bind(this);
+    private final java.io.File file;
 
-            String email = "onedrive@id";
-            String password = "password";
+    /**
+     * @param email
+     */
+    public OneDriveFS(String email) throws IOException {
+        
+        file = new java.io.File(System.getProperty("user.home"), ".vavifuse/onedrive/" + email);
+        
+        try {
+            // TODO why not work?
+//            Runtime.getRuntime().addShutdownHook(new Thread(() -> writeRefreshToken()));
+            
+            PropsEntity.Util.bind(this, email);
 
             api = OneDriveFactory.createOneDriveSDK(clientId,
                                                     clientSecret,
                                                     redirectUrl,
                                                     OneDriveScope.OFFLINE_ACCESS);
             String url = api.getAuthenticationURL();
-            Authenticator authenticator = new OneDriveAuthenticator(email, password, redirectUrl);
-            String code = authenticator.get(url);
 
-            api.authenticate(code);
+            String refreshToken = readRefreshToken();
+            if (refreshToken == null || refreshToken.isEmpty()) {
+                authenticateByBrowser(url, email);
+            } else {
+                try {
+                    api.authenticateWithRefreshToken(refreshToken);
+                } catch (OneDriveAuthenticationException e) {
+Debug.println("refreshToken: timeout?");
+                    authenticateByBrowser(url, email);
+                }
+            }
 
             OneFolder folder = api.getRootFolder();
 Debug.println("root: " + folder.getName());
@@ -71,11 +102,54 @@ Debug.println("root: " + folder.getName());
 
             api.startSessionAutoRefresh();
 
-        } catch (OneDriveException | IOException e) {
+        } catch (OneDriveException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+    
+    /** */
+    private void authenticateByBrowser(String url, String email) throws IOException, OneDriveException {
+        Authenticator authenticator = new OneDriveAuthenticator(email, redirectUrl);
+        String code = authenticator.get(url);
+
+        api.authenticate(code);
+    }
+
+    /** */
+    private void writeRefreshToken() {
+        try {
+Debug.println("here");
+            String oldRefreshToken = readRefreshToken();
+            if (!file.getParentFile().exists()) {
+                file.getParentFile().mkdirs();
+            }
+            String refreshToken = api.getRefreshToken();
+            if (!oldRefreshToken.equals(refreshToken)) {
+                FileWriter writer = new FileWriter(file);
+Debug.println("refreshToken: " + refreshToken);
+                writer.write("onedrive.refreshToken=" + refreshToken);
+                writer.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
             throw new IllegalStateException(e);
         }
     }
 
+    /** */
+    private String readRefreshToken() throws IOException {
+        String refreshToken = null;
+        if (file.exists()) {
+            FileReader reader = new FileReader(file);
+            Properties props = new Properties();
+            props.load(reader);
+            refreshToken = props.getProperty("onedrive.refreshToken");
+            reader.close();
+        }
+        return refreshToken;
+    }
+
+    /** */
     private Map<String, OneItem> cache = new HashMap<>();
     
     @Override
@@ -175,7 +249,10 @@ Debug.println("cache: " + key);
                 cache.put(key, item);
             }
             return 0;
-        } catch (OneDriveException | IOException e) {
+        } catch (OneDriveException e) { // means OneDriveAuthenticationException
+            // TODO relogin?
+            return -ErrorCodes.EACCES();
+        } catch (IOException e) {
             e.printStackTrace(System.err);
             return -ErrorCodes.EACCES();
         }
@@ -256,5 +333,35 @@ Debug.println("path: " + path);
 //        }
 //        return ((OneItem) p).write(buf, bufSize, writeOffset);
         return 0;
+    }
+
+    @Override
+    public int statfs(final String path, final StatvfsWrapper wrapper) {
+Debug.println("path: " + path);
+writeRefreshToken();
+        try {
+            DriveQuota quota = api.getDefaultDrive().getQuota();
+//Debug.println("total: " + quota.getTotal());
+//Debug.println("used: " + quota.getUsed());
+
+            long blockSize = 512;
+
+            long total = quota.getTotal() / blockSize;
+            long used = quota.getUsed() / blockSize;
+            long free = total - used;
+
+            wrapper.bavail(total - free);
+            wrapper.bfree(free);
+            wrapper.blocks(total);
+            wrapper.bsize(blockSize);
+            wrapper.favail(-1);
+            wrapper.ffree(-1);
+            wrapper.files(-1);
+            wrapper.frsize(1);
+
+            return 0;
+        } catch (OneDriveException | IOException e) {
+            return -ErrorCodes.EIO();
+        }
     }
 }

@@ -17,12 +17,16 @@ import vavi.net.fuse.onedrive.OneDriveFS;
  */
 public class OneDrive {
 
+    // TODO save refresh token.
     public static void main(final String... args) throws Exception {
-        if (args.length != 1) {
+        if (args.length != 2) {
             System.err.println("Usage: OneDrive <mountpoint>");
             System.exit(1);
         }
-        new OneDriveFS().mount(args[0]);
+
+        String email = args[1];
+
+        new OneDriveFS(email).mount(args[0]);
     }
 }
 

@@ -8,6 +8,7 @@ package vavi.net.fuse.onedrive;
 
 import java.awt.Dimension;
 import java.io.IOException;
+import java.net.URL;
 import java.util.concurrent.CountDownLatch;
 
 import javax.swing.JFrame;
@@ -20,6 +21,9 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.html.HTMLInputElement;
 
 import vavi.net.fuse.Getter;
+import vavi.net.http.HttpServer;
+import vavi.util.properties.annotation.Property;
+import vavi.util.properties.annotation.PropsEntity;
 
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -38,16 +42,17 @@ import javafx.scene.web.WebView;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/02/16 umjammer initial version <br>
  */
+@PropsEntity(url = "file://${HOME}/.vavifuse/credentials.properties")
 public class FxGetter implements Getter {
 
     private final String email;
-    private transient final String password;
+    @Property(name = "onedrive.password.{0}")
+    private transient String password;
     private final String redirectUrl;
     private transient String code;
     
-    public FxGetter(String email, String password, String redirectUrl) {
+    public FxGetter(String email, String redirectUrl) {
         this.email = email;
-        this.password = password;
         this.redirectUrl = redirectUrl;
     }
     
@@ -59,7 +64,15 @@ public class FxGetter implements Getter {
     public String get(String url) throws IOException {
 System.err.println(url);
 
+        PropsEntity.Util.bind(this, email);
+
         exception = null;
+        
+        URL redirectUrl = new URL(this.redirectUrl);
+        String host = redirectUrl.getHost();
+        int port = redirectUrl.getPort();
+        HttpServer httpServer = new HttpServer(host, port);
+        httpServer.start();
         
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -80,6 +93,8 @@ System.err.println(url);
         
 Thread.getAllStackTraces().keySet().forEach(System.err::println);
         
+        httpServer.stop();
+
         if (exception != null) {
             throw new IllegalStateException(exception);
         }
@@ -141,15 +156,8 @@ Thread.getAllStackTraces().keySet().forEach(System.err::println);
                         if (!login) { 
                             System.err.println("set email: " + email);
                             Document doc = webEngine.getDocument();
-//                            PrettyPrinter pp = new PrettyPrinter(System.err);
-//                            try {
-//                                pp.print(doc);
-//                                System.err.println();
-//                            } catch (IOException e) {
-//                                throw new IllegalStateException(e);
-//                            }
         
-//                            try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(System.err); }
+                            try { Thread.sleep(200); } catch (InterruptedException e) { e.printStackTrace(System.err); }
 
                             NodeList inputs = doc.getElementsByTagName("INPUT");
                             for (int i = 0; i < inputs.getLength(); i++) {
@@ -165,29 +173,6 @@ System.err.println("set email: " + email);
 System.err.println("set passwd: " + password);
                             ((Element) inputs.item(2)).setAttribute("checked", "true");
 System.err.println("set checked: " + true);
-
-//                            try {
-//                                // 謎すぎる
-//                                Robot robot = new Robot();
-//                                robot.delay(500);
-//                                robot.keyPress(KeyEvent.VK_ENTER);
-//System.err.println("robot enter");
-//                            } catch (AWTException e) {
-//                                e.printStackTrace(System.err);
-//                            }
-                            
-//                            try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(System.err); }
-                            
-//                            try {
-//                                System.err.println("hit any key then submit...");
-//                                BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-//                                br.readLine();
-//                            } catch (IOException e) {
-//                                throw new IllegalStateException(e);
-//                            }
-                            
-//                            HTMLFormElement form = (HTMLFormElement) doc.getElementsByTagName("FORM").item(0);
-//                            form.submit();
 
                             ((HTMLInputElement) inputs.item(3)).click();
 System.err.println("submit");

@@ -22,6 +22,8 @@ import java.util.concurrent.Future;
 import com.google.common.collect.Maps;
 
 import vavi.net.fuse.Getter;
+import vavi.util.properties.annotation.Property;
+import vavi.util.properties.annotation.PropsEntity;
 
 import asg.cliche.Command;
 import asg.cliche.Param;
@@ -40,6 +42,7 @@ import de.tuberlin.onedrivesdk.uploadFile.OneUploadFile;
 /**
  * Example Client for testing the OneDrive SDK
  */
+@PropsEntity(url = "classpath:onedrive.properties")
 public class App {
     private static OneFolder currentFolder;
 
@@ -49,26 +52,18 @@ public class App {
     private Map<String, OneFolder> currentFolderFolders = Maps.newHashMap();
     private Map<String, OneItem> currentFolderItems = Maps.newHashMap();
 
-    static final String clientId = "CLIENT_ID";
-    static final String clientSecret = "CLIENT_SECRET";
+    @Property(name = "onedrive.clientId")
+    private String clientId;
+    @Property(name = "onedrive.clientSecret")
+    private transient String clientSecret;
+    @Property(name = "onedrive.redirectUrl")
+    private String redirectUrl;
 
-//    File file = new File(System.getProperty("user.home"), ".vavifuse");
-//    Properties props = new Properties();
+    public App(String email) throws IOException, InterruptedException, OneDriveException {
 
-    public App() throws IOException, InterruptedException, OneDriveException {
-
-        String email = "onedrive@id";
-        String password = "password";
+        PropsEntity.Util.bind(this);
 
         //
-//        if (!file.exists()) {
-//            props.store(new FileOutputStream(file), new Date().toString());
-//        } else {
-//            props.load(new FileInputStream(file));
-//        }
-        
-        //
-        String redirectUrl = "https://vast-plateau-97564.herokuapp.com/onedrive_set";
         api = OneDriveFactory.createOneDriveSDK(clientId,
                                                 clientSecret,
                                                 redirectUrl,
@@ -77,51 +72,28 @@ public class App {
         String url = api.getAuthenticationURL();
 
         //
-        String
-//        code = props.getProperty("onedrive." + email + ".code");
-
-//        if (code == null) {
-            code = getCode(url, email, password, redirectUrl);
-//        } else {
-//            System.err.println("reuse code: " + code);
-//        }
-        
-//        try {
-            System.err.println("authenticate 1: " + code);
-            api.authenticate(code);
-//        } catch (OneDriveException e) {
-//            System.err.println("may be timeout, relogin...");
-//            code = getCode(url, email, password, redirectUrl);
-//            try {
-//                System.err.println("authenticate 2: " + code);
-//                api.authenticate(code);
-//            } catch (OneDriveException f) {
-//                throw new IllegalStateException("could not login");
-//            }
-//        }
+        Getter getter = new FxGetter(email, redirectUrl);
+        String code = getter.get(url);
+System.err.println("authenticate: " + code);
+        api.authenticate(code);
 
         currentFolder = api.getRootFolder();
 
         api.startSessionAutoRefresh();
+        
+        listSubItems();
+        exit();
     }
 
-    String getCode(String url, String email, String password, String redirectUrl) throws IOException {
-        Getter getter = new FxGetter(email, password, redirectUrl);
-        String code = getter.get(url);
-        
-//        props.setProperty("onedrive." + email + ".code", code);
-//        props.store(new FileOutputStream(file), new Date().toString());
-        
-        return code;
-    }
-    
     public static void main(String[] args) throws IOException, InterruptedException, OneDriveException {
+        String email = args[0];
         ShellFactory.createConsoleShell("OneDrive",
                                         "To list all available commands enter ?list or ?list-all, the latter will also show you system commands.\nTo get detailed info on a command enter ?help command-name",
-                                        new App())
+                                        new App(email))
                 .commandLoop();
     }
 
+    @SuppressWarnings("unused")
     private static String printCurrentFolder() {
         if (currentFolder != null) {
             return currentFolder.toString();
@@ -153,8 +125,8 @@ public class App {
     public void listSubItems() throws IOException, OneDriveException {
         System.out.println("Listing children");
 
-        this.currentFolderFiles = new HashMap<String, OneFile>();
-        this.currentFolderFolders = new HashMap<String, OneFolder>();
+        this.currentFolderFiles = new HashMap<>();
+        this.currentFolderFolders = new HashMap<>();
         this.currentFolderItems = convertToMap(currentFolder.getChildren(), OneFile.class);
 
         for (String s : this.currentFolderItems.keySet()) {
@@ -246,7 +218,7 @@ public class App {
     }
 
     private void printItemList(Map<String, ?> map) {
-        List<String> itemKeys = new ArrayList<String>(map.keySet());
+        List<String> itemKeys = new ArrayList<>(map.keySet());
         Collections.sort(itemKeys);
         for (String key : itemKeys) {
             System.out.println(String.format("Item %s = %s", key, map.get(key)));
