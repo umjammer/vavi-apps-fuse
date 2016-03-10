@@ -90,7 +90,7 @@
 
   <!-- run -->
   <target name="onedrive" depends="compile" description="Run Program">
-    <java classname="App" jvm="${jvm}" fork="yes">
+    <java classname="vavi.net.fuse.App" jvm="${jvm}" fork="yes">
       <classpath>
         <path refid="project.class.path" />
         <pathelement location="${javac.dest}" />
@@ -101,8 +101,20 @@
 
   <!-- run -->
   <target name="run" depends="compile" description="Run Program">
-    <java classname="OneDrive" jvm="${jvm}" fork="yes">
+    <java classname="vavi.net.fuse.OneDrive" jvm="${jvm}" fork="yes">
       <arg value="${user.home}/mnt/onedrive:snaohide@hotmail.com"/>
+      <classpath>
+        <path refid="project.class.path" />
+        <pathelement location="${javac.dest}" />
+        <pathelement location="${javac.dest.test}" />
+      </classpath>
+    </java>
+  </target>
+
+  <!-- totp -->
+  <target name="totp" depends="compile" description="Run Program">
+    <java classname="vavi.net.hotp.Main" jvm="${jvm}" fork="yes">
+      <arg value="${secret}"/>
       <classpath>
         <path refid="project.class.path" />
         <pathelement location="${javac.dest}" />
