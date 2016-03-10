@@ -4,10 +4,11 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.net.fuse.onedrive;
+package vavi.net.auth.oauth2.microsoft;
 
 import java.awt.Dimension;
 import java.io.IOException;
+import java.net.URL;
 import java.util.concurrent.CountDownLatch;
 
 import javax.swing.JFrame;
@@ -18,7 +19,10 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.html.HTMLInputElement;
 
-import vavi.net.fuse.Authenticator;
+import vavi.net.auth.oauth2.Authenticator;
+import vavi.net.http.HttpServer;
+import vavi.util.properties.annotation.Property;
+import vavi.util.properties.annotation.PropsEntity;
 
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -37,22 +41,24 @@ import javafx.scene.web.WebView;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/02/16 umjammer initial version <br>
  */
+@PropsEntity(url = "file://${HOME}/.vavifuse/credentials.properties")
 public class OneDriveAuthenticator implements Authenticator {
 
     /** */
     private final String email;
-    /** */
-    private transient final String password;
+    @Property(name = "onedrive.password.{0}")
+    private transient String password;
     /** */
     private final String redirectUrl;
     /** */
     private transient String code;
-    
+
     /** */
-    public OneDriveAuthenticator(String email, String password, String redirectUrl) {
+    public OneDriveAuthenticator(String email, String redirectUrl) throws IOException {
         this.email = email;
-        this.password = password;
         this.redirectUrl = redirectUrl;
+        
+        PropsEntity.Util.bind(this, email);
     }
     
     /** */
@@ -60,17 +66,25 @@ public class OneDriveAuthenticator implements Authenticator {
     /** */
     private volatile Exception exception;
 
-    /* @see Getter#get(java.lang.String) */
+    /* @see Authenticator#get(java.lang.String) */
     @Override
     public String get(String url) throws IOException {
 
         exception = null;
         
+        URL redirectUrl = new URL(this.redirectUrl);
+        String host = redirectUrl.getHost();
+        int port = redirectUrl.getPort();
+        HttpServer httpServer = new HttpServer(host, port);
+        httpServer.start();
+
         SwingUtilities.invokeLater(() -> { openUI(url); });
         
         try { latch.await(); } catch (InterruptedException e) { throw new IllegalStateException(e); }
 
         closeUI();
+
+        httpServer.stop();
         
         if (exception != null) {
             throw new IllegalStateException(exception);
@@ -127,12 +141,11 @@ public class OneDriveAuthenticator implements Authenticator {
             public void changed(ObservableValue<? extends State> ov, State oldState, State newState) {
                 if (newState == State.SUCCEEDED) {
                     String location = webEngine.getLocation();
-                    System.err.println("location: " + location);
+System.err.println("location: " + location);
 
                     if (location.indexOf(url) > -1) {
                         
                         if (!login) { 
-                            System.err.println("set email: " + email);
                             Document doc = webEngine.getDocument();
 
                             NodeList inputs = doc.getElementsByTagName("INPUT");
