@@ -6,6 +6,7 @@
 
 package vavi.net.fuse.onedrive;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -41,7 +42,7 @@ import net.fusejna.util.FuseFilesystemAdapterAssumeImplemented;
 
 
 /**
- * OneDriveFS. 
+ * OneDriveFS. (fuse-jna)
  *
  * @depends "file://${HOME}.vavifuse/onedrive/[email]"
  *
@@ -63,14 +64,14 @@ public class OneDriveFS extends FuseFilesystemAdapterAssumeImplemented {
     private transient OneDriveSDK api;
 
     /** */
-    private final java.io.File file;
+    private final File file;
 
     /**
      * @param email
      */
     public OneDriveFS(String email) throws IOException {
         
-        file = new java.io.File(System.getProperty("user.home"), ".vavifuse/onedrive/" + email);
+        file = new File(System.getProperty("user.home"), ".vavifuse/onedrive/" + email);
         
         try {
             // TODO why not work?
