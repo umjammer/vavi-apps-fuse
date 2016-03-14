@@ -1,11 +1,8 @@
-
 package vavi.net.fuse.dropbox;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
@@ -18,15 +15,16 @@ import com.github.fge.fs.dropbox.provider.DropBoxFileSystemRepository;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
+import co.paralleluniverse.javafs.JavaFS;
 
 @PropsEntity(url = "file://${HOME}/.vavifuse/dropbox/{0}")
-public final class Main {
+public class Main {
     
     @Property(name = "dropbox.accessToken")
     private String accessToken;
 
     public static void main(final String... args) throws IOException {
-        String email = args[0];
+        String email = args[1];
 
         Main app = new Main();
         PropsEntity.Util.bind(app, email);
@@ -48,15 +46,11 @@ public final class Main {
         final FileSystemRepository repository = new DropBoxFileSystemRepository();
         final FileSystemProvider provider = new DropBoxFileSystemProvider(repository);
 
-        try (/* Create the filesystem... */
-            final FileSystem dropboxfs = provider.newFileSystem(uri, env)) {
-            /* And use it! You should of course adapt this code... */
-            // Equivalent to FileSystems.getDefault().getPath(...)
-            final Path src = Paths.get(System.getProperty("user.home") + "/tmp/2" , "java7.java");
-            // Here we create a path for our DropBox fs...
-            final Path dst = dropboxfs.getPath("/java7.java");
-            // Here we copy the file from our local fs to dropbox!
-            Files.copy(src, dst);
-        }
+        final FileSystem fs = provider.newFileSystem(uri, env);
+
+        Map<String, String> options = new HashMap<>();
+        options.put("fsname", "dropbox_fs" + "@" + System.currentTimeMillis());
+            
+        JavaFS.mount(fs, Paths.get(args[0]), false, true, options);
     }
 }

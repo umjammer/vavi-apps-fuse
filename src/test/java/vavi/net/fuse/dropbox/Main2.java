@@ -46,7 +46,7 @@ public class Main2 {
 
         // Run through Dropbox API authorization process
         String userLocale = Locale.getDefault().toString();
-        DbxRequestConfig requestConfig = new DbxRequestConfig("vavi-fuse", userLocale);
+        DbxRequestConfig requestConfig = new DbxRequestConfig("vavi-apps-fuse", userLocale);
         DbxWebAuthNoRedirect webAuth = new DbxWebAuthNoRedirect(requestConfig, appInfo);
 
         String authorizeUrl = webAuth.start();
@@ -57,11 +57,11 @@ public class Main2 {
         DbxAuthFinish authFinish = webAuth.finish(code);
 
         System.out.println("Authorization complete.");
-        System.out.println("- User ID: " + authFinish.userId);
-        System.out.println("- Access Token: " + authFinish.accessToken);
+        System.out.println("- User ID: " + authFinish.getUserId());
+        System.out.println("- Access Token: " + authFinish.getAccessToken());
 
         // Save auth information to output file.
-        DbxAuthInfo authInfo = new DbxAuthInfo(authFinish.accessToken, appInfo.host);
+        DbxAuthInfo authInfo = new DbxAuthInfo(authFinish.getAccessToken(), appInfo.getHost());
         DbxAuthInfo.Writer.writeToStream(authInfo, System.err, true);
     }
 }

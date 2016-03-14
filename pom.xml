@@ -125,15 +125,18 @@
       <artifactId>javafs</artifactId>
       <version>0.1.0</version>
     </dependency>
+<!--
     <dependency>
       <groupId>com.github.fge</groupId>
       <artifactId>java7-fs-base</artifactId>
       <version>0.0.1</version>
     </dependency>
+-->
     <dependency>
       <groupId>com.github.fge</groupId>
       <artifactId>java7-fs-dropbox</artifactId>
-      <version>0.0.1</version>
+      <version>0.0.2-v2patch-SNAPSHOT</version>
     </dependency>
+
   </dependencies>
 </project>
