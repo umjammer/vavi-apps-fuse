@@ -20,7 +20,7 @@ import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
 
-@PropsEntity(url = "classpath:googledrive.properties")
+@PropsEntity(url = "file://${user.home}/.vavifuse/googledrive.properties")
 public class DriveCommandLine {
 
     @Property(name = "googledrive.clientId")

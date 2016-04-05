@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.file.googledrive;
+package vavi.nio.file.googledrive.test;
 
 import java.io.IOException;
 import java.nio.file.FileStore;

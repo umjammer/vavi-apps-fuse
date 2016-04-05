@@ -53,7 +53,7 @@ import net.fusejna.util.FuseFilesystemAdapterAssumeImplemented;
 public class GoogleDriveFS extends FuseFilesystemAdapterAssumeImplemented {
 
     /** Application name. */
-    private static final String APPLICATION_NAME = "vavi-fuse";
+    private static final String APPLICATION_NAME = "vavi-apps-fuse";
 
     /** Directory to store user credentials for this application. */
     private static final java.io.File DATA_STORE_DIR = new java.io.File(System.getProperty("user.home"), ".vavifuse/googledrive");

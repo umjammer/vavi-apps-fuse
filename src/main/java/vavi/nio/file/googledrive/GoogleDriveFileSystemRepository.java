@@ -1,12 +1,25 @@
-package vavi.net.fuse.googledrive;
+/*
+ * Copyright (c) 2016 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
+
+package vavi.nio.file.googledrive;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
+import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
+
+import com.github.fge.filesystem.driver.FileSystemDriver;
+import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
@@ -18,20 +31,29 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
-import com.google.api.services.drive.model.File;
-import com.google.api.services.drive.model.FileList;
 
 import vavi.net.auth.oauth2.google.AuthorizationCodeInstalledApp;
+import vavi.util.Debug;
 
 
-public class DriveQuickstart {
+/**
+ * GoogleDriveFileSystemRepository. 
+ *
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
+ * @version 0.00 2016/03/30 umjammer initial version <br>
+ */
+@ParametersAreNonnullByDefault
+public final class GoogleDriveFileSystemRepository extends FileSystemRepositoryBase {
+
+    public GoogleDriveFileSystemRepository() {
+        super("googledrive", new GoogleDriveFileSystemFactoryProvider());
+    }
 
     /** Application name. */
-    private static final String APPLICATION_NAME = "Drive API Java Quickstart";
+    private static final String APPLICATION_NAME = "vavi-apps-fuse";
 
     /** Directory to store user credentials for this application. */
-    private static final java.io.File DATA_STORE_DIR = new java.io.File(
-        System.getProperty("user.home"), ".vavifuse/googledrive");
+    private static final java.io.File DATA_STORE_DIR = new java.io.File(System.getProperty("user.home"), ".vavifuse/googledrive");
 
     /** Global instance of the {@link FileDataStoreFactory}. */
     private static FileDataStoreFactory DATA_STORE_FACTORY;
@@ -46,7 +68,7 @@ public class DriveQuickstart {
      * Global instance of the scopes required by this quickstart.
      *
      * If modifying these scopes, delete your previously saved credentials
-     * at ~/.credentials/drive-java-quickstart.json
+     * at ~/.vavifuse/googledrive
      */
     private static final List<String> SCOPES = Arrays.asList(DriveScopes.DRIVE_METADATA_READONLY);
 
@@ -54,18 +76,21 @@ public class DriveQuickstart {
         try {
             HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
             DATA_STORE_FACTORY = new FileDataStoreFactory(DATA_STORE_DIR);
-        } catch (Throwable t) {
-            t.printStackTrace();
-            System.exit(1);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
         }
     }
 
-    /**
-     * Creates an authorized Credential object.
-     * @return an authorized Credential object.
-     * @throws IOException
-     */
-    public static Credential authorize(String email) throws IOException {
+    /** */
+    private transient Drive drive;
+
+    @Nonnull
+    @Override
+    public FileSystemDriver createDriver(final URI uri, final Map<String, ?> env) throws IOException {
+        final String email = (String) env.get("email");
+        if (email == null)
+            throw new IllegalArgumentException("email not found");
+
         // Load client secrets.
         InputStream in = new FileInputStream(new java.io.File(DATA_STORE_DIR.getParent(), "googledrive.json"));
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
@@ -78,45 +103,13 @@ public class DriveQuickstart {
                 .build();
         Credential credential = new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver())
                 .authorize(email);
-        System.err.println("Credentials saved to " + DATA_STORE_DIR.getAbsolutePath());
-        return credential;
-    }
+Debug.println("Credentials saved to " + DATA_STORE_DIR.getAbsolutePath());
 
-    /**
-     * Build and return an authorized Drive client service.
-     * @param email 
-     * @return an authorized Drive client service
-     * @throws IOException
-     */
-    public static Drive getDriveService(String email) throws IOException {
-        Credential credential = authorize(email);
-        return new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
+        drive = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
-    }
 
-    /**
-     * @param args 0: email
-     */
-    public static void main(String[] args) throws IOException {
-        String email = args[0];
-
-        // Build a new authorized API client service.
-        Drive service = getDriveService(email);
-
-        // Print the names and IDs for up to 10 files.
-        FileList result = service.files().list()
-             .setPageSize(10)
-             .setFields("nextPageToken, files(id, name)")
-             .execute();
-        List<File> files = result.getFiles();
-        if (files == null || files.size() == 0) {
-            System.err.println("No files found.");
-        } else {
-            System.err.println("Files:");
-            for (File file : files) {
-                System.err.printf("%s (%s)\n", file.getName(), file.getId());
-            }
-        }
+        final GoogleDriveFileStore fileStore = new GoogleDriveFileStore(drive, factoryProvider.getAttributesFactory());
+        return new GoogleDriveFileSystemDriver(fileStore, factoryProvider, drive, env);
     }
 }
