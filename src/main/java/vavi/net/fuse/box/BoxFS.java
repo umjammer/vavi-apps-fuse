@@ -31,7 +31,7 @@ import net.fusejna.util.FuseFilesystemAdapterAssumeImplemented;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/02/29 umjammer initial version <br>
  */
-@PropsEntity(url = "classpath:box.properties")
+@PropsEntity(url = "file://${user.home}/.vavifuse/box.properties")
 public class BoxFS extends FuseFilesystemAdapterAssumeImplemented {
 
     @Property(name = "box.clientId")
