@@ -42,7 +42,7 @@ import de.tuberlin.onedrivesdk.uploadFile.OneUploadFile;
 /**
  * Example Client for testing the OneDrive SDK
  */
-@PropsEntity(url = "classpath:onedrive.properties")
+@PropsEntity(url = "file://${user.home}/.vavifuse/onedrive.properties")
 public class App {
     private static OneFolder currentFolder;
 

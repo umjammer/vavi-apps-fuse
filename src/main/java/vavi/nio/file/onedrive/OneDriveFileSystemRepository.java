@@ -1,5 +1,10 @@
+/*
+ * Copyright (c) 2016 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
 
-package vavi.nio.file.onedrive.test;
+package vavi.nio.file.onedrive;
 
 import java.io.File;
 import java.io.FileReader;
@@ -28,8 +33,14 @@ import de.tuberlin.onedrivesdk.common.OneDriveScope;
 import de.tuberlin.onedrivesdk.networking.OneDriveAuthenticationException;
 
 
+/**
+ * OneDriveFileSystemRepository. 
+ *
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
+ * @version 0.00 2016/03/11 umjammer initial version <br>
+ */
 @ParametersAreNonnullByDefault
-@PropsEntity(url = "classpath:onedrive.properties")
+@PropsEntity(url = "file://${user.home}/.vavifuse/onedrive.properties")
 public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase {
 
     @Property(name = "onedrive.clientId")
@@ -46,7 +57,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
     /** */
     private transient OneDriveSDK client;
 
-    /** */
+    /** for refreshToken */
     private File file;
 
     @Nonnull
@@ -82,7 +93,7 @@ Debug.println("refreshToken: timeout?");
             client.startSessionAutoRefresh(this::writeRefreshToken);
 
             final OneDriveFileStore fileStore = new OneDriveFileStore(client, factoryProvider.getAttributesFactory());
-            return new OneDriveFileSystemDriver(fileStore, factoryProvider, client);
+            return new OneDriveFileSystemDriver(fileStore, factoryProvider, client, env);
 
         } catch (OneDriveException e) {
             throw new IllegalStateException(e);
@@ -100,7 +111,7 @@ Debug.println("refreshToken: timeout?");
     /** */
     private void writeRefreshToken() {
         try {
-Debug.println("here");
+//Debug.println("here");
             String oldRefreshToken = readRefreshToken();
             if (!file.getParentFile().exists()) {
                 file.getParentFile().mkdirs();

@@ -1,12 +1,19 @@
+/*
+ * Copyright (c) 2016 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
 
-package vavi.nio.file.onedrive.test;
+package vavi.nio.file.onedrive;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.spi.FileSystemProvider;
@@ -18,6 +25,12 @@ import com.github.fge.filesystem.provider.FileSystemRepository;
 import static java.nio.file.FileVisitResult.CONTINUE;
 
 
+/**
+ * onedrive nio file walk 
+ *
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
+ * @version 0.00 2016/03/20 umjammer initial version <br>
+ */
 public final class Main3 {
     
     public static void main(final String... args) throws IOException {
@@ -45,15 +58,33 @@ public final class Main3 {
 
             /* And use it! You should of course adapt this code... */
             // Equivalent to FileSystems.getDefault().getPath(...)
-//            final Path src = Paths.get(System.getProperty("user.home") + "/tmp/2" , "java7.java");
+            final Path src = Paths.get(System.getProperty("user.home") + "/tmp/2" , "java7.java");
             // Here we create a path for our DropBox fs...
-//            final Path dst = dropboxfs.getPath("/java7.java");
+            final Path dst = onedrivefs.getPath("/java7.java");
             // Here we copy the file from our local fs to dropbox!
-//            Files.copy(src, dst);
+            try {
+System.out.println("$ list");
+                Files.list(dst.getParent()).forEach(System.out::println);
+System.out.println("$ copy");
+                Files.copy(src, dst);
+            } catch (FileAlreadyExistsException e) {
+//e.printStackTrace(System.out);
+System.err.println(e);
+System.out.println("$ delete");
+                Files.delete(dst);
+System.out.println("$ list");
+                Files.list(dst.getParent()).forEach(System.out::println);
+System.out.println("$ copy");
+                Files.copy(src, dst);
+            }
+System.out.println("$ list");
+            Files.list(dst.getParent()).forEach(System.out::println);
 
-            Path root = onedrivefs.getRootDirectories().iterator().next();
-            Files.walkFileTree(root, new PrintFiles());
+//            Path root = onedrivefs.getRootDirectories().iterator().next();
+//            Files.walkFileTree(root, new PrintFiles());
         }
+        
+        System.exit(0);
     }
 
     static class PrintFiles extends SimpleFileVisitor<Path> {

@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.file.onedrive;
+package vavi.nio.file.onedrive.test;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,7 +38,7 @@ import de.tuberlin.onedrivesdk.common.OneItem;
  * @version 0.00 2016/02/29 umjammer initial version <br>
  * @see "https://account.live.com/developers/applications/index"
  */
-@PropsEntity(url = "classpath:onedrive.properties")
+@PropsEntity(url = "file://${user.home}/.vavifuse/onedrive.properties")
 public class OneDriveFileSystem extends FileSystem {
 
     /** */

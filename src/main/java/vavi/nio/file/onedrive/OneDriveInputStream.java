@@ -1,19 +1,27 @@
+/*
+ * Copyright (c) 2016 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
 
-package vavi.nio.file.onedrive.test;
+package vavi.nio.file.onedrive;
 
-import com.github.fge.filesystem.driver.FileSystemDriver;
-
-import de.tuberlin.onedrivesdk.downloadFile.OneDownloadFile;
-
-import javax.annotation.ParametersAreNonnullByDefault;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
+import com.github.fge.filesystem.driver.FileSystemDriver;
+
+import de.tuberlin.onedrivesdk.OneDriveException;
+import de.tuberlin.onedrivesdk.downloadFile.OneDownloadFile;
+
 
 /**
- * Wrapper over {@link DbxClient.Downloader} extending {@link InputStream}
+ * Wrapper over {@link OneDownloadFile} extending {@link InputStream}
  *
  * <p>
  * This class wraps a DropBox downloader class by extending {@code
@@ -39,14 +47,11 @@ import java.nio.file.Path;
 @ParametersAreNonnullByDefault
 public final class OneDriveInputStream extends InputStream {
 
-    private final OneDownloadFile downloader;
-
     private final InputStream delegate;
 
-    public OneDriveInputStream(final OneDownloadFile downloader) {
-        this.downloader = downloader;
-        delegate = null;
-//        delegate = downloader.getInputStream();
+    public OneDriveInputStream(final OneDownloadFile downloader) throws OneDriveException, IOException {
+        downloader.startDownload();
+        delegate = new FileInputStream(downloader.getDownloadedFile()); 
     }
 
     @Override
@@ -91,24 +96,6 @@ public final class OneDriveInputStream extends InputStream {
 
     @Override
     public void close() throws IOException {
-        IOException exception = null;
-
-        try {
-            delegate.close();
-        } catch (IOException e) {
-            exception = e;
-        }
-
-        try {
-//            downloader.close();
-        } catch (RuntimeException e) {
-            if (exception != null)
-                exception.addSuppressed(e);
-            else
-                exception = new IOException("tell me what to do, please", e);
-        }
-
-        if (exception != null)
-            throw exception;
+        delegate.close();
     }
 }

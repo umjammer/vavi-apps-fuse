@@ -1,15 +1,21 @@
+/*
+ * Copyright (c) 2016 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
 
-package vavi.nio.file.onedrive.test;
+package vavi.nio.file.onedrive;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
 
 import de.tuberlin.onedrivesdk.OneDriveException;
-import de.tuberlin.onedrivesdk.OneDriveSDK;
+import de.tuberlin.onedrivesdk.file.OneFile;
 import de.tuberlin.onedrivesdk.uploadFile.OneUploadFile;
 
 
@@ -41,27 +47,32 @@ public final class OneDriveOutputStream extends OutputStream {
     private final AtomicBoolean closeCalled = new AtomicBoolean(false);
 
     private final OneUploadFile uploader;
+    
+    private OutputStream out;
 
-    private final OutputStream out;
-
-    public OneDriveOutputStream(@Nonnull final OneUploadFile uploader) {
-        this.uploader = Objects.requireNonNull(uploader);
-        out = null;
-//        out = uploader.getOutputStream();
+    private Consumer<OneFile> consumer;
+    
+    public OneDriveOutputStream(@Nonnull final OneUploadFile uploader, Consumer<OneFile> consumer) throws IOException, OneDriveException {
+        this.uploader = uploader;
+        this.consumer = consumer;
+        out = new FileOutputStream(uploader.getUploadFile());
     }
 
     @Override
     public void write(final int b) throws IOException {
+System.out.println("here: 0");
         out.write(b);
     }
 
     @Override
     public void write(final byte[] b) throws IOException {
+System.out.println("here: 1");
         out.write(b);
     }
 
     @Override
     public void write(final byte[] b, final int off, final int len) throws IOException {
+System.out.println("here: 2");
         out.write(b, off, len);
     }
 
@@ -78,7 +89,6 @@ public final class OneDriveOutputStream extends OutputStream {
 
         /* TODO: UGLY! Tied to the API in a big, big way */
         IOException exception = null;
-        boolean finishedOK = true;
 
         /* First try and close the stream */
         try {
@@ -92,22 +102,13 @@ public final class OneDriveOutputStream extends OutputStream {
          * OneDriveIOException if the stream was OK. */
 
         try {
-//            uploader.finish();
-        } catch (/*OneDrive*/Exception e) {
-            finishedOK = false;
+//System.out.println("close: " + uploader.getUploadFile().length());
+            OneFile file = uploader.startUpload();
+            consumer.accept(file);
+        } catch (OneDriveException e) {
             if (exception == null)
                 exception = new OneDriveIOException(e);
             else
-                exception.addSuppressed(e);
-        }
-
-        /* Now try and .close(). If the finish stage was OK, ignore; if not,
-         * suppress the returned exception (we always have a nonnull exception). */
-
-        try {
-//            uploader.close();
-        } catch (RuntimeException e) {
-            if (!finishedOK)
                 exception.addSuppressed(e);
         }
 

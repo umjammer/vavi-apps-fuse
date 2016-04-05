@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.file.onedrive;
+package vavi.nio.file.onedrive.test;
 
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;

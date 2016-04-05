@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.file.onedrive.test;
+package vavi.nio.file.onedrive;
 
 import java.nio.file.LinkOption;
 

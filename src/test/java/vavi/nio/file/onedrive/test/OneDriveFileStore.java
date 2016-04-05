@@ -1,11 +1,17 @@
+/*
+ * Copyright (c) 2016 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
 
 package vavi.nio.file.onedrive.test;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
-
-import com.github.fge.filesystem.attributes.FileAttributesFactory;
-import com.github.fge.filesystem.filestore.FileStoreBase;
+import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.FileStoreAttributeView;
+import java.util.HashMap;
+import java.util.Map;
 
 import de.tuberlin.onedrivesdk.OneDriveException;
 import de.tuberlin.onedrivesdk.OneDriveSDK;
@@ -13,86 +19,110 @@ import de.tuberlin.onedrivesdk.drive.DriveQuota;
 
 
 /**
- * A simple DropBox {@link FileStore}
+ * OneDriveFileStore. 
  *
- * <p>
- * This makes use of information available in {@link DriveQuota}.
- * Information is computed in "real time".
- * </p>
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
+ * @version 0.00 2016/03/05 umjammer initial version <br>
  */
-public final class OneDriveFileStore extends FileStoreBase {
+public class OneDriveFileStore extends FileStore {
 
-    private final OneDriveSDK client;
+    private final OneDrivePath oneDrivePath;
 
     /**
-     * Constructor
-     *
-     * @param client the (valid) DropBox client to use
+     * @param oneDrivePath
      */
-    public OneDriveFileStore(final OneDriveSDK client, final FileAttributesFactory factory) {
-        super("dropbox", factory, false);
-        this.client = client;
+    public OneDriveFileStore(OneDrivePath oneDrivePath) {
+        this.oneDrivePath = oneDrivePath;
     }
 
-    /**
-     * Returns the size, in bytes, of the file store.
-     *
-     * @return the size of the file store, in bytes
-     *
-     * @throws IOException if an I/O error occurs
-     */
+    /* @see java.nio.file.FileStore#name() */
+    @Override
+    public String name() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    /* @see java.nio.file.FileStore#type() */
+    @Override
+    public String type() {
+        return "onedrive";
+    }
+
+    /* @see java.nio.file.FileStore#isReadOnly() */
+    @Override
+    public boolean isReadOnly() {
+        return false;
+    }
+
+    /* @see java.nio.file.FileStore#getTotalSpace() */
     @Override
     public long getTotalSpace() throws IOException {
-        return getQuota().getTotal();
+        return Long.class.cast(getAttributs().get("blocks"));
     }
 
-    /**
-     * Returns the number of bytes available to this Java virtual machine on the
-     * file store.
-     * <p>
-     * The returned number of available bytes is a hint, but not a
-     * guarantee, that it is possible to use most or any of these bytes. The
-     * number of usable bytes is most likely to be accurate immediately
-     * after the space attributes are obtained. It is likely to be made
-     * inaccurate
-     * by any external I/O operations including those made on the system outside
-     * of this Java virtual machine.
-     *
-     * @return the number of bytes available
-     *
-     * @throws IOException if an I/O error occurs
-     */
+    /* @see java.nio.file.FileStore#getUsableSpace() */
     @Override
     public long getUsableSpace() throws IOException {
-        final DriveQuota quota = getQuota();
-        return quota.getTotal() - quota.getUsed();
+        return Long.class.cast(getAttributs().get("bavail"));
     }
 
-    /**
-     * Returns the number of unallocated bytes in the file store.
-     * <p>
-     * The returned number of unallocated bytes is a hint, but not a
-     * guarantee, that it is possible to use most or any of these bytes. The
-     * number of unallocated bytes is most likely to be accurate immediately
-     * after the space attributes are obtained. It is likely to be
-     * made inaccurate by any external I/O operations including those made on
-     * the system outside of this virtual machine.
-     *
-     * @return the number of unallocated bytes
-     *
-     * @throws IOException if an I/O error occurs
-     */
+    /* @see java.nio.file.FileStore#getUnallocatedSpace() */
     @Override
     public long getUnallocatedSpace() throws IOException {
-        final DriveQuota quota = getQuota();
-        return quota.getTotal() - quota.getUsed();
+        return 0;
     }
 
-    private DriveQuota getQuota() throws IOException {
+    /* @see java.nio.file.FileStore#supportsFileAttributeView(java.lang.Class) */
+    @Override
+    public boolean supportsFileAttributeView(Class<? extends FileAttributeView> type) {
+        return false;
+    }
+
+    /* @see java.nio.file.FileStore#supportsFileAttributeView(java.lang.String) */
+    @Override
+    public boolean supportsFileAttributeView(String name) {
+        return false;
+    }
+
+    /* @see java.nio.file.FileStore#getFileStoreAttributeView(java.lang.Class) */
+    @Override
+    public <V extends FileStoreAttributeView> V getFileStoreAttributeView(Class<V> type) {
+        return null;
+    }
+
+    /* @see java.nio.file.FileStore#getAttribute(java.lang.String) */
+    @Override
+    public Object getAttribute(String attribute) throws IOException {
+        return getAttributs().get(attribute);
+    }
+
+    /** */
+    private OneDriveSDK api;
+    
+    /** */
+    private Map<String, Object> getAttributs() throws IOException {
         try {
-            return client.getDefaultDrive().getQuota();
+            DriveQuota quota = api.getDefaultDrive().getQuota();
+//Debug.println("total: " + quota.getTotal());
+//Debug.println("used: " + quota.getUsed());
+    
+            long blockSize = 512;
+    
+            long total = quota.getTotal() / blockSize;
+            long used = quota.getUsed() / blockSize;
+            long free = total - used;
+    
+            Map<String, Object> attributes = new HashMap<>();
+            attributes.put("bavail", total - free);
+            attributes.put("bfree", free);
+            attributes.put("blocks", total);
+            attributes.put("bsize", blockSize);
+            
+            return attributes;
         } catch (OneDriveException e) {
-            throw new IOException("cannot get quota info from account", e);
+            throw new IOException(e);
         }
     }
 }
+
+/* */

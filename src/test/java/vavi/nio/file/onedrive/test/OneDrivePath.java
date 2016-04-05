@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.file.onedrive;
+package vavi.nio.file.onedrive.test;
 
 import java.io.File;
 import java.io.IOException;

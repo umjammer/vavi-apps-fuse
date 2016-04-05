@@ -50,7 +50,7 @@ import net.fusejna.util.FuseFilesystemAdapterAssumeImplemented;
  * @version 0.00 2016/02/29 umjammer initial version <br>
  * @see "https://account.live.com/developers/applications/index"
  */
-@PropsEntity(url = "classpath:onedrive.properties")
+@PropsEntity(url = "file://${user.home}/.vavifuse/onedrive.properties")
 public class OneDriveFS extends FuseFilesystemAdapterAssumeImplemented {
 
     @Property(name = "onedrive.clientId")
@@ -63,7 +63,7 @@ public class OneDriveFS extends FuseFilesystemAdapterAssumeImplemented {
     /** */
     private transient OneDriveSDK api;
 
-    /** */
+    /** for storing refresh token */
     private final File file;
 
     /**
@@ -119,7 +119,7 @@ Debug.println("root: " + folder.getName());
     /** */
     private void writeRefreshToken() {
         try {
-Debug.println("here");
+//Debug.println("here");
             String oldRefreshToken = readRefreshToken();
             if (!file.getParentFile().exists()) {
                 file.getParentFile().mkdirs();
@@ -151,7 +151,7 @@ Debug.println("refreshToken: " + refreshToken);
     }
 
     /** */
-    private Map<String, OneItem> cache = new HashMap<>();
+    private Map<String, OneItem> cache = new HashMap<>(); // TODO
     
     @Override
     public int access(final String path, final int access) {
@@ -166,15 +166,10 @@ Debug.println("refreshToken: " + refreshToken);
     @Override
     public int create(final String path, final ModeWrapper mode, final FileInfoWrapper info) {
 Debug.println("path: " + path);
-//        if (getPath(path) != null) {
-//            return -ErrorCodes.EEXIST();
-//        }
-//        final OneDrivePath parent = getParentPath(path);
-//        if (parent instanceof OneDriveDirectory) {
-//            ((OneFolder) parent).mkfile(getLastComponent(path));
-//            return 0;
-//        }
-        return -ErrorCodes.ENOENT();
+        if (cache.containsKey(path)) {
+            return -ErrorCodes.EEXIST();
+        }
+        return 0; 
     }
 
     @Override
@@ -198,17 +193,28 @@ Debug.println("enoent: " + path);
     }
 
     @Override
+    public int fgetattr(final String path, final StatWrapper stat, final FileInfoWrapper info)
+    {
+Debug.println("path: " + path);
+        return 0;
+    }
+
+    @Override
     public int mkdir(final String path, final ModeWrapper mode) {
 Debug.println("path: " + path);
-//        if (getPath(path) != null) {
-//            return -ErrorCodes.EEXIST();
-//        }
-//        final OneDrivePath parent = getParentPath(path);
-//        if (parent instanceof OneDriveDirectory) {
-//            ((OneFolder) parent).mkdir(getLastComponent(path));
-//            return 0;
-//        }
-        return -ErrorCodes.ENOENT();
+        if (cache.containsKey(path)) {
+            return -ErrorCodes.EEXIST();
+        }
+        try {
+            OneItem entry = cache.get(path);
+            OneFolder parent = entry.getParentFolder();
+            parent.createFolder(entry.getName());
+            return 0;
+        } catch (OneDriveException e) {
+            return -ErrorCodes.ENOENT();
+        } catch (IOException e) {
+            return -ErrorCodes.EIO();
+        }
     }
 
     @Override
@@ -235,13 +241,21 @@ Debug.println("path: " + path);
         return 0;
     }
 
+    private Map<String, List<OneItem>> folderCache = new HashMap<>();
+
     @Override
     public int readdir(final String path, final DirectoryFiller filler) {
         try {
 Debug.println("path: " + path);
-            OneItem folder = cache.get(path);
-            List<OneItem> items = OneFolder.class.cast(folder).getChildren();
+            List<OneItem> items = null;
+            if (folderCache.containsKey(path)) {
+                items = folderCache.get(path);
+            } else {
+                OneItem folder = cache.get(path);
+                items = OneFolder.class.cast(folder).getChildren();
 Debug.println("folder: " + path + ": " + items.size());
+                folderCache.put(path, items);
+            }
             for (OneItem item : items) {
                 filler.add(item.getName());
 
@@ -254,27 +268,22 @@ Debug.println("cache: " + key);
             // TODO relogin?
             return -ErrorCodes.EACCES();
         } catch (IOException e) {
-            e.printStackTrace(System.err);
-            return -ErrorCodes.EACCES();
+e.printStackTrace(System.err);
+            return -ErrorCodes.EIO();
         }
     }
 
     @Override
     public int rename(final String path, final String newName) {
 Debug.println("path: " + path);
-//        final OneDrivePath p = getPath(path);
-//        if (p == null) {
-//            return -ErrorCodes.ENOENT();
-//        }
-//        final OneDrivePath newParent = getParentPath(newName);
-//        if (newParent == null) {
-//            return -ErrorCodes.ENOENT();
-//        }
-//        if (!(newParent instanceof OneFolder)) {
-//            return -ErrorCodes.ENOTDIR();
-//        }
-//        p.delete();
-//        p.rename(newName.substring(newName.lastIndexOf("/")));
+        if (!cache.containsKey(path)) {
+            return -ErrorCodes.ENOENT();
+        }
+//        OneItem entry = cache.get(path);
+//        OneItem newEntry = cache.get(newName);
+//        final OneFolder newParent = newEntry.getParentFolder();
+//        newEntry.delete();
+//        entry.rename(newName.substring(newName.lastIndexOf("/")));
 //        ((OneFolder) newParent).add(p);
         return 0;
     }
@@ -336,12 +345,14 @@ Debug.println("path: " + path);
         return 0;
     }
 
+    private DriveQuota quotaCache;
+
     @Override
     public int statfs(final String path, final StatvfsWrapper wrapper) {
 Debug.println("path: " + path);
 writeRefreshToken();
         try {
-            DriveQuota quota = api.getDefaultDrive().getQuota();
+            DriveQuota quota = quotaCache == null ? quotaCache = api.getDefaultDrive().getQuota() : quotaCache;
 //Debug.println("total: " + quota.getTotal());
 //Debug.println("used: " + quota.getUsed());
 

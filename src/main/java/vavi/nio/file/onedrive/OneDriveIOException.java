@@ -1,5 +1,10 @@
+/*
+ * Copyright (c) 2016 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
 
-package vavi.nio.file.onedrive.test;
+package vavi.nio.file.onedrive;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -8,7 +13,7 @@ import de.tuberlin.onedrivesdk.OneDriveException;
 
 
 /**
- * Class used as a wrapper over the DropBox API's unchecked exceptions when
+ * Class used as a wrapper over the OneDrive API's unchecked exceptions when
  * an {@link IOException} is needed
  *
  * <p>

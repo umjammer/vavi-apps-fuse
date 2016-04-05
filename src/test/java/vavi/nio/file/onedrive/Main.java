@@ -1,4 +1,10 @@
-package vavi.nio.file.onedrive.test;
+/*
+ * Copyright (c) 2016 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
+
+package vavi.nio.file.onedrive;
 
 import java.io.IOException;
 import java.net.URI;
@@ -13,6 +19,12 @@ import com.github.fge.filesystem.provider.FileSystemRepository;
 import co.paralleluniverse.javafs.JavaFS;
 
 
+/**
+ * Main. 
+ *
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
+ * @version 0.00 2016/03/xx umjammer initial version <br>
+ */
 public class Main {
     
     public static void main(final String... args) throws IOException {
@@ -20,12 +32,13 @@ public class Main {
 
         /* 
          * Create the necessary elements to create a filesystem.
-         * Note: the URI _must_ have a scheme of "dropbox", and
+         * Note: the URI _must_ have a scheme of "onedrive", and
          * _must_ be hierarchical.
          */
         final URI uri = URI.create("onedrive://foo/");
-        final Map<String, String> env = new HashMap<>();
+        final Map<String, Object> env = new HashMap<>();
         env.put("email", email);
+        env.put("ignoreAppleDouble", true);
 
         /*
          * Create the FileSystemProvider; this will be more simple once

@@ -1,5 +1,10 @@
+/*
+ * Copyright (c) 2016 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
 
-package vavi.nio.file.onedrive.test;
+package vavi.nio.file.onedrive;
 
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -17,14 +22,13 @@ import javax.annotation.Nonnull;
 import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider;
 
 import de.tuberlin.onedrivesdk.common.OneItem;
-import de.tuberlin.onedrivesdk.file.OneFile;
 
 
 /**
- * {@link BasicFileAttributes} implementation for DropBox
+ * {@link BasicFileAttributes} implementation for OneDrive
  *
  * <p>
- * Note: DropBox has poor support for file times; as required by the {@link
+ * Note: OneDrive has poor support for file times; as required by the {@link
  * BasicFileAttributes} contract, all methods returning a {@link FileTime} for
  * which there is no support will return Unix's epoch (that is, Jan 1st, 1970
  * at 00:00:00 GMT).
@@ -32,10 +36,10 @@ import de.tuberlin.onedrivesdk.file.OneFile;
  */
 public final class OneDriveBasicFileAttributesProvider extends BasicFileAttributesProvider implements PosixFileAttributes {
 
-    private final OneFile fileEntry;
+    private final OneItem entry;
 
     public OneDriveBasicFileAttributesProvider(@Nonnull final OneItem entry) throws IOException {
-        fileEntry = Objects.requireNonNull(entry).isFile() ? OneFile.class.cast(entry) : null;
+        this.entry = Objects.requireNonNull(entry);
     }
 
     /**
@@ -51,7 +55,7 @@ public final class OneDriveBasicFileAttributesProvider extends BasicFileAttribut
      */
     @Override
     public FileTime lastModifiedTime() {
-        return fileEntry == null ? UNIX_EPOCH : FileTime.fromMillis(fileEntry.getLastModifiedDateTime() * 1000);
+        return FileTime.fromMillis(entry.getLastModifiedDateTime() * 1000);
     }
 
     /**
@@ -59,7 +63,7 @@ public final class OneDriveBasicFileAttributesProvider extends BasicFileAttribut
      */
     @Override
     public boolean isRegularFile() {
-        return fileEntry != null;
+        return entry.isFile();
     }
 
     /**
@@ -67,7 +71,7 @@ public final class OneDriveBasicFileAttributesProvider extends BasicFileAttribut
      */
     @Override
     public boolean isDirectory() {
-        return fileEntry == null;
+        return entry.isFolder();
     }
 
     /**
@@ -81,7 +85,7 @@ public final class OneDriveBasicFileAttributesProvider extends BasicFileAttribut
      */
     @Override
     public long size() {
-        return fileEntry == null ? 0L : fileEntry.getSize();
+        return entry.getSize();
     }
 
     /* @see java.nio.file.attribute.PosixFileAttributes#owner() */
@@ -99,6 +103,6 @@ public final class OneDriveBasicFileAttributesProvider extends BasicFileAttribut
     /* @see java.nio.file.attribute.PosixFileAttributes#permissions() */
     @Override
     public Set<PosixFilePermission> permissions() {
-        return fileEntry == null ? PosixFilePermissions.fromString("rwxr-xr-x") : PosixFilePermissions.fromString("rw-r--r--");
+        return entry.isFolder() ? PosixFilePermissions.fromString("rwxr-xr-x") : PosixFilePermissions.fromString("rw-r--r--");
     }
 }
