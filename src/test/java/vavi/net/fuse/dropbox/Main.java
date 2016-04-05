@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2016 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
+
 package vavi.net.fuse.dropbox;
 
 import java.io.IOException;
@@ -23,6 +29,9 @@ public class Main {
     @Property(name = "dropbox.accessToken")
     private String accessToken;
 
+    /**
+     * @param args 0: mount point, 1: email
+     */
     public static void main(final String... args) throws IOException {
         String email = args[1];
 

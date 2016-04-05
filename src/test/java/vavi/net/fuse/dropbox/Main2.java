@@ -21,7 +21,7 @@ import vavi.util.properties.annotation.PropsEntity;
  * An example command-line application that runs through the web-based OAuth
  * flow (using {@link DbxWebAuth}).
  */
-@PropsEntity(url = "classpath:dropbox.properties")
+@PropsEntity(url = "file://${user.home}/.vavifuse/dropbox.properties")
 public class Main2 {
 
     @Property(name = "dropbox.clientId")

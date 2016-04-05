@@ -33,7 +33,7 @@ import net.fusejna.util.FuseFilesystemAdapterAssumeImplemented;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/02 umjammer initial version <br>
  */
-@PropsEntity(url = "classpath:dropbox.properties")
+@PropsEntity(url = "file://${user.home}/.vavifuse/dropbox.properties")
 public class DropBoxFS extends FuseFilesystemAdapterAssumeImplemented {
 
     @Property(name = "dropbox.clientId")
