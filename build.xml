@@ -15,6 +15,7 @@
 <project name="" default="run" basedir="."
          xmlns:ivy="antlib:org.apache.ivy.ant">
 
+  <property environment="env"/>
   <property file="local.properties" />
 
   <xmlproperty file="pom.xml" />
@@ -113,8 +114,9 @@
 
   <!-- totp -->
   <target name="totp" depends="compile" description="Run Program">
-    <java classname="vavi.net.hotp.Main" jvm="${jvm}" fork="yes">
-      <arg value="${secret}"/>
+    <java classname="vavi.net.totp.Main" jvm="${jvm}" fork="yes">
+      <arg value="${domain}"/>
+      <arg value="${email}"/>
       <classpath>
         <path refid="project.class.path" />
         <pathelement location="${javac.dest}" />

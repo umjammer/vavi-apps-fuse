@@ -9,7 +9,7 @@
 # @version	0.00	100119	nsano	initial version
 #
 
-jvm=/Library/Java/JavaVirtualMachines/jdk1.8.0_74.jdk/Contents/Home/bin/java
+jvm=${env.JAVA_HOME}/bin/java
 encoding=utf-8
 javac.source=1.8
 javac.target=1.8

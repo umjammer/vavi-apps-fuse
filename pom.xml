@@ -123,7 +123,7 @@
     <dependency>
       <groupId>co.paralleluniverse</groupId>
       <artifactId>javafs</artifactId>
-      <version>0.1.0</version>
+      <version>0.1.0-SNAPSHOT</version>
     </dependency>
 <!--
     <dependency>
@@ -138,5 +138,23 @@
       <version>0.0.2-v2patch-SNAPSHOT</version>
     </dependency>
 
+<!--
+    <dependency>
+      <groupId>com.box</groupId>
+      <artifactId>box-java-sdk</artifactId>
+      <version>2.1.1</version>
+    </dependency>
+-->
+    <dependency>
+      <groupId>com.github.fge</groupId>
+      <artifactId>java7-fs-box</artifactId>
+      <version>0.0.1-v2patch-SNAPSHOT</version>
+    </dependency>
+
+    <dependency>
+      <groupId>vavi</groupId>
+      <artifactId>vavi-commons-sandbox</artifactId>
+      <version>0.3.2</version>
+    </dependency>
   </dependencies>
 </project>
