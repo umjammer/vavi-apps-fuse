@@ -4,7 +4,7 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <packaging>jar</packaging>
 
   <name>vavi-apps-fuse</name>
@@ -44,6 +44,10 @@
         <enabled>true</enabled>
         <updatePolicy>always</updatePolicy>
       </snapshots>
+    </repository>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
     </repository>
   </repositories>
 
@@ -156,5 +160,64 @@
       <artifactId>vavi-commons-sandbox</artifactId>
       <version>0.3.2</version>
     </dependency>
+
+    <dependency>
+      <groupId>com.flickr4java</groupId>
+      <artifactId>flickr4java</artifactId>
+      <version>2.16</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-vfs2</artifactId>
+      <version>2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-vfs2-sandbox</artifactId>
+      <version>2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>jcifs</groupId>
+      <artifactId>jcifs</artifactId>
+      <version>0.8.3</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.yetiz</groupId>
+      <artifactId>ACD-JAPI</artifactId>
+      <version>1.0</version>
+    </dependency>
   </dependencies>
+  <description>0.0.2
+
+    nio.file
+
+        onedrive
+        googledrive (wip)
+        box
+        dropbox
+
+    fuse-jna
+
+        onedrive
+
+TODO
+
+    amazon cloud drive
+    flickr
+    apple photos.app
+    apache commons vfs
+
+    box (nfc normalize)
+    dropbox (nfc normalize)
+
+    box authentication (give me example!)
+    google automatic authentication (how to click button)
+
+    fuse-jna
+
+        googledrive
+        box
+        dropbox</description>
 </project>

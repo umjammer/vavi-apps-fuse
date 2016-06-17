@@ -6,9 +6,15 @@ vavi-apps-fuse
 
 # Status
 
-| | | |
-|-----------|------------|------------|
-| | | |
+| fs                 | authentication | autologin | list | upload | download | copy | move | rm | mkdir | cache | watch |
+|--------------------|----------------|-----------|------|--------|----------|------|------|----|-------|-------|-------|
+| google drive       | ✔              |           | ✔    | ✔      | ✔        |      | ✔    | ✔  | ✔     |       |       |
+| one drive          | ✔              | ✔         | ✔    | ✔      | ✔        | ✔    | ✔    | ✔  | ✔     |       |       |
+| dropbox            | ✔              | ✔         | ✔    | ✔      | ✔        |      |      | ✔  | ✔     |       |       |
+| box                |                | ✔         | ✔    | ✔      | ✔        |      |      | ✔  | ✔     |       |       |
+| vfs                |                |           |      |        |          |      |      |    |       |       |       |
+| amazon cloud drive |                |           |      |        |          |      |      |    |       |       |       |
+| flickr             |                |           |      |        |          |      |      |    |       |       |       |
 
 # Libraries
 
