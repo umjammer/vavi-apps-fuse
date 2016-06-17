@@ -24,14 +24,14 @@ import de.tuberlin.onedrivesdk.downloadFile.OneDownloadFile;
  * Wrapper over {@link OneDownloadFile} extending {@link InputStream}
  *
  * <p>
- * This class wraps a DropBox downloader class by extending {@code
+ * This class wraps a OneDrive downloader class by extending {@code
  * InputStream} and delegating all of its methods to the downloader's
  * included stream. As such, this means this class is usable in a
  * try-with-resources statement (which the DropBox class isn't).
  * </p>
  *
  * <p>
- * Note about exception handling: unfortunately, the DropBox API class used
+ * Note about exception handling: unfortunately, the OneDrive API class used
  * to wrap an input stream defines a close method which is not declared to
  * throw an exception; which means it may throw none, or it may throw an
  * <em>unchecked</em> exception. As such, the {@link #close()} method of this

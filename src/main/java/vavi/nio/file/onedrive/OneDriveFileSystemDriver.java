@@ -30,6 +30,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
+import java.text.Normalizer;
+import java.text.Normalizer.Form;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,9 +49,6 @@ import org.json.simple.parser.ParseException;
 import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
-
-import static java.text.Normalizer.normalize;
-import static java.text.Normalizer.Form.NFC;
 
 import de.tuberlin.onedrivesdk.OneDriveException;
 import de.tuberlin.onedrivesdk.OneDriveSDK;
@@ -87,9 +86,12 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
     /** <NFC normalized path {@link String}, {@link OneItem}> */
     private Map<String, OneItem> cache = new HashMap<>(); // TODO refresh
     
-    /** @see #ignoreAppleDouble */
+    /**
+     * TODO when the parent is not cached
+     * @see #ignoreAppleDouble
+     */
     private OneItem getOneItem(Path path) throws OneDriveException, IOException {
-        String pathString = normalize(path.toRealPath().toString(), NFC);
+        String pathString = toString(path);
         if (cache.containsKey(pathString)) {
 //System.err.println("CACHE: path: " + path + ", id: " + cache.get(pathString).getId());
             return cache.get(pathString);
@@ -98,11 +100,21 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
                 throw new NoSuchFileException("ignore apple double file: " + path);
             }
 
-            OneItem item = client.getItemByPath(pathString);
-//System.err.println("GOT: path: " + path + ", id: " + item.getId());
-            cache.put(pathString, item);
-            return item;
+            OneItem entry = client.getItemByPath(pathString);
+//System.err.println("GOT: path: " + path + ", id: " + entry.getId());
+            cache.put(pathString, entry);
+            return entry;
         }
+    }
+
+    /** */
+    private String toString(Path path) throws IOException {
+        return Normalizer.normalize(path.toRealPath().toString(), Form.NFC);
+    }
+
+    /** */
+    private String toFilenameString(Path path) throws IOException {
+        return Normalizer.normalize(path.toRealPath().getFileName().toString(), Form.NFC);
     }
 
     /** @see #ignoreAppleDouble */
@@ -135,13 +147,14 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
         }
     }
 
+    /** NFC normalized {@link String} */
     private Set<String> uploadFlags = new HashSet<>();
     
     @Nonnull
     @Override
     public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
         try {
-            String pathString = normalize(path.toRealPath().toString(), NFC);
+            String pathString = toString(path);
             final OneItem entry;
             try {
                 entry = getOneItem(path);
@@ -156,14 +169,15 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
 
             OneFolder dirEntry = (OneFolder) getOneItem(path.getParent());
 
-            final OneUploadFile uploader = dirEntry.uploadFile(File.createTempFile("vavi-apps-fuse-", ".upload"), path.getFileName().toString());
+            final OneUploadFile uploader = dirEntry.uploadFile(File.createTempFile("vavi-apps-fuse-", ".upload"), toFilenameString(path));
 
             uploadFlags.add(pathString);
             return new OneDriveOutputStream(uploader, file -> {
                 try {
                     uploadFlags.remove(pathString);
+                    // cache
                     cache.put(pathString, OneItem.class.cast(file));
-                    folderCache.get(normalize(path.getParent().toRealPath().toString(), NFC)).add(path);
+                    folderCache.get(toString(path.getParent())).add(path);
                 } catch (IOException e) {
                     throw new IllegalStateException(e);
                 }
@@ -181,7 +195,7 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
     public DirectoryStream<Path> newDirectoryStream(final Path dir,
                                                     final DirectoryStream.Filter<? super Path> filter) throws IOException {
         try {
-            String pathString = normalize(dir.toRealPath().toString(), NFC);
+            String pathString = toString(dir);
             final OneItem entry = getOneItem(dir);
 
             if (!OneFolder.class.isInstance(entry))
@@ -198,7 +212,8 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
                     Path childPath = dir.resolve(child.getName());
                     list.add(childPath);
 //System.err.println("child: " + childPath.toRealPath().toString());
-                    cache.put(normalize(childPath.toRealPath().toString(), NFC), child);
+                    // cache
+                    cache.put(toString(childPath), child);
                 }
                 
                 folderCache.put(pathString, list);
@@ -335,7 +350,7 @@ System.err.println("here: X1");
     @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
         try {
-            final String filenameString = dir.toRealPath().getFileName().toString();
+            final String filenameString = toFilenameString(dir);
             OneItem parentEntry = getOneItem(dir.getParent());
 
             // TODO: how to diagnose?
@@ -343,8 +358,8 @@ System.err.println("here: X1");
             if (dirEntry == null)
                 throw new OneDriveIOException("cannot create directory??");
             // cache
-            cache.put(normalize(dir.toRealPath().toString(), NFC), OneItem.class.cast(dirEntry));
-            folderCache.get(normalize(dir.getParent().toRealPath().toString(), NFC)).add(dir);
+            cache.put(toString(dir), OneItem.class.cast(dirEntry));
+            folderCache.get(toString(dir.getParent())).add(dir);
         } catch (OneDriveException e) {
             throw new OneDriveIOException("dir: "+ dir, e);
         }
@@ -353,11 +368,11 @@ System.err.println("here: X1");
     @Override
     public void delete(final Path path) throws IOException {
         try {
-            final String pathString = path.toRealPath().toString();
-            final OneItem item = getOneItem(path);
+            final String pathString = toString(path);
+            final OneItem entry = getOneItem(path);
 
             // TODO: metadata!
-            if (OneFolder.class.isInstance(item)) {
+            if (OneFolder.class.isInstance(entry)) {
                 // TODO use cache
                 List<OneItem> list = client.getFolderByPath(pathString).getChildren();
 
@@ -365,12 +380,12 @@ System.err.println("here: X1");
                     throw new DirectoryNotEmptyException(pathString);
             }
 
-            if (!item.delete()) {
+            if (!entry.delete()) {
                 throw new OneDriveIOException("cannot delete ??");
             }
             // cache
-            cache.remove(normalize(pathString, NFC));
-            folderCache.get(normalize(path.getParent().toRealPath().toString(), NFC)).remove(path);
+            cache.remove(pathString);
+            folderCache.get(toString(path.getParent())).remove(path);
         } catch (OneDriveException e) {
             throw new OneDriveIOException("path: " + path, e);
         }
@@ -394,12 +409,28 @@ System.err.println("here: X1");
             targetEntry.delete();
             targetEntry = OneItem.class.cast(targetEntry.getParentFolder());
 
+            // cache
+            cache.remove(toString(target));
+            folderCache.get(toString(target.getParent())).remove(toString(target));
+
+            // 2.
             final OneItem sourceEntry = getOneItem(source);
 
             // TODO: how to diagnose?
             if (OneFile.class.isInstance(sourceEntry)) {
-                if (OneFile.class.cast(sourceEntry).copy(OneFolder.class.cast(targetEntry)) == null)
+                OneFile newEntry = OneFile.class.cast(sourceEntry).copy(OneFolder.class.cast(targetEntry));
+                if (newEntry == null)
                     throw new OneDriveIOException("cannot copy??");
+
+                // cache
+                cache.put(toString(target), OneItem.class.cast(newEntry));
+                String pathString = toString(target.getParent());
+                List<Path> paths = folderCache.get(pathString);
+                if (paths == null) {
+                    paths = new ArrayList<>();
+                    folderCache.put(pathString, paths);
+                }
+                paths.add(target);
             } else if (OneFolder.class.isInstance(sourceEntry)) {
                 throw new UnsupportedOperationException("source can not be a folder");
             }
@@ -428,12 +459,32 @@ System.err.println("here: X1");
             targetEntry.delete();
             targetEntry = OneItem.class.cast(targetEntry.getParentFolder());
 
+            // cache
+            cache.remove(toString(target));
+            folderCache.get(toString(target.getParent())).remove(toString(target));
+
+            // 2.
             final OneItem sourceEntry = getOneItem(source);
 
             // TODO: how to diagnose?
             if (OneFile.class.isInstance(sourceEntry)) {
-                if (OneFile.class.cast(sourceEntry).move(OneFolder.class.cast(targetEntry)) == null)
+                OneFile newEntry = OneFile.class.cast(sourceEntry).move(OneFolder.class.cast(targetEntry));
+                if (newEntry == null)
                     throw new OneDriveIOException("cannot copy??");
+
+                // cache
+                cache.remove(toString(source));
+                folderCache.get(toString(source.getParent())).remove(source);
+
+                cache.put(toString(target), OneItem.class.cast(newEntry));
+        //System.out.println("target.parent: " + target.getParent() + ", " + folderCache.get(toString(target.getParent())));
+                String pathString = toString(target.getParent());
+                List<Path> paths = folderCache.get(pathString);
+                if (paths == null) {
+                    paths = new ArrayList<>();
+                    folderCache.put(pathString, paths);
+                }
+                paths.add(target);
             } else if (OneFolder.class.isInstance(sourceEntry)) {
                 throw new UnsupportedOperationException("source can not be a folder");
             }
@@ -460,7 +511,7 @@ System.err.println("here: X1");
     @Override
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
         try {
-            final String pathString = path.toRealPath().toString();
+            final String pathString = toString(path);
             final OneItem entry = getOneItem(path);
 
             if (!OneFile.class.isInstance(entry))
@@ -487,7 +538,7 @@ System.err.println("here: X1");
     @Override
     public Object getPathMetadata(final Path path) throws IOException {
         try {
-if (uploadFlags.contains(normalize(path.toRealPath().toString(), NFC))) {
+if (uploadFlags.contains(toString(path))) {
 System.out.println("uploading...");
     return new OneItem() {
         public String getId() {

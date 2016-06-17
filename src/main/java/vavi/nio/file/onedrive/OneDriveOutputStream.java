@@ -30,7 +30,7 @@ import de.tuberlin.onedrivesdk.uploadFile.OneUploadFile;
  * </p>
  *
  * <p>
- * Note about exception handling: unfortunately, the DropBox API class used
+ * Note about exception handling: unfortunately, the OneDrive API class used
  * to wrap an output stream defines a close method which is not declared to
  * throw an exception; which means it may throw none, or it may throw an
  * <em>unchecked</em> exception. As such, the {@link #close()} method of this
