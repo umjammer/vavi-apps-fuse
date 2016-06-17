@@ -31,7 +31,7 @@ import com.google.api.services.drive.model.File;
  * </p>
  *
  * <p>
- * Note about exception handling: unfortunately, the DropBox API class used
+ * Note about exception handling: unfortunately, the GoogleDrive API class used
  * to wrap an output stream defines a close method which is not declared to
  * throw an exception; which means it may throw none, or it may throw an
  * <em>unchecked</em> exception. As such, the {@link #close()} method of this
@@ -48,14 +48,16 @@ public final class GoogleDriveOutputStream extends OutputStream {
     private final AtomicBoolean closeCalled = new AtomicBoolean(false);
 
     private Drive drive;
+    private String filename;
     private java.io.File file;
     private OutputStream out;
 
     private Consumer<File> consumer;
     
-    public GoogleDriveOutputStream(Drive drive, @Nonnull final java.io.File file, Consumer<File> consumer) throws IOException {
+    public GoogleDriveOutputStream(Drive drive, @Nonnull final java.io.File file, String filename, Consumer<File> consumer) throws IOException {
         this.drive = drive;
         this.file = file;
+        this.filename = filename;
         this.consumer = consumer;
         out = new FileOutputStream(file);
     }
@@ -106,15 +108,15 @@ System.out.println("here: 2");
         try {
 //System.out.println("close: " + uploader.getUploadFile().length());
             File fileMetadata = new File();
-            fileMetadata.setName(file.getName());
+            fileMetadata.setName(filename);
 
-            FileContent mediaContent = new FileContent("image/jpeg", file);
+            FileContent mediaContent = new FileContent(null, file);
 
             Drive.Files.Create insert = drive.files().create(fileMetadata, mediaContent);
             MediaHttpUploader uploader = insert.getMediaHttpUploader();
             uploader.setDirectUploadEnabled(true);
             uploader.setProgressListener(System.err::println);
-            File file = insert.execute();
+            File file = insert.setFields("id, name, size, mimeType, createdTime").execute(); // TODO file is not finished status!
 
             consumer.accept(file);
         } catch (IOException e) {

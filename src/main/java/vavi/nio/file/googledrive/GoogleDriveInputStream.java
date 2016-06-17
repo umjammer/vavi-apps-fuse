@@ -6,44 +6,38 @@
 
 package vavi.nio.file.googledrive;
 
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.security.GeneralSecurityException;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.github.fge.filesystem.driver.FileSystemDriver;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.googleapis.media.MediaHttpDownloader;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.services.drive.Drive;
-
-import vavi.io.OutputEngine;
-import vavi.io.OutputEngineInputStream;
+import com.google.api.services.drive.model.File;
 
 
 /**
  * Wrapper over {@link File} extending {@link InputStream}
  *
  * <p>
- * This class wraps a DropBox downloader class by extending {@code
+ * This class wraps a GoogleDrive downloader class by extending {@code
  * InputStream} and delegating all of its methods to the downloader's
  * included stream. As such, this means this class is usable in a
  * try-with-resources statement (which the DropBox class isn't).
  * </p>
  *
  * <p>
- * Note about exception handling: unfortunately, the DropBox API class used
+ * Note about exception handling: unfortunately, the GoogleDrive API class used
  * to wrap an input stream defines a close method which is not declared to
  * throw an exception; which means it may throw none, or it may throw an
  * <em>unchecked</em> exception. As such, the {@link #close()} method of this
  * class captures all {@link RuntimeException}s which {@link
- * OneDownloadFile#close()} may throw and wrap it into a {@link
+ * com.google.api.client.googleapis.media.MediaHttpDownloader#close()} may throw and wrap it into a {@link
  * GoogleDriveIOException}. If the underlying input stream <em>did</em> throw an
  * exception, however, then such an exception is {@link
  * Throwable#addSuppressed(Throwable) suppressed}.
@@ -56,35 +50,15 @@ public final class GoogleDriveInputStream extends InputStream {
 
     private final InputStream delegate;
     
-    // TODO can be static and Repository class has this too.
-    private HttpTransport httpTransport;
-    
-    public GoogleDriveInputStream(Drive drive, final java.io.File uploadedFile) throws IOException {
-        try {
-            httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-        } catch (GeneralSecurityException e) {
-            new GoogleDriveIOException(e);
-        }
-                
-        OutputStream out = new FileOutputStream(uploadedFile);
-
-        // TODO ???
-        delegate = new OutputEngineInputStream(new OutputEngine() {
-            @Override
-            public void initialize(OutputStream out) throws IOException {
-            }
-            @Override
-            public void execute() throws IOException {
-            }
-            @Override
-            public void finish() throws IOException {
-            }
-        });
-
-        MediaHttpDownloader downloader = new MediaHttpDownloader(httpTransport, drive.getRequestFactory().getInitializer());
-        downloader.setDirectDownloadEnabled(true);
-        downloader.setProgressListener(System.err::println);
-        downloader.download(new GenericUrl(uploadedFile.toURI()), out);        
+    public GoogleDriveInputStream(Drive drive, File file, final java.io.File downloadFile) throws IOException {
+        OutputStream out = new FileOutputStream(downloadFile);
+//        MediaHttpDownloader downloader = new MediaHttpDownloader(httpTransport, drive.getRequestFactory().getInitializer());
+//        downloader.setDirectDownloadEnabled(true);
+//        downloader.setProgressListener(System.err::println);
+//        downloader.download(new GenericUrl(uploadedFile.toURI()), out);        
+        drive.files().get(file.getId()).executeMediaAndDownloadTo(out);
+        out.close();
+        delegate = new FileInputStream(downloadFile);
     }
 
     @Override

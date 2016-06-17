@@ -18,7 +18,7 @@ import com.google.api.services.drive.model.About.StorageQuota;
 
 
 /**
- * GoogleDriveFileStore. 
+ * FlickrFileStore. 
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/05 umjammer initial version <br>

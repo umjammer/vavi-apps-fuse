@@ -54,7 +54,7 @@ public final class GoogleDriveBasicFileAttributesProvider extends BasicFileAttri
      */
     @Override
     public FileTime lastModifiedTime() {
-        return entry.getModifiedByMeTime() != null ? FileTime.fromMillis(entry.getModifiedByMeTime().getValue()) : FileTime.fromMillis(entry.getCreatedTime() != null ? entry.getCreatedTime().getValue() : 0);
+        return entry.getModifiedTime() != null ? FileTime.fromMillis(entry.getModifiedTime().getValue()) : FileTime.fromMillis(entry.getCreatedTime() != null ? entry.getCreatedTime().getValue() : 0);
     }
 
     /**

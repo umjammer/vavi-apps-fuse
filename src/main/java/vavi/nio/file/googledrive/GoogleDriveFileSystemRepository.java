@@ -70,7 +70,7 @@ public final class GoogleDriveFileSystemRepository extends FileSystemRepositoryB
      * If modifying these scopes, delete your previously saved credentials
      * at ~/.vavifuse/googledrive
      */
-    private static final List<String> SCOPES = Arrays.asList(DriveScopes.DRIVE_METADATA_READONLY);
+    private static final List<String> SCOPES = Arrays.asList(DriveScopes.DRIVE);
 
     static {
         try {
