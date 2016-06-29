@@ -1,6 +1,12 @@
 vavi-apps-fuse
 ----
 
+# Depends
+
+ * [patch for OneDriveJavaSDK](https://gist.github.com/umjammer/1f7bd3b1cf10516b135258407d2091be)
+ * [patch for javafs](https://gist.github.com/umjammer/156326deb769c62b11a834aef6f69e81)
+ * [patch for java7-fs-dropbox](https://gist.github.com/umjammer/4bc15c64cc06ceb3366c098f6ec84e11)
+ * [patch for java7-fs-box](https://gist.github.com/umjammer/ccc88380d38660a39a2c4181637d685c)
 
 # Licenses
 
