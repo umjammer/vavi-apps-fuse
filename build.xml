@@ -7,127 +7,75 @@
 <!--                                                                        -->
 <!-- vavi-apps-fuse                                                         -->
 <!--                                                                        -->
-<!-- @author	Naohide Sano                                                -->
-<!-- @version	0.00	100119	nsano	initial version                     -->
+<!-- @author Naohide Sano                                                   -->
+<!-- @version 0.00 100119 nsano initial version                             -->
 <!--                                                                        -->
 <!-- ////////////////////////////////////////////////////////////////////// -->
 
-<project name="" default="run" basedir="."
-         xmlns:ivy="antlib:org.apache.ivy.ant">
+<project name="vavi-apps-fuse" default="run" basedir="."
+  xmlns:artifact="urn:maven-artifact-ant">
+
+  <path id="maven-ant-tasks.classpath">
+    <fileset dir="${user.home}/lib/java">
+      <include name="maven-ant-tasks*.jar" />
+    </fileset>
+  </path>
+  <typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="urn:maven-artifact-ant"
+           classpathref="maven-ant-tasks.classpath" /> 
 
   <property environment="env"/>
   <property file="local.properties" />
-
   <xmlproperty file="pom.xml" />
-  <property name="ivy.file" value="${ivy.cache}/${project.groupId}/${project.artifactId}/ivy-${project.version}.xml" />
 
-  <!-- path definitions -->
-
+  <!-- Path Definitions -->
   <path id="project.class.path">
-    <fileset dir="${dir.lib}">
-      <include name="*.jar" />
-    </fileset>
+    <pathelement location="${javac.dest.test}" />
+    <pathelement location="${javac.dest}" />
+    <fileset refid="maven-ant-tasks.dependency.fileset" />
   </path>
 
-  <!-- target definitions -->
-
-  <!-- clean -->
-  <target name="clean" description="Clear build environment">
-    <delete>
-      <fileset dir="${javac.dest}">
-        <include name="**/*" />
-      </fileset>
-      <fileset dir="${javac.dest.test}">
-        <include name="**/*" />
-      </fileset>
-      <fileset dir="${dir.lib}">
-        <include name="*.jar" />
-      </fileset>
-    </delete>
-  </target>
-
   <!-- prepare -->
-  <target name="prepare" description="Prepare to build">
-    <ivy:settings file="ivy-settings.xml" />
-    <ivy:convertpom pomFile="pom.xml" ivyFile="ivy.xml" />
-    <ivy:retrieve />
-  </target>
-
-  <!-- javac -->
-  <target name="compile" depends="prepare" description="Compile java">
-    <javac debug="on" destdir="${javac.dest}"
-           source="${project.build.plugins.plugin.configuration.source}"
-           target="${project.build.plugins.plugin.configuration.target}"
-           encoding="${project.build.plugins.plugin.configuration.encoding}">
-      <classpath refid="project.class.path" />
-      <include name="**/*.java" />
-      <src path="${javac.source}" />
-    </javac>
-
-    <copy todir="${javac.dest}">
-      <fileset dir="${javac.resource}">
-        <include name="**/*" />
-      </fileset>
-    </copy>
-
-    <javac debug="on" destdir="${javac.dest.test}"
-           source="${project.build.plugins.plugin.configuration.source}"
-           target="${project.build.plugins.plugin.configuration.target}"
-           encoding="${project.build.plugins.plugin.configuration.encoding}">
-      <classpath>
-        <path refid="project.class.path" />
-        <pathelement location="${javac.dest}" />
-      </classpath>
-      <include name="**/*.java" />
-      <src path="${javac.source.test}" />
-    </javac>
-
-    <copy todir="${javac.dest.test}">
-      <fileset dir="${javac.resource.test}">
-        <include name="**/*" />
-      </fileset>
-    </copy>
+  <target name="prepare" description="Preparing">
+    <artifact:pom file="pom.xml" id="maven.project" />
+    <artifact:dependencies fileSetId="maven-ant-tasks.dependency.fileset">
+      <pom refid="maven.project" />
+    </artifact:dependencies>
+    <artifact:mvn pom="pom.xml">
+      <arg value="-q" />
+      <arg value="clean" />
+      <arg value="package" />
+      <arg value="-DskipTests=true" />
+    </artifact:mvn>
   </target>
 
   <!-- run -->
-  <target name="onedrive" depends="compile" description="Run Program">
-    <java classname="vavi.net.fuse.App" jvm="${jvm}" fork="yes">
+  <target name="onedrive" depends="prepare" description="Run Program">
+    <java classname="vavi.net.fuse.App" fork="yes">
       <classpath>
         <path refid="project.class.path" />
-        <pathelement location="${javac.dest}" />
-        <pathelement location="${javac.dest.test}" />
       </classpath>
     </java>
   </target>
 
   <!-- run -->
-  <target name="run" depends="compile" description="Run Program">
-    <java classname="vavi.net.fuse.OneDrive" jvm="${jvm}" fork="yes">
+  <target name="run" depends="prepare" description="Run Program">
+    <java classname="vavi.net.fuse.OneDrive" fork="yes">
       <arg value="${user.home}/mnt/onedrive:snaohide@hotmail.com"/>
       <classpath>
         <path refid="project.class.path" />
-        <pathelement location="${javac.dest}" />
-        <pathelement location="${javac.dest.test}" />
       </classpath>
     </java>
   </target>
 
   <!-- totp -->
-  <target name="totp" depends="compile" description="Run Program">
-    <java classname="vavi.net.totp.Main" jvm="${jvm}" fork="yes">
+  <target name="totp" depends="prepare" description="Run Program">
+    <java classname="vavi.net.totp.Main" fork="yes">
       <arg value="${domain}"/>
       <arg value="${email}"/>
       <classpath>
         <path refid="project.class.path" />
-        <pathelement location="${javac.dest}" />
-        <pathelement location="${javac.dest.test}" />
       </classpath>
     </java>
-  </target>
-
-  <!-- ivy report -->
-  <target name="ivy-report" depends="prepare">
-    <ivy:report todir="target/ivy-reports"/>
   </target>
 
 </project>

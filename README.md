@@ -18,7 +18,7 @@ vavi-apps-fuse
 | one drive          | ✔              | ✔         | ✔    | ✔      | ✔        | ✔    | ✔    | ✔  | ✔     |       |       |
 | dropbox            | ✔              | ✔         | ✔    | ✔      | ✔        |      |      | ✔  | ✔     |       |       |
 | box                |                | ✔         | ✔    | ✔      | ✔        |      |      | ✔  | ✔     |       |       |
-| vfs                |                |           |      |        |          |      |      |    |       |       |       |
+| vfs                |✔               |-          |✔     |        |          |      |      |    |       |       |       |
 | amazon cloud drive |                |           |      |        |          |      |      |    |       |       |       |
 | flickr             |                |           |      |        |          |      |      |    |       |       |       |
 

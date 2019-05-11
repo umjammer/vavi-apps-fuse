@@ -8,11 +8,8 @@
   <packaging>jar</packaging>
 
   <name>vavi-apps-fuse</name>
-  <url>http://maven.apache.org</url>
+  <url>https://github.com/umjammer/vavi-apps-fuse</url>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
 
   <build>
     <plugins>
@@ -30,8 +27,8 @@
 
   <repositories>
     <repository>
-      <id>vavi-commons-mvn-repo</id>
-      <url>https://raw.github.com/umjammer/vavi-commons/mvn-repo/</url>
+      <id>umjammer-mvn-repo</id>
+      <url>https://raw.github.com/umjammer/umjammer/mvn-repo/</url>
       <snapshots>
         <enabled>true</enabled>
         <updatePolicy>always</updatePolicy>
@@ -58,9 +55,9 @@
       <version>0.0.1-SNAPSHOT</version>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>5.3.0</version>
       <scope>test</scope>
     </dependency>
 
@@ -107,10 +104,9 @@
     </dependency>
 
     <dependency>
-      <groupId>vavi</groupId>
+      <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
-      <version>1.0.5</version>
-      <scope>test</scope>
+      <version>1.0.6</version>
     </dependency>
     <dependency>
       <groupId>vavi</groupId>
@@ -156,9 +152,9 @@
     </dependency>
 
     <dependency>
-      <groupId>vavi</groupId>
+      <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons-sandbox</artifactId>
-      <version>0.3.2</version>
+      <version>0.3.3</version>
     </dependency>
 
     <dependency>
@@ -182,11 +178,35 @@
       <artifactId>jcifs</artifactId>
       <version>0.8.3</version>
     </dependency>
+    <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jsch</artifactId>
+      <version>0.1.51</version>
+    </dependency>
 
     <dependency>
       <groupId>org.yetiz</groupId>
       <artifactId>ACD-JAPI</artifactId>
       <version>1.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.mail</groupId>
+      <artifactId>mail</artifactId>
+      <version>1.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>sen</groupId>
+        <artifactId>sen</artifactId>
+        <version>1.2.2.1g</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>klab-commons-csv</artifactId>
+      <version>2.0.2</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <description>0.0.2
@@ -220,4 +240,10 @@ TODO
         googledrive
         box
         dropbox</description>
+  <scm>
+    <url>https://github.com/umjammer/vavi-apps-fuse</url>
+  </scm>
+  <issueManagement>
+    <url>https://github.com/umjammer/vavi-apps-fuse/issues</url>
+  </issueManagement>
 </project>
