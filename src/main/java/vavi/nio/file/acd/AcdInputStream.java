@@ -50,7 +50,7 @@ import com.github.fge.filesystem.driver.FileSystemDriver;
 public final class AcdInputStream extends InputStream {
 
     private final InputStream delegate;
-    
+
     public AcdInputStream(ACD drive, NodeInfo file, final java.io.File downloadFile) throws IOException {
         OutputStream out = new FileOutputStream(downloadFile);
         drive.getFile(file.getId());

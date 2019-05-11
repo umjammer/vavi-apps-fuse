@@ -56,7 +56,7 @@ import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 
 /**
- * AcdFileSystemDriver. 
+ * AcdFileSystemDriver.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/30 umjammer initial version <br>
@@ -86,7 +86,7 @@ public final class AcdFileSystemDriver extends UnixLikeFileSystemDriverBase {
 
     /** <NFC normalized path {@link String}, {@link NodeInfo}> */
     private Map<String, NodeInfo> cache = new HashMap<>(); // TODO refresh
-    
+
     /**
      * TODO when the parent is not cached
      * @see #ignoreAppleDouble
@@ -128,7 +128,7 @@ public final class AcdFileSystemDriver extends UnixLikeFileSystemDriverBase {
                filename.equals(".localized") ||
                filename.equals(".hidden");
     }
-    
+
     @Nonnull
     @Override
     public InputStream newInputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
@@ -142,7 +142,7 @@ public final class AcdFileSystemDriver extends UnixLikeFileSystemDriverBase {
 
     /** NFC normalized {@link String} */
     private Set<String> uploadFlags = new HashSet<>();
-    
+
     @Nonnull
     @Override
     public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
@@ -160,7 +160,7 @@ public final class AcdFileSystemDriver extends UnixLikeFileSystemDriverBase {
         }
 
         java.io.File temp = java.io.File.createTempFile("vavi-apps-fuse-", ".upload");
-        
+
         uploadFlags.add(pathString);
         return new AcdOutputStream(drive, temp, toFilenameString(path), FolderInfo.class.cast(getFile(path.getParent())), file -> {
             try {
@@ -176,7 +176,7 @@ System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + "
 
     /** <NFC normalized path {@link String}, {@link Path}> */
     private Map<String, List<Path>> folderCache = new HashMap<>(); // TODO refresh
-    
+
     @Nonnull
     @Override
     public DirectoryStream<Path> newDirectoryStream(final Path dir,
@@ -193,7 +193,7 @@ System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + "
         } else {
             final List<NodeInfo> children = drive.getList(entry.getId());
             list = new ArrayList<>(children.size());
-            
+
             // TODO nextPageToken
             for (final NodeInfo child : children) {
                 Path childPath = dir.resolve(child.getName());
@@ -205,7 +205,7 @@ System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + "
 //System.out.println("put folderCache: " + pathString);
             folderCache.put(pathString, list);
         }
-        
+
         final List<Path> _list = list;
 
         //noinspection AnonymousInnerClassWithTooManyMethods
@@ -241,28 +241,28 @@ System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + "
                 final long offset = leftover;
                 return new SeekableByteChannel() {
                     long written = offset;
-    
+
                     public boolean isOpen() {
                         return wbc.isOpen();
                     }
-    
+
                     public long position() throws IOException {
                         return written;
                     }
-    
+
                     public SeekableByteChannel position(long pos) throws IOException {
                         written = pos;
                         return this;
                     }
-    
+
                     public int read(ByteBuffer dst) throws IOException {
                         throw new UnsupportedOperationException();
                     }
-    
+
                     public SeekableByteChannel truncate(long size) throws IOException {
                         throw new UnsupportedOperationException();
                     }
-    
+
                     public int write(ByteBuffer src) throws IOException {
 System.out.println("here: X0");
                     int n = wbc.write(src);
@@ -472,10 +472,10 @@ System.err.println(e);
         try {
             final String pathString = toString(path);
             final NodeInfo entry = getFile(path);
-    
+
             if (entry.isFolder())
                 return;
-    
+
             // TODO: assumed; not a file == directory
             for (final AccessMode mode : modes)
                 if (mode == AccessMode.EXECUTE)

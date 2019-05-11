@@ -53,7 +53,7 @@ public final class AcdOutputStream extends OutputStream {
     private OutputStream out;
 
     private Consumer<FileInfo> consumer;
-    
+
     public AcdOutputStream(ACD drive, @Nonnull final java.io.File file, String filename, FolderInfo folderInfo, Consumer<FileInfo> consumer) throws IOException {
         this.drive = drive;
         this.file = file;

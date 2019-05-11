@@ -95,14 +95,14 @@ public final class AcdFileStore extends FileStoreBase {
 
     /** */
     private AccountQuota cache; // TODO refresh
-    
+
     /** */
     private AccountQuota getQuota() throws IOException {
         if (cache != null) {
             return cache;
         } else {
             cache = drive.getUserQuota();
-            return cache; 
+            return cache;
         }
     }
 }
