@@ -13,7 +13,7 @@ import java.nio.file.attribute.FileTime;
 
 
 /**
- * OneDriveFileAttributeView. 
+ * OneDriveFileAttributeView.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/05 umjammer initial version <br>
@@ -25,7 +25,7 @@ public class OneDriveFileAttributeView implements BasicFileAttributeView {
     private OneDriveFileAttributeView(OneDrivePath path) {
         this.path = path;
     }
-    
+
     /* @see java.nio.file.attribute.BasicFileAttributeView#name() */
     @Override
     public String name() {

@@ -47,32 +47,33 @@ public final class OneDriveOutputStream extends OutputStream {
     private final AtomicBoolean closeCalled = new AtomicBoolean(false);
 
     private final OneUploadFile uploader;
-    
+
     private OutputStream out;
 
     private Consumer<OneFile> consumer;
-    
+
     public OneDriveOutputStream(@Nonnull final OneUploadFile uploader, Consumer<OneFile> consumer) throws IOException, OneDriveException {
         this.uploader = uploader;
         this.consumer = consumer;
         out = new FileOutputStream(uploader.getUploadFile());
+//System.out.println("here: out: " + out);
     }
 
     @Override
     public void write(final int b) throws IOException {
-System.out.println("here: 0");
+System.out.println("here: write 0");
         out.write(b);
     }
 
     @Override
     public void write(final byte[] b) throws IOException {
-System.out.println("here: 1");
+System.out.println("here: write 1");
         out.write(b);
     }
 
     @Override
     public void write(final byte[] b, final int off, final int len) throws IOException {
-System.out.println("here: 2");
+System.out.println("here: write 2: " + len);
         out.write(b, off, len);
     }
 

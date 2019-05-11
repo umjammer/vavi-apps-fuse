@@ -20,17 +20,17 @@ import co.paralleluniverse.javafs.JavaFS;
 
 
 /**
- * Main. 
+ * OneDrive JavaFS.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/xx umjammer initial version <br>
  */
 public class Main {
-    
+
     public static void main(final String... args) throws IOException {
         String email = args[1];
 
-        /* 
+        /*
          * Create the necessary elements to create a filesystem.
          * Note: the URI _must_ have a scheme of "onedrive", and
          * _must_ be hierarchical.
@@ -52,7 +52,8 @@ public class Main {
 
         Map<String, String> options = new HashMap<>();
         options.put("fsname", "onedrive_fs" + "@" + System.currentTimeMillis());
-            
-        JavaFS.mount(fs, Paths.get(args[0]), false, true, options);
+        options.put("noappledouble", null);
+
+        JavaFS.mount(fs, Paths.get(args[0]), false, false, options);
     }
 }

@@ -117,7 +117,7 @@ public class PasscodeGenerator {
     /**
      * Grabs a positive integer value from the input array starting at
      * the given offset.
-     * 
+     *
      * @param bytes the array of bytes
      * @param start the index into the array to start grabbing bytes
      * @return the integer constructed from the four bytes in the array

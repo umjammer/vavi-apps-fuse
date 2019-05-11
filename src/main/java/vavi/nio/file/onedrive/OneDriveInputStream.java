@@ -51,7 +51,7 @@ public final class OneDriveInputStream extends InputStream {
 
     public OneDriveInputStream(final OneDownloadFile downloader) throws OneDriveException, IOException {
         downloader.startDownload();
-        delegate = new FileInputStream(downloader.getDownloadedFile()); 
+        delegate = new FileInputStream(downloader.getDownloadedFile());
     }
 
     @Override

@@ -19,7 +19,7 @@ import de.tuberlin.onedrivesdk.drive.DriveQuota;
 
 
 /**
- * OneDriveFileStore. 
+ * OneDriveFileStore.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/05 umjammer initial version <br>
@@ -98,26 +98,26 @@ public class OneDriveFileStore extends FileStore {
 
     /** */
     private OneDriveSDK api;
-    
+
     /** */
     private Map<String, Object> getAttributs() throws IOException {
         try {
             DriveQuota quota = api.getDefaultDrive().getQuota();
 //Debug.println("total: " + quota.getTotal());
 //Debug.println("used: " + quota.getUsed());
-    
+
             long blockSize = 512;
-    
+
             long total = quota.getTotal() / blockSize;
             long used = quota.getUsed() / blockSize;
             long free = total - used;
-    
+
             Map<String, Object> attributes = new HashMap<>();
             attributes.put("bavail", total - free);
             attributes.put("bfree", free);
             attributes.put("blocks", total);
             attributes.put("bsize", blockSize);
-            
+
             return attributes;
         } catch (OneDriveException e) {
             throw new IOException(e);

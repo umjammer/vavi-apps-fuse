@@ -95,7 +95,7 @@ public final class OneDriveFileStore extends FileStoreBase {
 
     /** */
     private DriveQuota cache; // TODO refresh
-    
+
     /** */
     private DriveQuota getQuota() throws IOException {
         try {
@@ -103,7 +103,7 @@ public final class OneDriveFileStore extends FileStoreBase {
                 return cache;
             } else {
                 cache = client.getDefaultDrive().getQuota();
-                return cache; 
+                return cache;
             }
         } catch (OneDriveException e) {
             throw new IOException("cannot get quota info from account", e);

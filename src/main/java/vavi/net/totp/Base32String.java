@@ -6,7 +6,7 @@ import java.util.HashMap;
 
 /**
  * Encodes arbitrary byte arrays as case-insensitive base-32 strings
- * 
+ *
  * @author sweis@google.com (Steve Weis)
  * @author Neal Gafter
  */
@@ -69,8 +69,8 @@ public class Base32String {
                 bitsLeft -= 8;
             }
         }
-        // We'll ignore leftover bits for now. 
-        // 
+        // We'll ignore leftover bits for now.
+        //
         // if (next != outLength || bitsLeft >= SHIFT) {
         //  throw new DecodingException("Bits left: " + bitsLeft);
         // }

@@ -29,7 +29,7 @@ import java.util.NoSuchElementException;
 
 
 /**
- * OneDrivePath. 
+ * OneDrivePath.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/05 umjammer initial version <br>
@@ -52,7 +52,7 @@ public class OneDrivePath implements Path {
         else
             this.path = normalize(path);
     }
-    
+
     /* @see java.nio.file.Path#getFileSystem() */
     @Override
     public OneDriveFileSystem getFileSystem() {
@@ -435,7 +435,7 @@ public class OneDrivePath implements Path {
         }
         return true;
     }
-    
+
     private OneDrivePath checkPath(Path path) {
         if (path == null) {
             throw new NullPointerException();

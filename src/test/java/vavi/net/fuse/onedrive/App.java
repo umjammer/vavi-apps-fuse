@@ -80,7 +80,7 @@ System.err.println("authenticate: " + code);
         currentFolder = api.getRootFolder();
 
         api.startSessionAutoRefresh();
-        
+
         listSubItems();
         exit();
     }

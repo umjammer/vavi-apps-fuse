@@ -35,7 +35,7 @@ import javafx.scene.web.WebView;
 
 
 /**
- * DropBoxAuthenticator. 
+ * DropBoxAuthenticator.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/02 umjammer initial version <br>
@@ -50,7 +50,7 @@ public class DropBoxAuthenticator implements Authenticator {
     private transient String password;
     /** */
     private transient String code;
-    
+
     /** */
     public DropBoxAuthenticator(String email) {
         this.email = email;
@@ -61,7 +61,7 @@ public class DropBoxAuthenticator implements Authenticator {
             throw new IllegalStateException(e);
         }
     }
-    
+
     /** */
     private CountDownLatch latch = new CountDownLatch(1);
     /** */
@@ -72,13 +72,13 @@ public class DropBoxAuthenticator implements Authenticator {
     public String get(String url) throws IOException {
 
         exception = null;
-        
+
         SwingUtilities.invokeLater(() -> { openUI(url); });
-        
+
         try { latch.await(); } catch (InterruptedException e) { throw new IllegalStateException(e); }
 
         closeUI();
-        
+
         if (exception != null) {
             throw new IllegalStateException(exception);
         }
@@ -137,13 +137,13 @@ public class DropBoxAuthenticator implements Authenticator {
                     System.err.println("location: " + location);
 
                     if (location.indexOf(url) > -1) {
-                        
-                        if (!login) { 
+
+                        if (!login) {
                             System.err.println("set email: " + email);
                             Document doc = webEngine.getDocument();
 
                             NodeList inputs = doc.getElementsByTagName("INPUT");
-    
+
                             ((HTMLInputElement) inputs.item(0)).setValue(email);
 System.err.println("set email: " + email);
                             ((HTMLInputElement) inputs.item(1)).setValue(password);
@@ -153,7 +153,7 @@ System.err.println("set checked: " + true);
 
                             ((HTMLInputElement) inputs.item(3)).click();
 System.err.println("submit");
-                            
+
                             login = true;
                         } else {
                             exception = new IllegalArgumentException("wrong email or password");

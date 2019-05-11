@@ -13,7 +13,7 @@ import java.nio.file.attribute.FileTime;
 
 
 /**
- * GoogleDriveFileAttributeView. 
+ * GoogleDriveFileAttributeView.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/05 umjammer initial version <br>

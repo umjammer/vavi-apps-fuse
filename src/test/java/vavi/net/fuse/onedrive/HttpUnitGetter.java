@@ -17,7 +17,7 @@ import vavi.net.fuse.Getter;
 
 
 /**
- * HttpUnitGetter. 
+ * HttpUnitGetter.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/02/13 umjammer initial version <br>
@@ -34,7 +34,7 @@ public class HttpUnitGetter implements Getter {
         } catch (SAXException e) {
             throw new IOException(e);
         }
-        
+
         return null;
     }
 }

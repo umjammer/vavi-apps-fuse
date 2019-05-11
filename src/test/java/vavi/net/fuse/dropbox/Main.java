@@ -25,7 +25,7 @@ import co.paralleluniverse.javafs.JavaFS;
 
 @PropsEntity(url = "file://${HOME}/.vavifuse/dropbox/{0}")
 public class Main {
-    
+
     @Property(name = "dropbox.accessToken")
     private String accessToken;
 
@@ -37,8 +37,8 @@ public class Main {
 
         Main app = new Main();
         PropsEntity.Util.bind(app, email);
-        
-        /* 
+
+        /*
          * Create the necessary elements to create a filesystem.
          * Note: the URI _must_ have a scheme of "dropbox", and
          * _must_ be hierarchical.
@@ -59,7 +59,7 @@ public class Main {
 
         Map<String, String> options = new HashMap<>();
         options.put("fsname", "dropbox_fs" + "@" + System.currentTimeMillis());
-            
+
         JavaFS.mount(fs, Paths.get(args[0]), false, true, options);
     }
 }

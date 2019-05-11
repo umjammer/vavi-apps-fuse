@@ -43,7 +43,7 @@ import de.tuberlin.onedrivesdk.networking.OneDriveAuthenticationException;
 
 
 /**
- * OneDriveFileSystemProvider. 
+ * OneDriveFileSystemProvider.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/05 umjammer initial version <br>
@@ -65,13 +65,13 @@ public class OneDriveFileSystemProvider extends FileSystemProvider {
 
     /** */
     public OneDriveFileSystemProvider(String email) throws IOException {
-        
+
         file = new java.io.File(System.getProperty("user.home"), ".vavifuse/onedrive/" + email);
-        
+
         try {
             // TODO why not work?
 //            Runtime.getRuntime().addShutdownHook(new Thread(() -> writeRefreshToken()));
-            
+
             PropsEntity.Util.bind(this, email);
 
             api = OneDriveFactory.createOneDriveSDK(clientId,
@@ -102,7 +102,7 @@ Debug.println("root: " + folder.getName());
             throw new IllegalStateException(e);
         }
     }
-    
+
     /** */
     private void authenticateByBrowser(String url, String email) throws IOException, OneDriveException {
         Authenticator authenticator = new OneDriveAuthenticator(email, redirectUrl);

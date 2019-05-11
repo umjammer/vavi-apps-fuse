@@ -70,13 +70,13 @@ public class OneDriveFS extends FuseFilesystemAdapterAssumeImplemented {
      * @param email
      */
     public OneDriveFS(String email) throws IOException {
-        
+
         file = new File(System.getProperty("user.home"), ".vavifuse/onedrive/" + email);
-        
+
         try {
             // TODO why not work?
 //            Runtime.getRuntime().addShutdownHook(new Thread(() -> writeRefreshToken()));
-            
+
             PropsEntity.Util.bind(this, email);
 
             api = OneDriveFactory.createOneDriveSDK(clientId,
@@ -107,7 +107,7 @@ Debug.println("root: " + folder.getName());
             throw new IllegalStateException(e);
         }
     }
-    
+
     /** */
     private void authenticateByBrowser(String url, String email) throws IOException, OneDriveException {
         Authenticator authenticator = new OneDriveAuthenticator(email, redirectUrl);
@@ -125,7 +125,7 @@ Debug.println("root: " + folder.getName());
                 file.getParentFile().mkdirs();
             }
             String refreshToken = api.getRefreshToken();
-            if (!oldRefreshToken.equals(refreshToken)) {
+            if (oldRefreshToken == null || !oldRefreshToken.equals(refreshToken)) {
                 FileWriter writer = new FileWriter(file);
 Debug.println("refreshToken: " + refreshToken);
                 writer.write("onedrive.refreshToken=" + refreshToken);
@@ -152,12 +152,12 @@ Debug.println("refreshToken: " + refreshToken);
 
     /** */
     private Map<String, OneItem> cache = new HashMap<>(); // TODO
-    
+
     @Override
     public int access(final String path, final int access) {
 //Debug.println("path: " + path);
         if (cache.containsKey(path)) {
-            return 0; 
+            return 0;
         } else {
             return -ErrorCodes.ENOENT();
         }
@@ -169,7 +169,7 @@ Debug.println("path: " + path);
         if (cache.containsKey(path)) {
             return -ErrorCodes.EEXIST();
         }
-        return 0; 
+        return 0;
     }
 
     @Override
@@ -185,7 +185,7 @@ Debug.println("path: " + path);
                     .setAllTimesSec(one.getLastModifiedDateTime())
                     .size(OneFile.class.cast(one).getSize());
             }
-            return 0; 
+            return 0;
         } else {
 Debug.println("enoent: " + path);
             return -ErrorCodes.ENOENT();
@@ -221,7 +221,7 @@ Debug.println("path: " + path);
     public int open(final String path, final FileInfoWrapper info) {
 Debug.println("path: " + path);
         if (cache.containsKey(path)) {
-            return 0; 
+            return 0;
         } else {
             return -ErrorCodes.ENOENT();
         }

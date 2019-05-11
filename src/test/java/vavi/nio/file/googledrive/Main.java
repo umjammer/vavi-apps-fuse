@@ -20,20 +20,24 @@ import co.paralleluniverse.javafs.JavaFS;
 
 
 /**
- * Main. 
+ * Main.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/04/03 umjammer initial version <br>
  */
 public class Main {
-    
+
     public static void main(final String... args) throws IOException {
         String email = args[1];
 
-        /* 
+        /*
          * Create the necessary elements to create a filesystem.
-         * Note: the URI _must_ have a scheme of "onedrive", and
+         * Note: the URI _must_ have a scheme of "googledrive", and
          * _must_ be hierarchical.
+         *
+         * When you got "invalid_grant" during authoring,
+         * remove "~/.vavifuse/googledrive/StoredCredential".
+         * It's because of expiring of access token.
          */
         final URI uri = URI.create("googledrive://foo/");
         final Map<String, Object> env = new HashMap<>();
@@ -52,7 +56,9 @@ public class Main {
 
         Map<String, String> options = new HashMap<>();
         options.put("fsname", "googledrive_fs" + "@" + System.currentTimeMillis());
-            
-        JavaFS.mount(fs, Paths.get(args[0]), false, true, options);
+        options.put("noappledouble", null);
+        //options.put("noapplexattr", null);
+
+        JavaFS.mount(fs, Paths.get(args[0]), false, false, options);
     }
 }

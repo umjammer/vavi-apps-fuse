@@ -49,13 +49,13 @@ import com.google.api.services.drive.model.File;
 public final class GoogleDriveInputStream extends InputStream {
 
     private final InputStream delegate;
-    
+
     public GoogleDriveInputStream(Drive drive, File file, final java.io.File downloadFile) throws IOException {
         OutputStream out = new FileOutputStream(downloadFile);
 //        MediaHttpDownloader downloader = new MediaHttpDownloader(httpTransport, drive.getRequestFactory().getInitializer());
 //        downloader.setDirectDownloadEnabled(true);
 //        downloader.setProgressListener(System.err::println);
-//        downloader.download(new GenericUrl(uploadedFile.toURI()), out);        
+//        downloader.download(new GenericUrl(uploadedFile.toURI()), out);
         drive.files().get(file.getId()).executeMediaAndDownloadTo(out);
         out.close();
         delegate = new FileInputStream(downloadFile);

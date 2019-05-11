@@ -17,7 +17,7 @@ import vavi.net.fuse.Getter;
 
 
 /**
- * InteractiveGetter. 
+ * InteractiveGetter.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/02/11 umjammer initial version <br>
@@ -36,12 +36,12 @@ public class InteractiveGetter implements Getter {
                 new IOException(e);
             }
         }
-        
+
         System.out.println("Please open the following URL in your browser then type the autorization code:");
         System.out.println(" " + url);
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         String code = br.readLine();
-        
+
         return code;
     }
 

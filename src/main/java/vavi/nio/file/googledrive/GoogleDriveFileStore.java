@@ -93,14 +93,14 @@ public final class GoogleDriveFileStore extends FileStoreBase {
 
     /** */
     private StorageQuota cache; // TODO refresh
-    
+
     /** */
     private StorageQuota getQuota() throws IOException {
         if (cache != null) {
             return cache;
         } else {
             cache = drive.about().get().setFields("storageQuota").execute().getStorageQuota();
-            return cache; 
+            return cache;
         }
     }
 }

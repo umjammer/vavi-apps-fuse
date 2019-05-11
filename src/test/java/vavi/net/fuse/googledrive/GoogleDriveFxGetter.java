@@ -33,7 +33,7 @@ import javafx.scene.web.WebView;
 
 
 /**
- * GoogleDriveFxGetter. 
+ * GoogleDriveFxGetter.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/01 umjammer initial version <br>
@@ -47,17 +47,17 @@ public class GoogleDriveFxGetter implements Getter {
     @Property(name = "googledrive.totpSecret.{0}")
     private transient String totpSecret;
     private transient String code;
-    
+
     public GoogleDriveFxGetter(String email) {
         this.email = email;
-        
+
         try {
             PropsEntity.Util.bind(this, email);
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
     }
-    
+
     private CountDownLatch latch = new CountDownLatch(1);
     private volatile Exception exception;
 
@@ -67,14 +67,14 @@ public class GoogleDriveFxGetter implements Getter {
 System.err.println(url);
 
         exception = null;
-        
+
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 initAndShowGUI(url);
             }
         });
-        
+
         try {
             System.err.println("wait until sign in...");
             latch.await();
@@ -84,9 +84,9 @@ System.err.println(url);
 
         frame.setVisible(false);
         frame.dispose();
-        
+
 //Thread.getAllStackTraces().keySet().forEach(System.err::println);
-        
+
         if (exception != null) {
             throw new IllegalStateException(exception);
         }
@@ -144,30 +144,30 @@ System.err.println(url);
                     System.err.println("location: " + location);
 
                     if (location.startsWith("https://accounts.google.com/ServiceLogin")) {
-                        
-                        if (!login) { 
+
+                        if (!login) {
                             Document doc = webEngine.getDocument();
-        
+
                             try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(System.err); }
 
                             ((HTMLInputElement) doc.getElementById("Email")).setValue(email);
 System.err.println("set email: " + email);
-                            
+
                             try { Thread.sleep(50); } catch (InterruptedException e) { e.printStackTrace(System.err); }
 
                             ((HTMLInputElement) doc.getElementById("next")).click();
 System.err.println("next");
-                            
+
                             try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(System.err); }
 
 System.err.println(webEngine.executeScript("document.documentElement.outerHTML"));
-                            
+
 //                            ((HTMLInputElement) doc.getElementById("password")).setValue(password);
 //System.err.println("set passwd: " + password);
 
 //                            ((HTMLInputElement) doc.getElementById("signIn")).click();
 //System.err.println("signin");
-                            
+
                             login = true;
 
                         } else {
@@ -196,7 +196,7 @@ System.err.println("no totp secret, enter by yourself");
 
                     } else if (location.startsWith("https://accounts.google.com/o/oauth2/auth")) {
 System.err.println(webEngine.executeScript("document.documentElement.outerHTML"));
-                        
+
 //                        Document doc = webEngine.getDocument();
 //                        ((HTMLFormElement) doc.getElementById("connect-approve")).submit();
 System.err.println("accept");

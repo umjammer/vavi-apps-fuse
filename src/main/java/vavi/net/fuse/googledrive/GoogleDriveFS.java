@@ -43,7 +43,7 @@ import net.fusejna.util.FuseFilesystemAdapterAssumeImplemented;
 
 
 /**
- * GoogleDriveFS. 
+ * GoogleDriveFS.
  *
  * @depends "file://${HOME}.vavifuse/googledrive/?"
  *
@@ -110,12 +110,12 @@ Debug.println("Credentials saved to " + DATA_STORE_DIR.getAbsolutePath());
     }
 
     private Map<String, File> cache = new HashMap<>();
-    
+
     @Override
     public int access(final String path, final int access) {
 //Debug.println("path: " + path);
         if (cache.containsKey(path)) {
-            return 0; 
+            return 0;
         } else {
             return -ErrorCodes.ENOENT();
         }
@@ -145,7 +145,7 @@ Debug.println("path: " + path);
             stat.setMode(NodeType.FILE, true, true, false, true, false, false, true, false, false)
                 .setAllTimesSec(one.getModifiedTime().getValue() / 1000)
                 .size(File.class.cast(one).getSize());
-            return 0; 
+            return 0;
         } else {
 Debug.println("enoent: " + path);
             return -ErrorCodes.ENOENT();
@@ -170,7 +170,7 @@ Debug.println("path: " + path);
     public int open(final String path, final FileInfoWrapper info) {
 Debug.println("path: " + path);
         if (cache.containsKey(path)) {
-            return 0; 
+            return 0;
         } else {
             return -ErrorCodes.ENOENT();
         }

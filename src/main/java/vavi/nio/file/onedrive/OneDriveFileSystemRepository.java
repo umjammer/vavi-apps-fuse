@@ -34,7 +34,7 @@ import de.tuberlin.onedrivesdk.networking.OneDriveAuthenticationException;
 
 
 /**
- * OneDriveFileSystemRepository. 
+ * OneDriveFileSystemRepository.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/11 umjammer initial version <br>
@@ -67,9 +67,9 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
             final String email = (String) env.get("email");
             if (email == null)
                 throw new IllegalArgumentException("email not found");
-    
+
             file = new File(System.getProperty("user.home"), ".vavifuse/onedrive/" + email);
-        
+
             PropsEntity.Util.bind(this, email);
 
             client = OneDriveFactory.createOneDriveSDK(clientId,

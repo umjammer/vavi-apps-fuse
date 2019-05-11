@@ -30,7 +30,7 @@ import de.tuberlin.onedrivesdk.common.OneItem;
 
 
 /**
- * OneDriveFileSystem. 
+ * OneDriveFileSystem.
  *
  * @depends "file://${HOME}.vavifuse/onedrive/[email]"
  *
@@ -56,17 +56,17 @@ public class OneDriveFileSystem extends FileSystem {
                               Map<String, ?> env) throws IOException {
         this.provider = provider;
         this.ofpath = ofpath;
-        
+
         if (Files.notExists(ofpath)) {
             throw new FileSystemNotFoundException(ofpath.toString());
         }
         // sm and existence check
        ofpath.getFileSystem().provider().checkAccess(ofpath, AccessMode.READ);
         if (!Files.isWritable(ofpath)) {
-            this.readOnly = true;       
+            this.readOnly = true;
         }
     }
-    
+
     /* @see java.nio.file.FileSystem#provider() */
     @Override
     public FileSystemProvider provider() {

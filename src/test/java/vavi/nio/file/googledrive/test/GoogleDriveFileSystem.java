@@ -18,7 +18,7 @@ import java.util.Set;
 
 
 /**
- * GoogleDriveFileSystem. 
+ * GoogleDriveFileSystem.
  *
  * @depends "file://${HOME}.vavifuse/googledrive/?"
  *
@@ -38,7 +38,7 @@ public class GoogleDriveFileSystem extends FileSystem {
     @Override
     public void close() throws IOException {
         // TODO Auto-generated method stub
-        
+
     }
 
     /* @see java.nio.file.FileSystem#isOpen() */

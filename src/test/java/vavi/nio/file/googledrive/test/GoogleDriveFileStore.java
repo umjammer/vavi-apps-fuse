@@ -18,7 +18,7 @@ import com.google.api.services.drive.model.About.StorageQuota;
 
 
 /**
- * FlickrFileStore. 
+ * FlickrFileStore.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/05 umjammer initial version <br>
@@ -88,13 +88,13 @@ public class GoogleDriveFileStore extends FileStore {
 
     /** */
     private Drive drive;
-    
+
     /** */
     private Map<String, Object> getAttributs() throws IOException {
         StorageQuota quota = drive.about().get().execute().getStorageQuota();
 //Debug.println("total: " + quota.getTotal());
 //Debug.println("used: " + quota.getUsed());
-    
+
         long blockSize = 512;
 
         long total = quota.getLimit() / blockSize;
@@ -106,7 +106,7 @@ public class GoogleDriveFileStore extends FileStore {
         attributes.put("bfree", free);
         attributes.put("blocks", total);
         attributes.put("bsize", blockSize);
-        
+
         return attributes;
     }
 }

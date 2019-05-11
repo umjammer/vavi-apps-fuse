@@ -26,19 +26,19 @@ import static java.nio.file.FileVisitResult.CONTINUE;
 
 
 /**
- * googledrive nio file walk 
+ * googledrive nio file walk
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/04/05 umjammer initial version <br>
  */
 public final class Main3 {
-    
+
     public static void main(final String... args) throws IOException {
         String email = args[0];
 
-        /* 
+        /*
          * Create the necessary elements to create a filesystem.
-         * Note: the URI _must_ have a scheme of "dropbox", and
+         * Note: the URI _must_ have a scheme of "googledrive", and
          * _must_ be hierarchical.
          */
         final URI uri = URI.create("googledrive://foo/");
@@ -61,7 +61,7 @@ public final class Main3 {
             final Path src = Paths.get(System.getProperty("user.home") + "/tmp/2" , "java7.java");
             // Here we create a path for our DropBox fs...
             final Path dst = googledrivefs.getPath("/java7.java");
-            // Here we copy the file from our local fs to dropbox!
+            // Here we copy the file from our local fs to googledrive!
             try {
 System.out.println("$ list");
                 Files.list(dst.getParent()).forEach(System.out::println);
@@ -83,7 +83,7 @@ System.out.println("$ list");
 //            Path root = onedrivefs.getRootDirectories().iterator().next();
 //            Files.walkFileTree(root, new PrintFiles());
         }
-        
+
         System.exit(0);
     }
 
@@ -114,7 +114,7 @@ System.out.println("$ list");
         // If there is some error accessing
         // the file, let the user know.
         // If you don't override this method
-        // and an error occurs, an IOException 
+        // and an error occurs, an IOException
         // is thrown.
         @Override
         public FileVisitResult visitFileFailed(Path file, IOException exc) {

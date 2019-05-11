@@ -37,7 +37,7 @@ public class Main2 {
 
         // Only display important log messages.
         Logger.getLogger(Main2.class.getName()).setLevel(Level.WARNING);
-        
+
         Main2 app = new Main2();
         PropsEntity.Util.bind(app);
 
@@ -50,7 +50,7 @@ public class Main2 {
         DbxWebAuthNoRedirect webAuth = new DbxWebAuthNoRedirect(requestConfig, appInfo);
 
         String authorizeUrl = webAuth.start();
-        
+
         Getter getter = new DropBoxFxGetter(email);
         String code = getter.get(authorizeUrl);
 

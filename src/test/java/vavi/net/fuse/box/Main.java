@@ -18,9 +18,23 @@ import vavi.util.properties.annotation.PropsEntity;
 
 import co.paralleluniverse.javafs.JavaFS;
 
+
+/**
+ * <pre>
+ * HOWTO
+ *
+ * * get developer token
+ *  https://app.box.com/developers/services/edit/216798
+ * * edit properties file
+ *  $ vi ~/.vavifuse/box/developer
+ * </pre>
+ *
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
+ * @version 0.00 2016/11/11 umjammer initial version <br>
+ */
 @PropsEntity(url = "file://${HOME}/.vavifuse/box/{0}")
 public class Main {
-    
+
     @Property(name = "box.accessToken")
     private String accessToken;
 
@@ -54,10 +68,9 @@ public class Main {
             BoxAuth auth = new BoxAuth();
             PropsEntity.Util.bind(auth, email);
             BoxAPIConnection api = new BoxAPIConnection(auth.clientId, auth.clientSecret, "zlqxcyc51blrq9rkzzy0ji3bbz4odx0i");
-            
         }
-        
-        /* 
+
+        /*
          * Create the necessary elements to create a filesystem.
          * Note: the URI _must_ have a scheme of "box", and
          * _must_ be hierarchical.
@@ -77,7 +90,7 @@ public class Main {
 
         Map<String, String> options = new HashMap<>();
         options.put("fsname", "box_fs" + "@" + System.currentTimeMillis());
-            
+
         JavaFS.mount(fs, Paths.get(args[0]), false, true, options);
     }
 }

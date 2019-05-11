@@ -37,7 +37,7 @@ import javafx.scene.web.WebView;
 
 
 /**
- * FxGetter. 
+ * FxGetter.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/02/16 umjammer initial version <br>
@@ -50,12 +50,12 @@ public class FxGetter implements Getter {
     private transient String password;
     private final String redirectUrl;
     private transient String code;
-    
+
     public FxGetter(String email, String redirectUrl) {
         this.email = email;
         this.redirectUrl = redirectUrl;
     }
-    
+
     private CountDownLatch latch = new CountDownLatch(1);
     private volatile Exception exception;
 
@@ -67,20 +67,20 @@ System.err.println(url);
         PropsEntity.Util.bind(this, email);
 
         exception = null;
-        
+
         URL redirectUrl = new URL(this.redirectUrl);
         String host = redirectUrl.getHost();
         int port = redirectUrl.getPort();
         HttpServer httpServer = new HttpServer(host, port);
         httpServer.start();
-        
+
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 initAndShowGUI(url);
             }
         });
-        
+
         try {
             System.err.println("wait until sign in...");
             latch.await();
@@ -90,9 +90,9 @@ System.err.println(url);
 
         frame.setVisible(false);
         frame.dispose();
-        
+
 Thread.getAllStackTraces().keySet().forEach(System.err::println);
-        
+
         httpServer.stop();
 
         if (exception != null) {
@@ -152,11 +152,11 @@ Thread.getAllStackTraces().keySet().forEach(System.err::println);
                     System.err.println("location: " + location);
 
                     if (location.indexOf(url) > -1) {
-                        
-                        if (!login) { 
+
+                        if (!login) {
                             System.err.println("set email: " + email);
                             Document doc = webEngine.getDocument();
-        
+
                             try { Thread.sleep(200); } catch (InterruptedException e) { e.printStackTrace(System.err); }
 
                             NodeList inputs = doc.getElementsByTagName("INPUT");
@@ -166,7 +166,7 @@ System.err.println("input: " + ((Element) input).getAttribute("id"));
 //System.err.println("input: " + StringUtil.paramStringDeep(input, 2));
 //System.err.println(com.sun.webkit.dom.HTMLInputElementImpl.class);
                             }
-    
+
                             ((HTMLInputElement) inputs.item(0)).setValue(email);
 System.err.println("set email: " + email);
                             ((HTMLInputElement) inputs.item(1)).setValue(password);
@@ -176,7 +176,7 @@ System.err.println("set checked: " + true);
 
                             ((HTMLInputElement) inputs.item(3)).click();
 System.err.println("submit");
-                            
+
                             login = true;
                         } else {
                             exception = new IllegalArgumentException("wrong email or password");

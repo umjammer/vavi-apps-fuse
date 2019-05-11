@@ -23,7 +23,7 @@ import static java.nio.file.FileVisitResult.CONTINUE;
 
 @PropsEntity(url = "file://${HOME}/.vavifuse/box/{0}")
 public final class Main3 {
-    
+
     @Property(name = "box.accessToken")
     private String accessToken;
 
@@ -32,8 +32,8 @@ public final class Main3 {
 
         Main3 app = new Main3();
         PropsEntity.Util.bind(app, email);
-        
-        /* 
+
+        /*
          * Create the necessary elements to create a filesystem.
          * Note: the URI _must_ have a scheme of "box", and
          * _must_ be hierarchical.
@@ -92,7 +92,7 @@ public final class Main3 {
         // If there is some error accessing
         // the file, let the user know.
         // If you don't override this method
-        // and an error occurs, an IOException 
+        // and an error occurs, an IOException
         // is thrown.
         @Override
         public FileVisitResult visitFileFailed(Path file, IOException exc) {

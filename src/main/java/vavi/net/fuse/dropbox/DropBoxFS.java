@@ -28,7 +28,7 @@ import net.fusejna.util.FuseFilesystemAdapterAssumeImplemented;
 
 
 /**
- * DropBoxFS. 
+ * DropBoxFS.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/02 umjammer initial version <br>
@@ -70,12 +70,12 @@ public class DropBoxFS extends FuseFilesystemAdapterAssumeImplemented {
     }
 
 //    private Map<String, OneItem> cache = new HashMap<>();
-    
+
     @Override
     public int access(final String path, final int access) {
 //Debug.println("path: " + path);
 //        if (cache.containsKey(path)) {
-            return 0; 
+            return 0;
 //        } else {
 //            return -ErrorCodes.ENOENT();
 //        }
@@ -108,7 +108,7 @@ Debug.println("path: " + path);
 //                    .setAllTimesSec(one.getLastModifiedDateTime())
 //                    .size(OneFile.class.cast(one).getSize());
 //            }
-            return 0; 
+            return 0;
 //        } else {
 //Debug.println("enoent: " + path);
 //            return -ErrorCodes.ENOENT();
@@ -133,7 +133,7 @@ Debug.println("path: " + path);
     public int open(final String path, final FileInfoWrapper info) {
 Debug.println("path: " + path);
 //        if (cache.containsKey(path)) {
-            return 0; 
+            return 0;
 //        } else {
 //            return -ErrorCodes.ENOENT();
 //        }

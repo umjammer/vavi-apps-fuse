@@ -26,19 +26,19 @@ import static java.nio.file.FileVisitResult.CONTINUE;
 
 
 /**
- * onedrive nio file walk 
+ * onedrive nio file walk
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/20 umjammer initial version <br>
  */
 public final class Main3 {
-    
+
     public static void main(final String... args) throws IOException {
         String email = args[0];
 
-        /* 
+        /*
          * Create the necessary elements to create a filesystem.
-         * Note: the URI _must_ have a scheme of "dropbox", and
+         * Note: the URI _must_ have a scheme of "onedrive", and
          * _must_ be hierarchical.
          */
         final URI uri = URI.create("onedrive://foo/");
@@ -83,7 +83,7 @@ System.out.println("$ list");
 //            Path root = onedrivefs.getRootDirectories().iterator().next();
 //            Files.walkFileTree(root, new PrintFiles());
         }
-        
+
         System.exit(0);
     }
 
@@ -114,7 +114,7 @@ System.out.println("$ list");
         // If there is some error accessing
         // the file, let the user know.
         // If you don't override this method
-        // and an error occurs, an IOException 
+        // and an error occurs, an IOException
         // is thrown.
         @Override
         public FileVisitResult visitFileFailed(Path file, IOException exc) {

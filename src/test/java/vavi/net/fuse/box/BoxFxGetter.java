@@ -35,7 +35,7 @@ import javafx.scene.web.WebView;
 
 
 /**
- * BoxFxGetter. 
+ * BoxFxGetter.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/18 umjammer initial version <br>
@@ -47,7 +47,7 @@ public class BoxFxGetter implements Getter {
     @Property(name = "box.password.{0}")
     private transient String password;
     private transient String code;
-    
+
     public BoxFxGetter(String email) {
         this.email = email;
 
@@ -57,7 +57,7 @@ public class BoxFxGetter implements Getter {
             throw new IllegalStateException(e);
         }
     }
-    
+
     private CountDownLatch latch = new CountDownLatch(1);
     private volatile Exception exception;
 
@@ -74,7 +74,7 @@ System.err.println(url);
                 initAndShowGUI(url);
             }
         });
-        
+
         try {
             System.err.println("wait until sign in...");
             latch.await();
@@ -84,7 +84,7 @@ System.err.println(url);
 
         frame.setVisible(false);
         frame.dispose();
-        
+
         if (exception != null) {
             throw new IllegalStateException(exception);
         }
@@ -142,22 +142,22 @@ System.err.println(url);
                     System.err.println("location: " + location);
 
                     if (location.startsWith(url)) {
-                        
-                        if (!login) { 
+
+                        if (!login) {
                             Document doc = webEngine.getDocument();
 System.err.println(webEngine.executeScript("document.documentElement.outerHTML"));
-        
+
                             try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(System.err); }
 
                             ((HTMLInputElement) doc.getElementById("pyxl4325")).setValue(email);
 System.err.println("set email: " + email);
-                            
+
                             ((HTMLInputElement) doc.getElementById("pyxl4328")).setValue(password);
 System.err.println("set passwd: " + password);
 
 //                            ((HTMLInputElement) doc.getElementById("????")).click();
 //System.err.println("signin");
-                            
+
                             login = true;
 
                         } else {

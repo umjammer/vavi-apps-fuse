@@ -26,14 +26,14 @@ import static java.nio.file.FileVisitResult.CONTINUE;
 
 
 /**
- * dropbox nio walk. 
+ * dropbox nio walk.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/21 umjammer initial version <br>
  */
 @PropsEntity(url = "file://${HOME}/.vavifuse/dropbox/{0}")
 public final class Main3 {
-    
+
     @Property(name = "dropbox.accessToken")
     private String accessToken;
 
@@ -42,8 +42,8 @@ public final class Main3 {
 
         Main3 app = new Main3();
         PropsEntity.Util.bind(app, email);
-        
-        /* 
+
+        /*
          * Create the necessary elements to create a filesystem.
          * Note: the URI _must_ have a scheme of "dropbox", and
          * _must_ be hierarchical.
@@ -119,7 +119,7 @@ Files.list(dst.getParent()).forEach(System.out::println);
         // If there is some error accessing
         // the file, let the user know.
         // If you don't override this method
-        // and an error occurs, an IOException 
+        // and an error occurs, an IOException
         // is thrown.
         @Override
         public FileVisitResult visitFileFailed(Path file, IOException exc) {

@@ -35,7 +35,7 @@ import javafx.scene.web.WebView;
 
 
 /**
- * DropBoxFxGetter. 
+ * DropBoxFxGetter.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/02 umjammer initial version <br>
@@ -47,7 +47,7 @@ public class DropBoxFxGetter implements Getter {
     @Property(name = "dropbox.password.{0}")
     private transient String password;
     private transient String code;
-    
+
     public DropBoxFxGetter(String email) {
         this.email = email;
 
@@ -57,7 +57,7 @@ public class DropBoxFxGetter implements Getter {
             throw new IllegalStateException(e);
         }
     }
-    
+
     private CountDownLatch latch = new CountDownLatch(1);
     private volatile Exception exception;
 
@@ -77,7 +77,7 @@ System.err.println(url);
                 initAndShowGUI(url);
             }
         });
-        
+
         try {
             System.err.println("wait until sign in...");
             latch.await();
@@ -87,10 +87,10 @@ System.err.println(url);
 
         frame.setVisible(false);
         frame.dispose();
-        
+
         System.setProperty("http.proxyHost","");
         System.setProperty("http.proxyPort","");
-        
+
         if (exception != null) {
             throw new IllegalStateException(exception);
         }
@@ -148,22 +148,22 @@ System.err.println(url);
                     System.err.println("location: " + location);
 
                     if (location.startsWith(url)) {
-                        
-                        if (!login) { 
+
+                        if (!login) {
                             Document doc = webEngine.getDocument();
 System.err.println(webEngine.executeScript("document.documentElement.outerHTML"));
-        
+
                             try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(System.err); }
 
                             ((HTMLInputElement) doc.getElementById("pyxl4325")).setValue(email);
 System.err.println("set email: " + email);
-                            
+
                             ((HTMLInputElement) doc.getElementById("pyxl4328")).setValue(password);
 System.err.println("set passwd: " + password);
 
 //                            ((HTMLInputElement) doc.getElementById("????")).click();
 //System.err.println("signin");
-                            
+
                             login = true;
 
                         } else {

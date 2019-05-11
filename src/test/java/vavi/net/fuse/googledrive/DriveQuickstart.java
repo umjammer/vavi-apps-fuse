@@ -84,7 +84,7 @@ public class DriveQuickstart {
 
     /**
      * Build and return an authorized Drive client service.
-     * @param email 
+     * @param email
      * @return an authorized Drive client service
      * @throws IOException
      */

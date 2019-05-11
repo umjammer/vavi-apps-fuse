@@ -33,18 +33,18 @@ public final class AccessAsAppUser {
     private static final int MAX_DEPTH = 1;
     private static final int MAX_CACHE_ENTRIES = 100;
 
-    private AccessAsAppUser() { }
+    private AccessAsAppUser() {}
 
     /**
      * @param args 0: user id
      */
     public static void main(String[] args) throws IOException {
-        
+
         USER_ID = args[0];
-        
+
         AccessAsAppUser app = new AccessAsAppUser();
         PropsEntity.Util.bind(app);;
-        
+
         // Turn off logging to prevent polluting the output.
         Logger.getLogger("com.box.sdk").setLevel(Level.OFF);
 

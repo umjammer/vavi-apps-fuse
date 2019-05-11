@@ -13,14 +13,14 @@ import vavi.util.properties.annotation.PropsEntity;
 
 /**
  * display counter with dots (30 second refresh)
- * 
+ *
  * $ java -cp ... vavi.net.totp.Main domain email
- * 
+ *
  * @author jcuff@srv
  */
 @PropsEntity(url = "file://${user.home}/.vavifuse/totp.properties")
 public class Main {
-    
+
     @Property(name = "{0}.{1}")
     transient String secret;
 
@@ -32,7 +32,7 @@ public class Main {
 
         final String domain = args[0];
         final String email = args[1];
-        
+
         Main app = new Main();
         PropsEntity.Util.bind(app, domain, email);
 
