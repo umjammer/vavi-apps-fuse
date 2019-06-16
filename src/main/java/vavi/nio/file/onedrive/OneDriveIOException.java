@@ -6,7 +6,6 @@
 
 package vavi.nio.file.onedrive;
 
-import java.io.Closeable;
 import java.io.IOException;
 
 import de.tuberlin.onedrivesdk.OneDriveException;
@@ -17,9 +16,9 @@ import de.tuberlin.onedrivesdk.OneDriveException;
  * an {@link IOException} is needed
  *
  * <p>
- * The problem mainly comes from {@link de.tuberlin.onedrivesdk.downloadFile.OneUploadFile} and {@link
+ * The problem mainly comes from {@link de.tuberlin.onedrivesdk.uploadFile.OneUploadFile} and {@link
  * de.tuberlin.onedrivesdk.downloadFile.OneDownloadFile}. Both of these methods define a {@code close()} method
- * but none of them implement {@link Closeable}. Worse than that, at least as
+ * but none of them implement {@link java.io.Closeable}. Worse than that, at least as
  * far as the uploader is concerned, this method is not even idempotent, and all
  * exceptions it throws are <strong>unchecked</strong>.
  * </p>

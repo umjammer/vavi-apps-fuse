@@ -34,7 +34,7 @@ import net.java.sen.Token;
  */
 public final class Classification2 {
 
-    static final String[] table = {
+    private static final String[] table = {
         "あいうえお",
         "かきくけこがぎぐげご",
         "さしすせそざじずぜそ",
@@ -58,54 +58,53 @@ public final class Classification2 {
         FileSearcher fileSearcher = new FileSearcher(root);
         Files.walkFileTree(root, fileSearcher);
         Pattern pattern = Pattern.compile("\\[(.+?)\\]");
-        fileSearcher.result().stream()
-            .forEach(path -> {
-                try {
-                    for (String s : table) {
-                        Path dir = root.resolve(s.substring(0, 1));
-                        if (!Files.exists(dir)) {
-                            //System.err.println("mkdir " + dir);
-                            if (!dryRun) {
-                                Files.createDirectory(dir);
-                            }
+        fileSearcher.result().forEach(path -> {
+            try {
+                for (String s : table) {
+                    Path dir = root.resolve(s.substring(0, 1));
+                    if (!Files.exists(dir)) {
+                        //System.err.println("mkdir " + dir);
+                        if (!dryRun) {
+                            Files.createDirectory(dir);
                         }
                     }
+                }
 
-                    String reading;
-                    if (Files.isDirectory(path)) {
-                        reading = toKana(path.getFileName().toString());
+                String reading;
+                if (Files.isDirectory(path)) {
+                    reading = toKana(path.getFileName().toString());
+                } else {
+                    Matcher matcher = pattern.matcher(path.getFileName().toString());
+                    if (matcher.find()) {
+                        reading = toKana(matcher.group(1));
                     } else {
-                        Matcher matcher = pattern.matcher(path.getFileName().toString());
-                        if (matcher.find()) {
-                            reading = toKana(matcher.group(1));
-                        } else {
-                            throw new IllegalStateException(path.toString());
-                        }
+                        throw new IllegalStateException(path.toString());
                     }
+                }
 
-                    char kana = CharNormalizerJa.ToHiragana.normalize(reading).charAt(0);
+                char kana = CharNormalizerJa.ToHiragana.normalize(reading).charAt(0);
 //System.err.println(reading + ", " + kana);
 
-                    char c = Arrays.asList(table).stream()
-                        .filter(s -> s.indexOf(kana) >= 0)
-                        .map(s -> s.charAt(0))
-                        .findFirst().get();
+                char c = Arrays.stream(table)
+                    .filter(s -> s.indexOf(kana) >= 0)
+                    .map(s -> s.charAt(0))
+                    .findFirst().get();
 
-                    Path dir = root.resolve(String.valueOf(c));
-                    System.err.println("mv " + path.getFileName() + " " + dir.getFileName());
-                    if (!dryRun) {
-                        Files.move(path, dir.resolve(path.getFileName()));
-                    }
-                } catch (NoSuchElementException f) {
-                    System.err.println(f.getMessage() + ": " + path);
-                } catch (IOException f) {
-                    System.err.println("ERROR: " + f);
-                    throw new IllegalStateException(f);
+                Path dir = root.resolve(String.valueOf(c));
+                System.err.println("mv " + path.getFileName() + " " + dir.getFileName());
+                if (!dryRun) {
+                    Files.move(path, dir.resolve(path.getFileName()));
                 }
-            });
+            } catch (NoSuchElementException f) {
+                System.err.println(f.getMessage() + ": " + path);
+            } catch (IOException f) {
+                System.err.println("ERROR: " + f);
+                throw new IllegalStateException(f);
+            }
+        });
     }
 
-    static String toKana(String text) throws IOException{
+    private static String toKana(String text) throws IOException{
         StringBuilder sb = new StringBuilder();
         StringTagger tagger = StringTagger.getInstance();
         Token[] token = tagger.analyze(text);
@@ -143,7 +142,7 @@ public final class Classification2 {
             if (attr.isRegularFile()) {
                 if (file.getParent().equals(root)) {
                     if (patternF.matcher(file.getFileName().toString()).find()) {
-                        //System.err.println(file);
+//                        System.err.println(file);
                         list.add(file);
                     }
                 }
@@ -155,7 +154,7 @@ public final class Classification2 {
         public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
             if (dir.getParent().equals(root)) {
                 if (!patternD.matcher(dir.getFileName().toString()).matches()) {
-                    //System.err.println(dir);
+//                    System.err.println(dir);
                     list.add(dir);
                 }
             }
@@ -168,7 +167,7 @@ public final class Classification2 {
             return CONTINUE;
         }
 
-        public List<Path> result() {
+        List<Path> result() {
             return list;
         }
     }

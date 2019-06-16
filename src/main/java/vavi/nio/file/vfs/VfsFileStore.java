@@ -31,7 +31,7 @@ public final class VfsFileStore extends FileStoreBase {
     /**
      * Constructor
      *
-     * @param drive the (valid) Commons VFS drive to use
+     * @param manager the (valid) Commons VFS drive to use
      */
     public VfsFileStore(final FileSystemManager manager, final FileAttributesFactory factory) {
         super("vfs", factory, false);

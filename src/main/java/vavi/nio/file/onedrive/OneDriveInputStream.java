@@ -9,7 +9,6 @@ package vavi.nio.file.onedrive;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -42,7 +41,7 @@ import de.tuberlin.onedrivesdk.downloadFile.OneDownloadFile;
  * Throwable#addSuppressed(Throwable) suppressed}.
  * </p>
  *
- * @see FileSystemDriver#newInputStream(Path, OpenOption...)
+ * @see FileSystemDriver#newInputStream(Path, java.util.Set)
  */
 @ParametersAreNonnullByDefault
 public final class OneDriveInputStream extends InputStream {

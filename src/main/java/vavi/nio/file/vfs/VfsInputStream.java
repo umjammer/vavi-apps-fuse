@@ -8,7 +8,6 @@ package vavi.nio.file.vfs;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -35,13 +34,13 @@ import com.github.fge.filesystem.driver.FileSystemDriver;
  * throw an exception; which means it may throw none, or it may throw an
  * <em>unchecked</em> exception. As such, the {@link #close()} method of this
  * class captures all {@link RuntimeException}s which {@link
- * File#close()} may throw and wrap it into a {@link
+ * java.io.File#close()} may throw and wrap it into a {@link
  * VfsIOException}. If the underlying input stream <em>did</em> throw an
  * exception, however, then such an exception is {@link
  * Throwable#addSuppressed(Throwable) suppressed}.
  * </p>
  *
- * @see FileSystemDriver#newInputStream(Path, OpenOption...)
+ * @see FileSystemDriver#newInputStream(Path, java.util.Set)
  */
 @ParametersAreNonnullByDefault
 public final class VfsInputStream extends InputStream {

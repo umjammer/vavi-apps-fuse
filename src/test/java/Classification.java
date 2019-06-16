@@ -122,7 +122,7 @@ public final class Classification {
             return CONTINUE;
         }
 
-        public List<Path> result() {
+        List<Path> result() {
             return list;
         }
     }
