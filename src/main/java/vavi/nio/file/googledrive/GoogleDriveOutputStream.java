@@ -9,6 +9,8 @@ package vavi.nio.file.googledrive;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -52,31 +54,31 @@ public final class GoogleDriveOutputStream extends OutputStream {
     private java.io.File file;
     private OutputStream out;
 
-    private Consumer<File> consumer;
-    
-    public GoogleDriveOutputStream(Drive drive, @Nonnull final java.io.File file, String filename, Consumer<File> consumer) throws IOException {
+    private Consumer<File> uploadFinisher;
+
+    public GoogleDriveOutputStream(Drive drive, @Nonnull final java.io.File file, String filename, Consumer<File> uploadFinisher) throws IOException {
         this.drive = drive;
         this.file = file;
         this.filename = filename;
-        this.consumer = consumer;
+        this.uploadFinisher = uploadFinisher;
         out = new FileOutputStream(file);
     }
 
     @Override
     public void write(final int b) throws IOException {
-System.out.println("here: 0");
+System.out.println("uploader: write 0");
         out.write(b);
     }
 
     @Override
     public void write(final byte[] b) throws IOException {
-System.out.println("here: 1");
+System.out.println("uploader: write 1");
         out.write(b);
     }
 
     @Override
     public void write(final byte[] b, final int off, final int len) throws IOException {
-System.out.println("here: 2");
+System.out.println("uploader: write 2: " + len);
         out.write(b, off, len);
     }
 
@@ -88,8 +90,9 @@ System.out.println("here: 2");
     @Override
     public void close() throws IOException {
         /* Reentrancy: check if .close() has been called already... */
-        if (closeCalled.getAndSet(true))
+        if (closeCalled.getAndSet(true)) {
             return;
+        }
 
         /* TODO: UGLY! Tied to the API in a big, big way */
         IOException exception = null;
@@ -112,21 +115,39 @@ System.out.println("here: 2");
 
             FileContent mediaContent = new FileContent(null, file);
 
-            Drive.Files.Create insert = drive.files().create(fileMetadata, mediaContent);
-            MediaHttpUploader uploader = insert.getMediaHttpUploader();
+            Drive.Files.Create creator = drive.files().create(fileMetadata, mediaContent);
+            MediaHttpUploader uploader = creator.getMediaHttpUploader();
             uploader.setDirectUploadEnabled(true);
-            uploader.setProgressListener(System.err::println);
-            File file = insert.setFields("id, name, size, mimeType, createdTime").execute(); // TODO file is not finished status!
+            uploader.setProgressListener(u -> { System.err.println("upload progress: " + u.getProgress()); });
+            final File newEntry = creator.setFields("id, name, size, mimeType, createdTime").execute(); // TODO file is not finished status!
 
-            consumer.accept(file);
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
+            executorService.submit(() -> {
+                long timeout = 0;
+                long delay = 100;
+                try {
+                    System.err.println("executorService: " + uploader.getProgress() + ", " + uploader.getUploadState());
+                    while (uploader.getProgress() < 1 && timeout < 10 * 1000) {
+                        System.err.println("executorService: " + uploader.getProgress() + ", " + uploader.getUploadState() + ", " + timeout);
+                        Thread.sleep(delay);
+                        timeout += delay;
+                        delay *= 2;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                uploadFinisher.accept(newEntry);
+            });
         } catch (IOException e) {
-            if (exception == null)
+            if (exception == null) {
                 exception = new GoogleDriveIOException(e);
-            else
+            } else {
                 exception.addSuppressed(e);
+            }
         }
 
-        if (exception != null)
+        if (exception != null) {
             throw exception;
+        }
     }
 }

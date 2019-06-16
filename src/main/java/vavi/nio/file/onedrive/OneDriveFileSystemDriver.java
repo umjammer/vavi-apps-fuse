@@ -7,15 +7,12 @@
 package vavi.nio.file.onedrive;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.NonWritableChannelException;
-import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.channels.WritableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -27,19 +24,14 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
-import java.text.Normalizer;
-import java.text.Normalizer.Form;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -49,6 +41,13 @@ import org.json.simple.parser.ParseException;
 import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
+
+import vavi.nio.file.Cache;
+import vavi.nio.file.UploadMonitor;
+import vavi.nio.file.Util;
+
+import static vavi.nio.file.Util.toFilenameString;
+import static vavi.nio.file.Util.toPathString;
 
 import de.tuberlin.onedrivesdk.OneDriveException;
 import de.tuberlin.onedrivesdk.OneDriveSDK;
@@ -60,7 +59,7 @@ import de.tuberlin.onedrivesdk.uploadFile.OneUploadFile;
 
 
 /**
- * OneDriveFileSystemDriver. 
+ * OneDriveFileSystemDriver.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/11 umjammer initial version <br>
@@ -83,60 +82,48 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
     }
 
-    /** <NFC normalized path {@link String}, {@link OneItem}> */
-    private Map<String, OneItem> cache = new HashMap<>(); // TODO refresh
-    
-    /**
-     * TODO when the parent is not cached
-     * @see #ignoreAppleDouble
-     */
-    private OneItem getOneItem(Path path) throws OneDriveException, IOException {
-        String pathString = toString(path);
-        if (cache.containsKey(pathString)) {
-//System.err.println("CACHE: path: " + path + ", id: " + cache.get(pathString).getId());
-            return cache.get(pathString);
-        } else {
-            if (ignoreAppleDouble && path.getFileName() != null && isAppleDouble(path)) {
-                throw new NoSuchFileException("ignore apple double file: " + path);
+    /** */
+    private Cache<OneItem> cache = new Cache<OneItem>() {
+        /**
+         * TODO when the parent is not cached
+         * @see #ignoreAppleDouble
+         * @throws NoSuchFileException must be thrown when the path is not found in this cache
+         */
+        public OneItem getEntry(Path path) throws IOException {
+            try {
+                if (cache.containsFile(path)) {
+                    return cache.getFile(path);
+                } else {
+                    if (ignoreAppleDouble && path.getFileName() != null && Util.isAppleDouble(path)) {
+                        throw new NoSuchFileException("ignore apple double file: " + path);
+                    }
+
+                    OneItem entry = client.getItemByPath(toPathString(path));
+                    cache.putFile(path, entry);
+                    return entry;
+                }
+            } catch (OneDriveException e) {
+                // cache
+                removeEntry(path);
+
+                throw (IOException) new NoSuchFileException("path: " + path).initCause(e);
             }
-
-            OneItem entry = client.getItemByPath(pathString);
-//System.err.println("GOT: path: " + path + ", id: " + entry.getId());
-            cache.put(pathString, entry);
-            return entry;
         }
-    }
+    };
 
     /** */
-    private String toString(Path path) throws IOException {
-        return Normalizer.normalize(path.toRealPath().toString(), Form.NFC);
-    }
+    private UploadMonitor uploadMonitor = new UploadMonitor();
 
-    /** */
-    private String toFilenameString(Path path) throws IOException {
-        return Normalizer.normalize(path.toRealPath().getFileName().toString(), Form.NFC);
-    }
-
-    /** @see #ignoreAppleDouble */
-    private boolean isAppleDouble(Path path) throws IOException {
-//System.err.println("path.toRealPath(): " + path.toRealPath());
-//System.err.println("path.getFileName(): " + path.getFileName());
-        String filename = path.getFileName().toString();
-        return filename.startsWith("._") ||
-               filename.equals(".DS_Store") ||
-               filename.equals(".localized") ||
-               filename.equals(".hidden");
-    }
-    
     @Nonnull
     @Override
     public InputStream newInputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
         try {
-            final OneItem entry = getOneItem(path);
+            final OneItem entry = cache.getEntry(path);
 
             // TODO: metadata driver
-            if (OneFolder.class.isInstance(entry))
+            if (entry.isFolder()) {
                 throw new IsDirectoryException("path: " + path);
+            }
 
             final OneDownloadFile downloader = OneFile.class.cast(entry).download(File.createTempFile("vavi-apps-fuse-", ".download"));
             downloader.startDownload();
@@ -147,96 +134,68 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
         }
     }
 
-    /** NFC normalized {@link String} */
-    private Set<String> uploadFlags = new HashSet<>();
-    
+    /**
+     * fuse からだと
+     * <ol>
+     *  <li>create -> newByteChannel
+     *  <li>flush -> n/a
+     *  <li>lock -> n/a
+     *  <li>release -> byteChannel.close
+     * </ol>
+     * と呼ばれる <br/>
+     * 元のファイルが取れない... <br/>
+     * 書き込みの指示もない...
+     * <p>
+     * nio.file からだと
+     * <pre>
+     *  newOutputStream -> write(2)
+     * </pre>
+     */
     @Nonnull
     @Override
     public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
         try {
-            String pathString = toString(path);
             final OneItem entry;
             try {
-                entry = getOneItem(path);
+                entry = cache.getEntry(path);
 
-                if (OneFolder.class.isInstance(entry))
+                if (entry.isFolder()) {
                     throw new IsDirectoryException("path: " + path);
-                else
+                } else {
                     throw new FileAlreadyExistsException("path: " + path);
-            } catch (OneDriveException e) {
-                System.err.println("newOutputStream: " + e.getMessage());
+                }
+            } catch (NoSuchFileException e) {
+System.out.println("newOutputStream: " + e.getMessage());
+new Exception("*** DUMMY ***").printStackTrace();
             }
 
-            OneFolder dirEntry = (OneFolder) getOneItem(path.getParent());
+            OneFolder dirEntry = (OneFolder) cache.getEntry(path.getParent());
 
             final OneUploadFile uploader = dirEntry.uploadFile(File.createTempFile("vavi-apps-fuse-", ".upload"), toFilenameString(path));
 
-            uploadFlags.add(pathString);
-            return new OneDriveOutputStream(uploader, file -> {
+            uploadMonitor.start(path);
+            return new OneDriveOutputStream(uploader, newEntry -> {
                 try {
-                    uploadFlags.remove(pathString);
-                    // cache
-                    cache.put(pathString, OneItem.class.cast(file));
-                    folderCache.get(toString(path.getParent())).add(path);
+                    uploadMonitor.finish(path);
+
+                    cache.addEntry(path, OneItem.class.cast(newEntry));
                 } catch (IOException e) {
+e.printStackTrace();
                     throw new IllegalStateException(e);
                 }
             });
         } catch (OneDriveException e) {
+e.printStackTrace();
             throw new OneDriveIOException(e);
         }
     }
 
-    /** <NFC normalized path {@link String}, {@link Path}> */
-    private Map<String, List<Path>> folderCache = new HashMap<>(); // TODO refresh
-    
     @Nonnull
     @Override
     public DirectoryStream<Path> newDirectoryStream(final Path dir,
                                                     final DirectoryStream.Filter<? super Path> filter) throws IOException {
         try {
-            String pathString = toString(dir);
-            final OneItem entry = getOneItem(dir);
-
-            if (!OneFolder.class.isInstance(entry))
-                throw new NotDirectoryException("dir: " + dir);
-    
-            List<Path> list = null;
-            if (folderCache.containsKey(pathString)) {
-                list = folderCache.get(pathString);
-            } else {
-                final List<OneItem> children = OneFolder.class.cast(entry).getChildren();
-                list = new ArrayList<>(children.size());
-                
-                for (final OneItem child : children) {
-                    Path childPath = dir.resolve(child.getName());
-                    list.add(childPath);
-//System.err.println("child: " + childPath.toRealPath().toString());
-                    // cache
-                    cache.put(toString(childPath), child);
-                }
-                
-                folderCache.put(pathString, list);
-            }
-            
-            final List<Path> _list = list;
-    
-            //noinspection AnonymousInnerClassWithTooManyMethods
-            return new DirectoryStream<Path>() {
-                private final AtomicBoolean alreadyOpen = new AtomicBoolean(false);
-    
-                @Override
-                public Iterator<Path> iterator() {
-                    // required by the contract
-                    if (alreadyOpen.getAndSet(true))
-                        throw new IllegalStateException();
-                    return _list.iterator();
-                }
-    
-                @Override
-                public void close() throws IOException {
-                }
-            };
+            return Util.newDirectoryStream(getDirectoryEntries(dir));
         } catch (OneDriveException e) {
             throw new OneDriveIOException("dir: " + dir, e);
         }
@@ -246,120 +205,58 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
     public SeekableByteChannel newByteChannel(Path path,
                                               Set<? extends OpenOption> options,
                                               FileAttribute<?>... attrs) throws IOException {
-        try {
-            if (options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND)) {
-                final WritableByteChannel wbc = Channels.newChannel(newOutputStream(path, options));
-                long leftover = 0;
-                if (options.contains(StandardOpenOption.APPEND)) {
-                    OneItem entry = getOneItem(path);
-                    if (entry != null && OneFile.class.cast(entry).getSize() >= 0)
-                        leftover = OneFile.class.cast(entry).getSize();
-                }
-                final long offset = leftover;
-                return new SeekableByteChannel() {
-                    long written = offset;
-    
-                    public boolean isOpen() {
-                        return wbc.isOpen();
-                    }
-    
-                    public long position() throws IOException {
-                        return written;
-                    }
-    
-                    public SeekableByteChannel position(long pos) throws IOException {
-                        throw new UnsupportedOperationException();
-                    }
-    
-                    public int read(ByteBuffer dst) throws IOException {
-                        throw new UnsupportedOperationException();
-                    }
-    
-                    public SeekableByteChannel truncate(long size) throws IOException {
-                        throw new UnsupportedOperationException();
-                    }
-    
-                    public int write(ByteBuffer src) throws IOException {
-System.err.println("here: X0");
-                        int n = wbc.write(src);
-                        written += n;
-                        return n;
-                    }
-    
-                    public long size() throws IOException {
-                        return written;
-                    }
-    
-                    public void close() throws IOException {
-System.err.println("here: X1");
-                        wbc.close();
-                    }
-                };
-            } else {
-                OneItem entry = getOneItem(path);
-                if (OneFolder.class.isInstance(entry))
-                    throw new NoSuchFileException(path.toString());
-                final ReadableByteChannel rbc = Channels.newChannel(newInputStream(path, null));
-                final long size = OneFile.class.cast(entry).getSize();
-                return new SeekableByteChannel() {
-                    long read = 0;
-    
-                    public boolean isOpen() {
-                        return rbc.isOpen();
-                    }
-    
-                    public long position() throws IOException {
-                        return read;
-                    }
-    
-                    public SeekableByteChannel position(long pos) throws IOException {
-                        read = pos;
-                        return this;
-                    }
-    
-                    public int read(ByteBuffer dst) throws IOException {
-                        int n = rbc.read(dst);
-                        if (n > 0) {
-                            read += n;
+        if (options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND)) {
+            return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
+                @Override
+                protected long getLeftOver() throws IOException {
+                    long leftover = 0;
+                    if (options.contains(StandardOpenOption.APPEND)) {
+                        OneItem entry = cache.getEntry(path);
+                        if (entry != null && OneFile.class.cast(entry).getSize() >= 0) {
+                            leftover = OneFile.class.cast(entry).getSize();
                         }
-                        return n;
                     }
-    
-                    public SeekableByteChannel truncate(long size) throws IOException {
-                        throw new NonWritableChannelException();
+                    return leftover;
+                }
+
+                @Override
+                public void close() throws IOException {
+System.out.println("SeekableByteChannelForWriting::close");
+                    if (written == 0) {
+                        // TODO no mean
+System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
+                        File file = new File(toPathString(path));
+                        FileInputStream fis = new FileInputStream(file);
+                        FileChannel fc = fis.getChannel();
+                        fc.transferTo(0, file.length(), this);
+                        fis.close();
                     }
-    
-                    public int write(ByteBuffer src) throws IOException {
-                        throw new NonWritableChannelException();
-                    }
-    
-                    public long size() throws IOException {
-                        return size;
-                    }
-    
-                    public void close() throws IOException {
-                        rbc.close();
-                    }
-                };
+                    super.close();
+                }
+            };
+        } else {
+            OneItem entry = cache.getEntry(path);
+            if (entry.isFolder()) {
+                throw new IsDirectoryException(path.toString());
             }
-        } catch (OneDriveException e) {
-            throw new OneDriveIOException("path: " + path, e);
+            return new Util.SeekableByteChannelForReading(newInputStream(path, null)) {
+                @Override
+                protected long getSize() throws IOException {
+                    return OneFile.class.cast(entry).getSize();
+                }
+            };
         }
     }
 
     @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
         try {
-            final String filenameString = toFilenameString(dir);
-            OneItem parentEntry = getOneItem(dir.getParent());
+            OneItem parentEntry = cache.getEntry(dir.getParent());
 
             // TODO: how to diagnose?
-            OneFolder dirEntry = OneFolder.class.cast(parentEntry).createFolder(filenameString);
-            if (dirEntry == null)
-                throw new OneDriveIOException("cannot create directory??");
-            // cache
-            cache.put(toString(dir), OneItem.class.cast(dirEntry));
-            folderCache.get(toString(dir.getParent())).add(dir);
+            OneFolder dirEntry = OneFolder.class.cast(parentEntry).createFolder(toFilenameString(dir));
+
+            cache.addEntry(dir, OneItem.class.cast(dirEntry));
         } catch (OneDriveException e) {
             throw new OneDriveIOException("dir: "+ dir, e);
         }
@@ -368,24 +265,7 @@ System.err.println("here: X1");
     @Override
     public void delete(final Path path) throws IOException {
         try {
-            final String pathString = toString(path);
-            final OneItem entry = getOneItem(path);
-
-            // TODO: metadata!
-            if (OneFolder.class.isInstance(entry)) {
-                // TODO use cache
-                List<OneItem> list = client.getFolderByPath(pathString).getChildren();
-
-                if (list.size() > 0)
-                    throw new DirectoryNotEmptyException(pathString);
-            }
-
-            if (!entry.delete()) {
-                throw new OneDriveIOException("cannot delete ??");
-            }
-            // cache
-            cache.remove(pathString);
-            folderCache.get(toString(path.getParent())).remove(path);
+            removeEntry(path);
         } catch (OneDriveException e) {
             throw new OneDriveIOException("path: " + path, e);
         }
@@ -394,49 +274,28 @@ System.err.println("here: X1");
     @Override
     public void copy(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
         try {
-            final String targetString = target.toRealPath().toString();
-            OneItem targetEntry = getOneItem(target);
+            if (cache.existsEntry(target)) {
+                //
+                // copy to other folder
+                //
 
-            if (OneFolder.class.isInstance(targetEntry)) {
-                // TODO use cache
-                final List<OneItem> list = client.getFolderByPath(targetString).getChildren();
-    
-                if (list.size() > 0)
-                    throw new DirectoryNotEmptyException("path: " + target);
-            }
-
-            // TODO: unknown what happens when a copy operation is performed
-            targetEntry.delete();
-            targetEntry = OneItem.class.cast(targetEntry.getParentFolder());
-
-            // cache
-            cache.remove(toString(target));
-            folderCache.get(toString(target.getParent())).remove(toString(target));
-
-            // 2.
-            final OneItem sourceEntry = getOneItem(source);
-
-            // TODO: how to diagnose?
-            if (OneFile.class.isInstance(sourceEntry)) {
-                OneFile newEntry = OneFile.class.cast(sourceEntry).copy(OneFolder.class.cast(targetEntry));
-                if (newEntry == null)
-                    throw new OneDriveIOException("cannot copy??");
-
-                // cache
-                cache.put(toString(target), OneItem.class.cast(newEntry));
-                String pathString = toString(target.getParent());
-                List<Path> paths = folderCache.get(pathString);
-                if (paths == null) {
-                    paths = new ArrayList<>();
-                    folderCache.put(pathString, paths);
+                if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
+                    removeEntry(target);
+                    copyEntry(source, target, false);
+                } else {
+                    if (cache.getEntry(target).isFolder()) {
+                        copyEntry(source, target, true);
+                    } else {
+                        throw new FileAlreadyExistsException(target.toString());
+                    }
                 }
-                paths.add(target);
-            } else if (OneFolder.class.isInstance(sourceEntry)) {
-                throw new UnsupportedOperationException("source can not be a folder");
+            } else {
+
+                copyEntry(source, target, true);
             }
-        } catch (ParseException | InterruptedException e) {
-            throw new OneDriveIOException(e);
+
         } catch (OneDriveException e) {
+e.printStackTrace();
             throw new OneDriveIOException("source: "+  source + ", target: " + target, e);
         }
     }
@@ -444,57 +303,49 @@ System.err.println("here: X1");
     @Override
     public void move(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
         try {
-            final String targetString = source.toRealPath().toString();
-            OneItem targetEntry = getOneItem(target);
+            String sourceFilename = toFilenameString(source);
+            String targetFilename = toFilenameString(target);
 
-            if (OneFolder.class.isInstance(targetEntry)) {
-                // TODO use cache
-                final List<OneItem> list = client.getFolderByPath(targetString).getChildren();
-    
-                if (list.size() > 0)
-                    throw new DirectoryNotEmptyException(targetString);
-            }
-            // TODO: unknown what happens when a move operation is performed
-            // and the target already exists
-            targetEntry.delete();
-            targetEntry = OneItem.class.cast(targetEntry.getParentFolder());
+            if (sourceFilename.equals(targetFilename)) {
+                // with filename (fuse)
 
-            // cache
-            cache.remove(toString(target));
-            folderCache.get(toString(target.getParent())).remove(toString(target));
+                //
+                // move to other folder
+                //
+                moveEntry(source, target, false);
 
-            // 2.
-            final OneItem sourceEntry = getOneItem(source);
+            } else {
+                // without filename
 
-            // TODO: how to diagnose?
-            if (OneFile.class.isInstance(sourceEntry)) {
-                OneFile newEntry = OneFile.class.cast(sourceEntry).move(OneFolder.class.cast(targetEntry));
-                if (newEntry == null)
-                    throw new OneDriveIOException("cannot copy??");
+                if (cache.existsEntry(target)) {
+                    //
+                    // move to other folder
+                    //
 
-                // cache
-                cache.remove(toString(source));
-                folderCache.get(toString(source.getParent())).remove(source);
+                    if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
+                        removeEntry(target);
+                        moveEntry(source, target, false);
+                    } else {
+                        if (cache.getEntry(target).isFolder()) {
+                            moveEntry(source, target, true);
+                        } else {
+                            throw new FileAlreadyExistsException(target.toString());
+                        }
+                    }
 
-                cache.put(toString(target), OneItem.class.cast(newEntry));
-        //System.out.println("target.parent: " + target.getParent() + ", " + folderCache.get(toString(target.getParent())));
-                String pathString = toString(target.getParent());
-                List<Path> paths = folderCache.get(pathString);
-                if (paths == null) {
-                    paths = new ArrayList<>();
-                    folderCache.put(pathString, paths);
+                } else {
+                    //
+                    // rename
+                    //
+                    renameEntry(source, target);
                 }
-                paths.add(target);
-            } else if (OneFolder.class.isInstance(sourceEntry)) {
-                throw new UnsupportedOperationException("source can not be a folder");
             }
-        } catch (ParseException | InterruptedException e) {
-            throw new OneDriveIOException(e);
+
         } catch (OneDriveException e) {
+e.printStackTrace();
             throw new OneDriveIOException("source: " + source + ", target: " + target, e);
         }
     }
-
     /**
      * Check access modes for a path on this filesystem
      * <p>
@@ -510,19 +361,17 @@ System.err.println("here: X1");
      */
     @Override
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
-        try {
-            final String pathString = toString(path);
-            final OneItem entry = getOneItem(path);
+        final OneItem entry = cache.getEntry(path);
 
-            if (!OneFile.class.isInstance(entry))
-                return;
-    
-            // TODO: assumed; not a file == directory
-            for (final AccessMode mode : modes)
-                if (mode == AccessMode.EXECUTE)
-                    throw new AccessDeniedException(pathString);
-        } catch (OneDriveException e) {
-            throw (IOException) new NoSuchFileException("path: " + path).initCause(e);
+        if (!entry.isFile()) {
+            return;
+        }
+
+        // TODO: assumed; not a file == directory
+        for (final AccessMode mode : modes) {
+            if (mode == AccessMode.EXECUTE) {
+                throw new AccessDeniedException(path.toString());
+            }
         }
     }
 
@@ -537,9 +386,8 @@ System.err.println("here: X1");
     @Nonnull
     @Override
     public Object getPathMetadata(final Path path) throws IOException {
-        try {
-if (uploadFlags.contains(toString(path))) {
-System.out.println("uploading...");
+if (uploadMonitor.isUploading(path)) {
+System.out.println("uploading... (meta): " + toPathString(path));
     return new OneItem() {
         public String getId() {
             return "-1";
@@ -561,9 +409,108 @@ System.out.println("uploading...");
         }
     };
 }
-            return getOneItem(path);
-        } catch (OneDriveException e) {
-            throw (IOException) new NoSuchFileException("path: " + path).initCause(e);
+        return cache.getEntry(path);
+    }
+
+    /** */
+    private List<Path> getDirectoryEntries(Path dir) throws IOException, OneDriveException {
+        final OneItem entry = cache.getEntry(dir);
+
+        if (!entry.isFolder()) {
+            throw new NotDirectoryException("dir: " + dir);
+        }
+
+        List<Path> list = null;
+        if (cache.containsFolder(dir)) {
+            list = cache.getFolder(dir);
+        } else {
+            final List<OneItem> children = OneFolder.class.cast(entry).getChildren();
+            list = new ArrayList<>(children.size());
+
+            for (final OneItem child : children) {
+                Path childPath = dir.resolve(child.getName());
+                list.add(childPath);
+//System.err.println("child: " + childPath.toRealPath().toString());
+
+                cache.putFile(childPath, child);
+            }
+
+            cache.putFolder(dir, list);
+        }
+
+        return list;
+    }
+
+    /** */
+    private void removeEntry(Path path) throws IOException, OneDriveException {
+        OneItem entry = cache.getEntry(path);
+        if (entry.isFolder()) {
+            // TODO use cache
+            final List<OneItem> children = client.getFolderByPath(toPathString(path)).getChildren();
+
+            if (children.size() > 0) {
+                throw new DirectoryNotEmptyException(path.toString());
+            }
+        }
+
+        // TODO: unknown what happens when a move operation is performed
+        // and the target already exists
+        entry.delete();
+
+        cache.removeEntry(path);
+    }
+
+    /**
+     * @param copiesToTarget if true target must be folder
+     */
+    private void copyEntry(final Path source, final Path target, boolean copiesToTarget) throws IOException, OneDriveException {
+        try {
+            OneItem sourceEntry = cache.getEntry(source);
+            OneItem targetParentEntry = cache.getEntry(copiesToTarget ? target : target.getParent());
+            if (sourceEntry.isFile()) {
+                OneFile newEntry = OneFile.class.cast(sourceEntry).copy(OneFolder.class.cast(targetParentEntry));
+
+                cache.addEntry(target, OneItem.class.cast(newEntry));
+            } else if (sourceEntry.isFolder()) {
+                throw new IsDirectoryException("source can not be a folder: " + source);
+            }
+        } catch (ParseException | InterruptedException e) {
+            throw new OneDriveIOException(e);
+        }
+    }
+
+    /**
+     * @param movesToTarget if true target must be folder
+     */
+    private void moveEntry(final Path source, final Path target, boolean movesToTarget) throws IOException, OneDriveException {
+        try {
+            OneItem sourceEntry = cache.getEntry(source);
+            OneItem targetParentEntry = cache.getEntry(movesToTarget ? target : target.getParent());
+            if (sourceEntry.isFile()) {
+                OneFile newEntry = OneFile.class.cast(sourceEntry).move(OneFolder.class.cast(targetParentEntry));
+
+                cache.removeEntry(source);
+                cache.addEntry(target, OneItem.class.cast(newEntry));
+            } else if (sourceEntry.isFolder()) {
+                throw new IsDirectoryException("source can not be a folder: " + source);
+            }
+        } catch (ParseException | InterruptedException e) {
+            throw new OneDriveIOException(e);
+        }
+    }
+
+    /** */
+    private void renameEntry(final Path source, final Path target) throws IOException, OneDriveException {
+        try {
+            OneItem sourceEntry = cache.getEntry(source);
+            OneItem targetEntry = cache.getEntry(target.getParent());
+
+            OneItem newEntry = sourceEntry.rename(OneFolder.class.cast(targetEntry), toFilenameString(target));
+
+            cache.removeEntry(source);
+            cache.addEntry(target, newEntry);
+        } catch (ParseException | InterruptedException e) {
+            throw new OneDriveIOException(e);
         }
     }
 }
