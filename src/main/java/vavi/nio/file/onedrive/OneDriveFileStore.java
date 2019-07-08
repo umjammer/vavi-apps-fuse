@@ -18,7 +18,7 @@ import de.tuberlin.onedrivesdk.drive.DriveQuota;
 
 
 /**
- * A simple DropBox {@link FileStore}
+ * A simple OneDrive {@link FileStore}
  *
  * <p>
  * This makes use of information available in {@link DriveQuota}.
@@ -48,7 +48,8 @@ public final class OneDriveFileStore extends FileStoreBase {
      */
     @Override
     public long getTotalSpace() throws IOException {
-        return getQuota().getTotal();
+        final DriveQuota quota = getQuota();
+        return quota == null ? 0 : quota.getTotal();
     }
 
     /**
@@ -70,7 +71,11 @@ public final class OneDriveFileStore extends FileStoreBase {
     @Override
     public long getUsableSpace() throws IOException {
         final DriveQuota quota = getQuota();
-        return quota.getTotal() - quota.getUsed();
+        if (quota == null) {
+            return 0;
+        } else {
+            return quota.getTotal() - quota.getUsed();
+        }
     }
 
     /**
@@ -90,7 +95,11 @@ public final class OneDriveFileStore extends FileStoreBase {
     @Override
     public long getUnallocatedSpace() throws IOException {
         final DriveQuota quota = getQuota();
-        return quota.getTotal() - quota.getUsed();
+        if (quota == null) {
+            return 0;
+        } else {
+            return quota.getTotal() - quota.getUsed();
+        }
     }
 
     /** */

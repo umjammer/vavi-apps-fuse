@@ -7,18 +7,22 @@
 package vavi.nio.file.onedrive;
 
 import com.github.fge.filesystem.provider.FileSystemProviderBase;
-import com.github.fge.filesystem.provider.FileSystemRepository;
 
 
 /**
  * OneDriveFileSystemProvider.
+ * <p>
+ * set "authenticatorClassName" in "classpath:onedrive.properties"
+ * </p>
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
 public final class OneDriveFileSystemProvider extends FileSystemProviderBase {
 
-    public OneDriveFileSystemProvider(final FileSystemRepository repository) {
-        super(repository);
+    public static final String PARAM_ID = "id";
+
+    public OneDriveFileSystemProvider() {
+        super(new OneDriveFileSystemRepository());
     }
 }

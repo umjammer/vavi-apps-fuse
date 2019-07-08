@@ -10,8 +10,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Properties;
 
 import javax.annotation.Nonnull;
@@ -21,7 +23,8 @@ import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 
 import vavi.net.auth.oauth2.Authenticator;
-import vavi.net.auth.oauth2.microsoft.OneDriveAuthenticator;
+import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
 import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
@@ -35,61 +38,82 @@ import de.tuberlin.onedrivesdk.networking.OneDriveAuthenticationException;
 
 /**
  * OneDriveFileSystemRepository.
+ * <p>
+ * set "authenticatorClassName" in "classpath:onedrive.properties"
+ * </p>
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-@PropsEntity(url = "file://${user.home}/.vavifuse/onedrive.properties")
+@PropsEntity(url = "classpath:onedrive.properties")
 public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase {
-
-    @Property(name = "onedrive.clientId")
-    private String clientId;
-    @Property(name = "onedrive.clientSecret")
-    private transient String clientSecret;
-    @Property(name = "onedrive.redirectUrl")
-    private String redirectUrl;
 
     public OneDriveFileSystemRepository() {
         super("onedrive", new OneDriveFileSystemFactoryProvider());
     }
 
-    /** */
+    /** application credential */
+    private BasicAppCredential appCredential;
+
+    /** cloud driver */
     private transient OneDriveSDK client;
 
     /** for refreshToken */
     private File file;
 
+    @Property
+    private String authenticatorClassName;
+
+    /** */
+    private Authenticator authenticator;
+
+    {
+        try {
+            PropsEntity.Util.bind(this);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    /**
+     * TODO root from uri
+     * @throws NoSuchElementException
+     */
     @Nonnull
     @Override
     public FileSystemDriver createDriver(final URI uri, final Map<String, ?> env) throws IOException {
         try {
-            final String email = (String) env.get("email");
-            if (email == null)
-                throw new IllegalArgumentException("email not found");
+            Map<String, String> params = getParamsMap(uri);
+            if (!params.containsKey(OneDriveFileSystemProvider.PARAM_ID)) {
+                throw new NoSuchElementException("uri not contains a param " + OneDriveFileSystemProvider.PARAM_ID);
+            }
+            final String email = params.get(OneDriveFileSystemProvider.PARAM_ID);
 
-            file = new File(System.getProperty("user.home"), ".vavifuse/onedrive/" + email);
+            appCredential = new MicrosoftLocalAppCredential();
+            PropsEntity.Util.bind(appCredential);
 
-            PropsEntity.Util.bind(this, email);
+            file = new File(System.getProperty("user.home"), ".vavifuse/" + appCredential.getScheme() + "/" + email);
 
-            client = OneDriveFactory.createOneDriveSDK(clientId,
-                                                       clientSecret,
-                                                       redirectUrl,
+            client = OneDriveFactory.createOneDriveSDK(appCredential.getClientId(),
+                                                       appCredential.getClientSecret(),
+                                                       appCredential.getRedirectUrl(),
                                                        OneDriveScope.OFFLINE_ACCESS);
             String url = client.getAuthenticationURL();
 
             String refreshToken = readRefreshToken();
             if (refreshToken == null || refreshToken.isEmpty()) {
-                authenticateByBrowser(url, email);
+                authenticate(url, email);
             } else {
                 try {
                     client.authenticateWithRefreshToken(refreshToken);
                 } catch (OneDriveAuthenticationException e) {
 Debug.println("refreshToken: timeout?");
-                    authenticateByBrowser(url, email);
+                    authenticate(url, email);
                 }
             }
 
+            writeRefreshToken();
             client.startSessionAutoRefresh(this::writeRefreshToken);
 
             final OneDriveFileStore fileStore = new OneDriveFileStore(client, factoryProvider.getAttributesFactory());
@@ -101,11 +125,17 @@ Debug.println("refreshToken: timeout?");
     }
 
     /** */
-    private void authenticateByBrowser(String url, String email) throws IOException, OneDriveException {
-        Authenticator authenticator = new OneDriveAuthenticator(email, redirectUrl);
-        String code = authenticator.get(url);
-
-        client.authenticate(code);
+    private void authenticate(String url, String email) throws IOException, OneDriveException {
+        try {
+            authenticator = Authenticator.class.cast(Class.forName(authenticatorClassName)
+                .getDeclaredConstructor(String.class, String.class).newInstance(email, appCredential.getRedirectUrl()));
+            String code = authenticator.get(url);
+            code = code.substring(code.indexOf("code=") + "code=".length());
+            client.authenticate(code);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                 NoSuchMethodException | SecurityException | ClassNotFoundException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /** */
@@ -117,14 +147,14 @@ Debug.println("refreshToken: timeout?");
                 file.getParentFile().mkdirs();
             }
             String refreshToken = client.getRefreshToken();
-            if (!oldRefreshToken.equals(refreshToken)) {
+            if (oldRefreshToken == null || !oldRefreshToken.equals(refreshToken)) {
                 FileWriter writer = new FileWriter(file);
 Debug.println("refreshToken: " + refreshToken);
                 writer.write("onedrive.refreshToken=" + refreshToken);
                 writer.close();
             }
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+e.printStackTrace();
             throw new IllegalStateException(e);
         }
     }

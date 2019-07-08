@@ -10,17 +10,15 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.github.fge.filesystem.provider.FileSystemRepository;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
@@ -36,32 +34,22 @@ public final class Main3 {
     public static void main(final String... args) throws IOException {
         String email = args[0];
 
-        /*
-         * Create the necessary elements to create a filesystem.
-         * Note: the URI _must_ have a scheme of "onedrive", and
-         * _must_ be hierarchical.
-         */
-        final URI uri = URI.create("onedrive://foo/");
-        final Map<String, String> env = new HashMap<>();
-        env.put("email", email);
+        // Create the necessary elements to create a filesystem.
+        // Note: the URI _must_ have a scheme of "onedrive", and
+        // _must_ be hierarchical.
+        URI uri = URI.create("onedrive:///?id=" + email);
 
-        /*
-         * Create the FileSystemProvider; this will be more simple once
-         * the filesystem is registered to the JRE, but right now you
-         * have to do like that, sorry...
-         */
-        final FileSystemRepository repository = new OneDriveFileSystemRepository();
-        final FileSystemProvider provider = new OneDriveFileSystemProvider(repository);
+        Map<String, Object> env = new HashMap<>();
 
-        try (/* Create the filesystem... */
-            final FileSystem onedrivefs = provider.newFileSystem(uri, env)) {
+        // Create the filesystem...
+        try (FileSystem onedrivefs = FileSystems.newFileSystem(uri, env)) {
 
-            /* And use it! You should of course adapt this code... */
+            // And use it! You should of course adapt this code...
             // Equivalent to FileSystems.getDefault().getPath(...)
-            final Path src = Paths.get(System.getProperty("user.home") + "/tmp/2" , "java7.java");
+            Path src = Paths.get(System.getProperty("user.home") + "/tmp/2" , "java7.java");
             // Here we create a path for our DropBox fs...
-            final Path dst = onedrivefs.getPath("/java7.java");
-            // Here we copy the file from our local fs to dropbox!
+            Path dst = onedrivefs.getPath("/java7.java");
+            // Here we copy the file from our local fs to onedrive!
             try {
 System.out.println("$ list");
                 Files.list(dst.getParent()).forEach(System.out::println);
