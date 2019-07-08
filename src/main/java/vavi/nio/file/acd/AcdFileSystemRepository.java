@@ -9,6 +9,7 @@ package vavi.nio.file.acd;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -41,9 +42,10 @@ public final class AcdFileSystemRepository extends FileSystemRepositoryBase {
     @Nonnull
     @Override
     public FileSystemDriver createDriver(final URI uri, final Map<String, ?> env) throws IOException {
-        final String email = (String) env.get("email");
-        if (email == null)
-            throw new IllegalArgumentException("email not found");
+        if (!env.containsKey(AcdFileSystemProvider.ENV_ID)) {
+            throw new NoSuchElementException(AcdFileSystemProvider.ENV_ID);
+        }
+        String email = (String) env.get(AcdFileSystemProvider.ENV_ID);
 
         final AcdFileStore fileStore = new AcdFileStore(drive, factoryProvider.getAttributesFactory());
         return new AcdFileSystemDriver(fileStore, factoryProvider, drive, session, env);

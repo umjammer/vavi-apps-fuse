@@ -7,7 +7,6 @@
 package vavi.nio.file.acd;
 
 import com.github.fge.filesystem.provider.FileSystemProviderBase;
-import com.github.fge.filesystem.provider.FileSystemRepository;
 
 
 /**
@@ -18,7 +17,9 @@ import com.github.fge.filesystem.provider.FileSystemRepository;
  */
 public final class AcdFileSystemProvider extends FileSystemProviderBase {
 
-    public AcdFileSystemProvider(final FileSystemRepository repository) {
-        super(repository);
+    public static final String ENV_ID = "email";
+
+    public AcdFileSystemProvider() {
+        super(new AcdFileSystemRepository());
     }
 }
