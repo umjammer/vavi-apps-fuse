@@ -8,18 +8,16 @@ package vavi.nio.file.googledrive;
 
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import com.github.fge.filesystem.provider.FileSystemRepository;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -37,7 +35,7 @@ public class TestGoogleDrive {
 
     String mountPoint;
 
-    @BeforeAll
+    @BeforeEach
     public void before() throws Exception {
         String email = System.getProperty("email");
         mountPoint = System.getProperty("mount_point");
@@ -47,20 +45,12 @@ public class TestGoogleDrive {
          * Note: the URI _must_ have a scheme of "googledrive", and
          * _must_ be hierarchical.
          */
-        final URI uri = URI.create("googledrive://foo/");
-        final Map<String, Object> env = new HashMap<>();
-        env.put("email", email);
+        URI uri = URI.create("googledrive:///?id=" + email);
+
+        Map<String, Object> env = new HashMap<>();
         env.put("ignoreAppleDouble", true);
 
-        /*
-         * Create the FileSystemProvider; this will be more simple once
-         * the filesystem is registered to the JRE, but right now you
-         * have to do like that, sorry...
-         */
-        final FileSystemRepository repository = new GoogleDriveFileSystemRepository();
-        final FileSystemProvider provider = new GoogleDriveFileSystemProvider(repository);
-
-        final FileSystem fs = provider.newFileSystem(uri, env);
+        FileSystem fs = FileSystems.newFileSystem(uri, env);
 
         Map<String, String> options = new HashMap<>();
         options.put("fsname", "googledrive_fs" + "@" + System.currentTimeMillis());
@@ -99,7 +89,7 @@ public class TestGoogleDrive {
         assertTrue(Files.exists(Paths.get(mountPoint, from.getFileName().toString())));
     }
 
-    @AfterAll
+    @AfterEach
     public void after() throws Exception {
         JavaFS.unmount(Paths.get(mountPoint));
     }

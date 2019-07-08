@@ -7,7 +7,6 @@
 package vavi.nio.file.googledrive;
 
 import com.github.fge.filesystem.provider.FileSystemProviderBase;
-import com.github.fge.filesystem.provider.FileSystemRepository;
 
 
 /**
@@ -18,7 +17,9 @@ import com.github.fge.filesystem.provider.FileSystemRepository;
  */
 public final class GoogleDriveFileSystemProvider extends FileSystemProviderBase {
 
-    public GoogleDriveFileSystemProvider(final FileSystemRepository repository) {
-        super(repository);
+    public static final String PARAM_ID = "id";
+
+    public GoogleDriveFileSystemProvider() {
+        super(new GoogleDriveFileSystemRepository());
     }
 }

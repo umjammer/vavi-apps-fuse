@@ -22,6 +22,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
@@ -31,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -39,6 +41,9 @@ import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
+import com.google.api.client.googleapis.media.MediaHttpUploader;
+import com.google.api.client.googleapis.media.MediaHttpUploader.UploadState;
+import com.google.api.client.http.InputStreamContent;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.Drive.Files;
@@ -49,6 +54,7 @@ import vavi.nio.file.Cache;
 import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
 
+import static com.rainerhahnekamp.sneakythrow.Sneaky.sneaked;
 import static vavi.nio.file.Util.toFilenameString;
 import static vavi.nio.file.Util.toPathString;
 
@@ -108,7 +114,9 @@ public final class GoogleDriveFileSystemDriver extends UnixLikeFileSystemDriverB
                 if (e.getMessage().startsWith("404")) {
                     // TODO when a deep directory is specified at first, like '/Books/Novels'
                     // cache
-                    removeEntry(path);
+                    if (cache.containsFile(path)) {
+                        removeEntry(path);
+                    }
 
                     throw (IOException) new NoSuchFileException("path: " + path).initCause(e);
                 } else {
@@ -167,20 +175,49 @@ options.forEach(o -> { System.err.println("newOutputStream: " + o); });
                     .map(o -> GoogleDriveCopyOption.class.cast(o).getMimeType()).findFirst().get();
         }
 
-        java.io.File temp = java.io.File.createTempFile("vavi-apps-fuse-", ".upload");
 
-        uploadMonitor.start(path);
-        return new GoogleDriveOutputStream(drive, temp, toFilenameString(path), newEntry -> {
-            try {
-                uploadMonitor.finish(path);
-                lock = null;
-System.out.println("file: " + newEntry.getName() + ", " + newEntry.getCreatedTime() + ", " + newEntry.size());
+        return new Util.OutputStreamForUploading() {
 
-                cache.addEntry(path, newEntry);
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
+            @Override
+            protected void upload(InputStream is) throws IOException {
+                File fileMetadata = new File();
+                fileMetadata.setName(toFilenameString(path));
+                fileMetadata.setParents(Arrays.asList(cache.getEntry(path.getParent()).getId()));
+
+                InputStreamContent mediaContent = new InputStreamContent(null, is);
+                mediaContent.setLength(is.available());
+
+                Drive.Files.Create creator = drive.files().create(fileMetadata, mediaContent);
+                MediaHttpUploader uploader = creator.getMediaHttpUploader();
+                uploader.setDirectUploadEnabled(true);
+                uploader.setProgressListener(u -> { System.err.println("upload progress: " + u.getProgress()); });
+                uploadMonitor.start(path);
+                final File newEntry = creator.setFields("id, name, size, parents, mimeType, createdTime").execute(); // TODO file is not finished status!
+
+                ExecutorService executorService = Executors.newSingleThreadExecutor();
+                executorService.submit(sneaked(() -> {
+                    long timeout = 0;
+                    long delay = 100;
+                    try {
+System.err.println("executorService: " + uploader.getProgress() + ", " + uploader.getUploadState());
+                        while ((uploader.getUploadState() != UploadState.MEDIA_COMPLETE || uploader.getProgress() < 1) && timeout < 10 * 1000) {
+System.err.println("executorService: " + uploader.getProgress() + ", " + uploader.getUploadState() + ", " + timeout);
+                            Thread.sleep(delay);
+                            timeout += delay;
+                            delay *= 2;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    uploadMonitor.finish(path);
+                    lock = null;
+System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.size());
+
+                    cache.addEntry(path, newEntry);
+                }));
             }
-        });
+        };
     }
 
     @Nonnull
@@ -258,106 +295,65 @@ if (lock != null) {
         File dirEntry = new File();
         dirEntry.setName(toFilenameString(dir));
         dirEntry.setMimeType(MIME_TYPE_DIR);
+        if (dir.getParent().getFileName() != null) {
+            dirEntry.setParents(Arrays.asList(cache.getEntry(dir.getParent()).getId()));
+        }
         File newEntry = drive.files().create(dirEntry)
                 .setFields("id, parents, name, size, mimeType, createdTime").execute();
-
+//Debug.println("createDirectory: " + dir + ", " + isFolder(newEntry) + ", " + newEntry.hashCode());
         cache.addEntry(dir, newEntry);
     }
 
     @Override
     public void delete(final Path path) throws IOException {
-        final File entry = cache.getEntry(path);
-
-        if (isFolder(entry)) {
-            // TODO use cache
-            List<File> list = drive.files().list()
-                    .setQ("'" + entry.getId() + "' in parents and trashed=false")
-                    .setFields("nextPageToken").execute().getFiles();
-
-            if (list.size() > 0) {
-                throw new DirectoryNotEmptyException(toPathString(path));
-            }
-        }
-
-        drive.files().delete(entry.getId()).execute();
-
-        cache.removeEntry(path);
+        removeEntry(path);
     }
 
     @Override
     public void copy(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
-        File targetEntry;
-        String targetFilename;
-        try {
-            targetEntry = cache.getEntry(target);
-            if (!isFolder(targetEntry)) {
-                drive.files().delete(targetEntry.getId()).execute();
-
-                cache.removeEntry(target);
-
-                targetEntry = cache.getEntry(target.getParent());
-                targetFilename = toFilenameString(target);
+        if (cache.existsEntry(target)) {
+            if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
+                removeEntry(target);
             } else {
-                targetFilename = toFilenameString(source);
+                throw new FileAlreadyExistsException(target.toString());
             }
-        } catch (NoSuchFileException e) {
-            targetEntry = cache.getEntry(target.getParent());
-            targetFilename = toFilenameString(source);
         }
 
-        // 2.
-        final File sourceEntry = cache.getEntry(source);
-        if (!isFolder(sourceEntry)) {
-            File entry = new File();
-            entry.setName(targetFilename);
-            entry.setParents(Arrays.asList(new String[] { targetEntry.getId() }));
-            File newEntry = drive.files().copy(sourceEntry.getId(), entry)
-                        .setFields("id, parents, name, size, mimeType, createdTime").execute();
-
-            cache.addEntry(target, newEntry);
-        } else {
-            throw new UnsupportedOperationException("source can not be a folder");
-        }
+        copyEntry(source, target);
     }
 
     @Override
     public void move(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
-        File targetEntry;
-        String targetFilename;
-        try {
-            targetEntry = cache.getEntry(target);
-            if (!isFolder(targetEntry)) {
-                drive.files().delete(targetEntry.getId()).execute();
-
-                cache.removeEntry(target);
-
-                targetEntry = cache.getEntry(target.getParent());
-                targetFilename = toFilenameString(target);
+        if (cache.existsEntry(target)) {
+            if (isFolder(cache.getEntry(target))) {
+                if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
+                    // replace the target
+                    if (cache.getChildCount(target) > 0) {
+                        throw new DirectoryNotEmptyException(target.toString());
+                    } else {
+                        removeEntry(target);
+                        moveEntry(source, target, false);
+                    }
+                } else {
+                    // move into the target
+                    moveEntry(source, target, true);
+                }
             } else {
-                targetFilename = toFilenameString(source);
+                if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
+                    removeEntry(target);
+                    moveEntry(source, target, false);
+                } else {
+                    throw new FileAlreadyExistsException(target.toString());
+                }
             }
-        } catch (NoSuchFileException e) {
-            targetEntry = cache.getEntry(target.getParent());
-            targetFilename = toFilenameString(target);
+        } else {
+            if (source.getParent().equals(target.getParent())) {
+                // rename
+                renameEntry(source, target);
+            } else {
+                moveEntry(source, target, false);
+            }
         }
-
-        // 2.
-        File sourceEntry = cache.getEntry(source);
-        StringBuilder previousParents = new StringBuilder();
-        for (String parent: sourceEntry.getParents()) {
-            previousParents.append(parent);
-            previousParents.append(',');
-        }
-        File entry = new File();
-        entry.setName(targetFilename);
-        File newEntry = drive.files().update(sourceEntry.getId(), entry)
-                .setAddParents(targetEntry.getId())
-                .setRemoveParents(previousParents.toString())
-                .setFields("id, parents, name, size, mimeType, createdTime").execute();
-
-        cache.removeEntry(source);
-        cache.addEntry(target, newEntry);
-//System.out.println("target.parent: " + target.getParent() + ", " + folderCache.get(toString(target.getParent())));
     }
 
     /**
@@ -375,7 +371,6 @@ if (lock != null) {
      */
     @Override
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
-        final String pathString = toPathString(path);
         final File entry = cache.getEntry(path);
 
         if (isFolder(entry)) {
@@ -385,7 +380,7 @@ if (lock != null) {
         // TODO: assumed; not a file == directory
         for (final AccessMode mode : modes) {
             if (mode == AccessMode.EXECUTE) {
-                throw new AccessDeniedException(pathString);
+                throw new AccessDeniedException(path.toString());
             }
         }
     }
@@ -413,6 +408,7 @@ if (lock != null) {
     private List<Path> getDirectoryEntries(final Path dir) throws IOException {
         final File entry = cache.getEntry(dir);
 
+//Debug.println("getDirectoryEntries: " + dir + ", " + isFolder(entry) + ", " + entry.hashCode());
         if (!isFolder(entry)) {
             throw new NotDirectoryException("dir: " + dir);
         }
@@ -432,7 +428,7 @@ if (lock != null) {
                 for (final File child : children) {
                     Path childPath = dir.resolve(child.getName());
                     list.add(childPath);
-//System.err.println("child: " + childPath.toRealPath().toString());
+//System.err.println("child: " + childPath + ", " + child.getId() + ", folder: " + isFolder(child));
 
                     cache.putFile(childPath, child);
                 }
@@ -443,5 +439,83 @@ if (lock != null) {
         }
 
         return list;
+    }
+
+    /** */
+    private void removeEntry(Path path) throws IOException {
+        final File entry = cache.getEntry(path);
+
+        if (isFolder(entry)) {
+            // TODO use cache
+            List<File> list = drive.files().list()
+                    .setQ("'" + entry.getId() + "' in parents and trashed=false")
+                    .setFields("nextPageToken").execute().getFiles();
+
+            if (list != null && list.size() > 0) {
+                throw new DirectoryNotEmptyException(toPathString(path));
+            }
+        }
+
+        drive.files().delete(entry.getId()).execute();
+
+        cache.removeEntry(path);
+    }
+
+    /** */
+    private void copyEntry(final Path source, final Path target) throws IOException {
+        final File sourceEntry = cache.getEntry(source);
+        File targetParentEntry = cache.getEntry(target.getParent());
+        if (!isFolder(sourceEntry)) {
+            File entry = new File();
+            entry.setName(toFilenameString(target));
+            entry.setParents(Arrays.asList(targetParentEntry.getId()));
+            File newEntry = drive.files().copy(sourceEntry.getId(), entry)
+                        .setFields("id, parents, name, size, mimeType, createdTime").execute();
+
+            cache.addEntry(target, newEntry);
+        } else {
+            // TODO java spec. allows empty folder
+            throw new UnsupportedOperationException("source can not be a folder");
+        }
+    }
+
+
+    /**
+     * @param targetIsParent if the target is folder
+     */
+    private void moveEntry(final Path source, final Path target, boolean targetIsParent) throws IOException {
+        File sourceEntry = cache.getEntry(source);
+        File targetParentEntry = cache.getEntry(targetIsParent ? target : target.getParent());
+        if (!isFolder(sourceEntry)) {
+            File entry = new File();
+            entry.setName(targetIsParent ? toFilenameString(source) : toFilenameString(target));
+            String previousParents = null;
+            if (sourceEntry.getParents() != null) {
+                previousParents = String.join(",", sourceEntry.getParents());
+            }
+            File newEntry = drive.files().update(sourceEntry.getId(), entry)
+                    .setAddParents(targetParentEntry.getId())
+                    .setRemoveParents(previousParents)
+                    .setFields("id, parents, name, size, mimeType, createdTime").execute();
+            cache.removeEntry(source);
+            if (targetIsParent) {
+                cache.addEntry(target.resolve(source.getFileName()), newEntry);
+            } else {
+                cache.addEntry(target, newEntry);
+            }
+        } else if (isFolder(sourceEntry)) {
+            throw new IsDirectoryException("source can not be a folder: " + source);
+        }
+    }
+
+    /** */
+    private void renameEntry(final Path source, final Path target) throws IOException {
+        File sourceEntry = cache.getEntry(source);
+        File entry = new File();
+        entry.setName(toFilenameString(target));
+        File newEntry = drive.files().update(sourceEntry.getId(), entry)
+                .setFields("id, name, size, mimeType, createdTime").execute();
+        cache.removeEntry(source);
+        cache.addEntry(target, newEntry);
     }
 }

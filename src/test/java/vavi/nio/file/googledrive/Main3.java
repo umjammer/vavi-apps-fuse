@@ -10,17 +10,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.spi.FileSystemProvider;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.github.fge.filesystem.provider.FileSystemRepository;
+import java.util.Collections;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
@@ -41,26 +38,16 @@ public final class Main3 {
          * Note: the URI _must_ have a scheme of "googledrive", and
          * _must_ be hierarchical.
          */
-        final URI uri = URI.create("googledrive://foo/");
-        final Map<String, String> env = new HashMap<>();
-        env.put("email", email);
+        URI uri = URI.create("googledrive:///?id=" + email);
 
-        /*
-         * Create the FileSystemProvider; this will be more simple once
-         * the filesystem is registered to the JRE, but right now you
-         * have to do like that, sorry...
-         */
-        final FileSystemRepository repository = new GoogleDriveFileSystemRepository();
-        final FileSystemProvider provider = new GoogleDriveFileSystemProvider(repository);
+        // Create the filesystem...
+        try (FileSystem googledrivefs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP)) {
 
-        try (/* Create the filesystem... */
-            final FileSystem googledrivefs = provider.newFileSystem(uri, env)) {
-
-            /* And use it! You should of course adapt this code... */
+            // And use it! You should of course adapt this code...
             // Equivalent to FileSystems.getDefault().getPath(...)
-            final Path src = Paths.get(System.getProperty("user.home") + "/tmp/2" , "java7.java");
+            Path src = Paths.get(System.getProperty("user.home") + "/tmp/2" , "java7.java");
             // Here we create a path for our DropBox fs...
-            final Path dst = googledrivefs.getPath("/java7.java");
+            Path dst = googledrivefs.getPath("/java7.java");
             // Here we copy the file from our local fs to googledrive!
             try {
 System.out.println("$ list");
