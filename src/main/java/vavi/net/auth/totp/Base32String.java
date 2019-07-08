@@ -1,5 +1,5 @@
 
-package vavi.net.totp;
+package vavi.net.auth.totp;
 
 import java.util.HashMap;
 

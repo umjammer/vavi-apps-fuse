@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.net.totp;
+package vavi.net.auth.totp;
 
 import java.security.GeneralSecurityException;
 
@@ -39,7 +39,6 @@ public class PinGenerator {
             throw new IllegalStateException(e);
         }
     }
-
 }
 
 /* */
