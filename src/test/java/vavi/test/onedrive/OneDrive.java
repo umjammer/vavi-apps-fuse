@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.net.fuse.onedrive;
+package vavi.test.onedrive;
 
 import vavi.net.fuse.onedrive.OneDriveFS;
 

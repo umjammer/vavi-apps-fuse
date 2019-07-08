@@ -1,4 +1,4 @@
-package vavi.net.fuse.googledrive;
+package vavi.test.googledrive;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -20,8 +20,6 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
-
-import vavi.net.auth.oauth2.google.AuthorizationCodeInstalledApp;
 
 
 public class DriveQuickstart {

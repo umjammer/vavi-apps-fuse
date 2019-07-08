@@ -1,9 +1,10 @@
-package vavi.net.fuse;
 /*
  * Copyright (c) 2016 by Naohide Sano, All rights reserved.
  *
  * Programmed by Naohide Sano
  */
+
+package vavi.test;
 
 import java.io.IOException;
 

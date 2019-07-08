@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.net.fuse.box;
+package vavi.test.dropbox;
 
 import java.awt.Dimension;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.html.HTMLInputElement;
 
-import vavi.net.fuse.Getter;
+import vavi.test.Getter;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -35,20 +35,20 @@ import javafx.scene.web.WebView;
 
 
 /**
- * BoxFxGetter.
+ * DropBoxFxGetter.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
- * @version 0.00 2016/03/18 umjammer initial version <br>
+ * @version 0.00 2016/03/02 umjammer initial version <br>
  */
 @PropsEntity(url = "file://${HOME}/.vavifuse/credentials.properties")
-public class BoxFxGetter implements Getter {
+public class DropBoxFxGetter implements Getter {
 
     private final String email;
-    @Property(name = "box.password.{0}")
+    @Property(name = "dropbox.password.{0}")
     private transient String password;
     private transient String code;
 
-    public BoxFxGetter(String email) {
+    public DropBoxFxGetter(String email) {
         this.email = email;
 
         try {
@@ -68,6 +68,9 @@ System.err.println(url);
 
         exception = null;
 
+        System.setProperty("http.proxyHost","127.0.0.1"); // TODO
+        System.setProperty("http.proxyPort","8888");
+
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -84,6 +87,9 @@ System.err.println(url);
 
         frame.setVisible(false);
         frame.dispose();
+
+        System.setProperty("http.proxyHost","");
+        System.setProperty("http.proxyPort","");
 
         if (exception != null) {
             throw new IllegalStateException(exception);

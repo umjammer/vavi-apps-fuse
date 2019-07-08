@@ -1,3 +1,4 @@
+package vavi.test.vfs;
 /*
  * Copyright (c) 2016 by Naohide Sano, All rights reserved.
  *
@@ -19,7 +20,7 @@ import vavi.util.properties.annotation.PropsEntity;
 
 
 /**
- * TestVfs.
+ * TestVfs (smb).
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/08/08 umjammer initial version <br>

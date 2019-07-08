@@ -1,4 +1,4 @@
-package vavi.net.fuse.googledrive;
+package vavi.test.googledrive;
 
 import java.io.IOException;
 import java.util.Arrays;

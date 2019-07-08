@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.net.fuse.googledrive;
+package vavi.test.box;
 
 import java.awt.Dimension;
 import java.io.IOException;
@@ -14,10 +14,12 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.w3c.dom.html.HTMLInputElement;
 
-import vavi.net.fuse.Getter;
-import vavi.net.totp.PinGenerator;
+import vavi.test.Getter;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -33,22 +35,20 @@ import javafx.scene.web.WebView;
 
 
 /**
- * GoogleDriveFxGetter.
+ * BoxFxGetter.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
- * @version 0.00 2016/03/01 umjammer initial version <br>
+ * @version 0.00 2016/03/18 umjammer initial version <br>
  */
 @PropsEntity(url = "file://${HOME}/.vavifuse/credentials.properties")
-public class GoogleDriveFxGetter implements Getter {
+public class BoxFxGetter implements Getter {
 
     private final String email;
-    @Property(name = "googledrive.password.{0}")
+    @Property(name = "box.password.{0}")
     private transient String password;
-    @Property(name = "googledrive.totpSecret.{0}")
-    private transient String totpSecret;
     private transient String code;
 
-    public GoogleDriveFxGetter(String email) {
+    public BoxFxGetter(String email) {
         this.email = email;
 
         try {
@@ -84,8 +84,6 @@ System.err.println(url);
 
         frame.setVisible(false);
         frame.dispose();
-
-//Thread.getAllStackTraces().keySet().forEach(System.err::println);
 
         if (exception != null) {
             throw new IllegalStateException(exception);
@@ -143,29 +141,21 @@ System.err.println(url);
                     String location = webEngine.getLocation();
                     System.err.println("location: " + location);
 
-                    if (location.startsWith("https://accounts.google.com/ServiceLogin")) {
+                    if (location.startsWith(url)) {
 
                         if (!login) {
                             Document doc = webEngine.getDocument();
+System.err.println(webEngine.executeScript("document.documentElement.outerHTML"));
 
                             try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(System.err); }
 
-                            ((HTMLInputElement) doc.getElementById("Email")).setValue(email);
+                            ((HTMLInputElement) doc.getElementById("pyxl4325")).setValue(email);
 System.err.println("set email: " + email);
 
-                            try { Thread.sleep(50); } catch (InterruptedException e) { e.printStackTrace(System.err); }
+                            ((HTMLInputElement) doc.getElementById("pyxl4328")).setValue(password);
+System.err.println("set passwd: " + password);
 
-                            ((HTMLInputElement) doc.getElementById("next")).click();
-System.err.println("next");
-
-                            try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(System.err); }
-
-System.err.println(webEngine.executeScript("document.documentElement.outerHTML"));
-
-//                            ((HTMLInputElement) doc.getElementById("password")).setValue(password);
-//System.err.println("set passwd: " + password);
-
-//                            ((HTMLInputElement) doc.getElementById("signIn")).click();
+//                            ((HTMLInputElement) doc.getElementById("????")).click();
 //System.err.println("signin");
 
                             login = true;
@@ -174,38 +164,21 @@ System.err.println(webEngine.executeScript("document.documentElement.outerHTML")
                             exception = new IllegalArgumentException("wrong email or password");
                             latch.countDown();
                         }
-                    } else if (location.startsWith("https://accounts.google.com/signin/challenge/totp")) {
+                    } else if (location.startsWith("https://www.dropbox.com/1/oauth2/authorize?")) {
 //System.err.println(webEngine.executeScript("document.documentElement.outerHTML"));
-                        //
-                        if (totpSecret != null && !totpSecret.isEmpty()) {
-                            String pin = PinGenerator.computePin(totpSecret, null);
-                            Document doc = webEngine.getDocument();
-
-                            try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(System.err); }
-
-                            ((HTMLInputElement) doc.getElementById("totpPin")).setValue(pin);
-System.err.println("pin: " + pin);
-
-                            try { Thread.sleep(50); } catch (InterruptedException e) { e.printStackTrace(System.err); }
-
-                            ((HTMLInputElement) doc.getElementById("submit")).click();
-System.err.println("2 step authentication");
-                        } else {
-System.err.println("no totp secret, enter by yourself");
-                        }
-
-                    } else if (location.startsWith("https://accounts.google.com/o/oauth2/auth")) {
+//                        Document doc = webEngine.getDocument();
+//                        ((HTMLButtonElement) doc.getElementById("submit_approve_access")).click();
+System.err.println("accept");
+                    } else if (location.startsWith("https://www.dropbox.com/1/oauth2/authorize_submit")) {
 System.err.println(webEngine.executeScript("document.documentElement.outerHTML"));
 
-//                        Document doc = webEngine.getDocument();
-//                        ((HTMLFormElement) doc.getElementById("connect-approve")).submit();
-System.err.println("accept");
-
-                    } else if (location.startsWith("https://accounts.google.com/o/oauth2/approval")) {
-//System.err.println(webEngine.executeScript("document.documentElement.outerHTML"));
-
                         Document doc = webEngine.getDocument();
-                        code = ((HTMLInputElement) doc.getElementById("code")).getAttribute("value");
+                        NodeList inputs = doc.getElementsByTagName("INPUT");
+                        for (int i = 0; i < inputs.getLength(); i++) {
+                            Node input = inputs.item(i);
+System.err.println("input: " + ((Element) input).getAttribute("type")); // == text
+                        }
+                        code = ((HTMLInputElement) doc.getElementById("code")).getAttribute("data-token");
 System.err.println("code: " + code);
                         latch.countDown();
                     }

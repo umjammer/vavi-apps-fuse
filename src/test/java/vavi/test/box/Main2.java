@@ -4,13 +4,13 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.net.fuse.box;
+package vavi.test.box;
 
 import com.box.sdk.BoxAPIConnection;
 import com.box.sdk.BoxFolder;
 import com.box.sdk.BoxItem;
 
-import vavi.net.fuse.Getter;
+import vavi.test.Getter;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 

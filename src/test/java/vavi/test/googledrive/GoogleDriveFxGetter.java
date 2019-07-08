@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.net.fuse.dropbox;
+package vavi.test.googledrive;
 
 import java.awt.Dimension;
 import java.io.IOException;
@@ -14,12 +14,10 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.w3c.dom.html.HTMLInputElement;
 
-import vavi.net.fuse.Getter;
+import vavi.net.auth.totp.PinGenerator;
+import vavi.test.Getter;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -35,20 +33,22 @@ import javafx.scene.web.WebView;
 
 
 /**
- * DropBoxFxGetter.
+ * GoogleDriveFxGetter.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
- * @version 0.00 2016/03/02 umjammer initial version <br>
+ * @version 0.00 2016/03/01 umjammer initial version <br>
  */
 @PropsEntity(url = "file://${HOME}/.vavifuse/credentials.properties")
-public class DropBoxFxGetter implements Getter {
+public class GoogleDriveFxGetter implements Getter {
 
     private final String email;
-    @Property(name = "dropbox.password.{0}")
+    @Property(name = "googledrive.password.{0}")
     private transient String password;
+    @Property(name = "googledrive.totpSecret.{0}")
+    private transient String totpSecret;
     private transient String code;
 
-    public DropBoxFxGetter(String email) {
+    public GoogleDriveFxGetter(String email) {
         this.email = email;
 
         try {
@@ -68,9 +68,6 @@ System.err.println(url);
 
         exception = null;
 
-        System.setProperty("http.proxyHost","127.0.0.1"); // TODO
-        System.setProperty("http.proxyPort","8888");
-
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -88,8 +85,7 @@ System.err.println(url);
         frame.setVisible(false);
         frame.dispose();
 
-        System.setProperty("http.proxyHost","");
-        System.setProperty("http.proxyPort","");
+//Thread.getAllStackTraces().keySet().forEach(System.err::println);
 
         if (exception != null) {
             throw new IllegalStateException(exception);
@@ -147,21 +143,29 @@ System.err.println(url);
                     String location = webEngine.getLocation();
                     System.err.println("location: " + location);
 
-                    if (location.startsWith(url)) {
+                    if (location.startsWith("https://accounts.google.com/ServiceLogin")) {
 
                         if (!login) {
                             Document doc = webEngine.getDocument();
-System.err.println(webEngine.executeScript("document.documentElement.outerHTML"));
 
                             try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(System.err); }
 
-                            ((HTMLInputElement) doc.getElementById("pyxl4325")).setValue(email);
+                            ((HTMLInputElement) doc.getElementById("Email")).setValue(email);
 System.err.println("set email: " + email);
 
-                            ((HTMLInputElement) doc.getElementById("pyxl4328")).setValue(password);
-System.err.println("set passwd: " + password);
+                            try { Thread.sleep(50); } catch (InterruptedException e) { e.printStackTrace(System.err); }
 
-//                            ((HTMLInputElement) doc.getElementById("????")).click();
+                            ((HTMLInputElement) doc.getElementById("next")).click();
+System.err.println("next");
+
+                            try { Thread.sleep(2000); } catch (InterruptedException e) { e.printStackTrace(System.err); }
+
+System.err.println(webEngine.executeScript("document.documentElement.outerHTML"));
+
+//                            ((HTMLInputElement) doc.getElementById("password")).setValue(password);
+//System.err.println("set passwd: " + password);
+
+//                            ((HTMLInputElement) doc.getElementById("signIn")).click();
 //System.err.println("signin");
 
                             login = true;
@@ -170,21 +174,38 @@ System.err.println("set passwd: " + password);
                             exception = new IllegalArgumentException("wrong email or password");
                             latch.countDown();
                         }
-                    } else if (location.startsWith("https://www.dropbox.com/1/oauth2/authorize?")) {
+                    } else if (location.startsWith("https://accounts.google.com/signin/challenge/totp")) {
 //System.err.println(webEngine.executeScript("document.documentElement.outerHTML"));
-//                        Document doc = webEngine.getDocument();
-//                        ((HTMLButtonElement) doc.getElementById("submit_approve_access")).click();
-System.err.println("accept");
-                    } else if (location.startsWith("https://www.dropbox.com/1/oauth2/authorize_submit")) {
+                        //
+                        if (totpSecret != null && !totpSecret.isEmpty()) {
+                            String pin = PinGenerator.computePin(totpSecret, null);
+                            Document doc = webEngine.getDocument();
+
+                            try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(System.err); }
+
+                            ((HTMLInputElement) doc.getElementById("totpPin")).setValue(pin);
+System.err.println("pin: " + pin);
+
+                            try { Thread.sleep(50); } catch (InterruptedException e) { e.printStackTrace(System.err); }
+
+                            ((HTMLInputElement) doc.getElementById("submit")).click();
+System.err.println("2 step authentication");
+                        } else {
+System.err.println("no totp secret, enter by yourself");
+                        }
+
+                    } else if (location.startsWith("https://accounts.google.com/o/oauth2/auth")) {
 System.err.println(webEngine.executeScript("document.documentElement.outerHTML"));
 
+//                        Document doc = webEngine.getDocument();
+//                        ((HTMLFormElement) doc.getElementById("connect-approve")).submit();
+System.err.println("accept");
+
+                    } else if (location.startsWith("https://accounts.google.com/o/oauth2/approval")) {
+//System.err.println(webEngine.executeScript("document.documentElement.outerHTML"));
+
                         Document doc = webEngine.getDocument();
-                        NodeList inputs = doc.getElementsByTagName("INPUT");
-                        for (int i = 0; i < inputs.getLength(); i++) {
-                            Node input = inputs.item(i);
-System.err.println("input: " + ((Element) input).getAttribute("type")); // == text
-                        }
-                        code = ((HTMLInputElement) doc.getElementById("code")).getAttribute("data-token");
+                        code = ((HTMLInputElement) doc.getElementById("code")).getAttribute("value");
 System.err.println("code: " + code);
                         latch.countDown();
                     }

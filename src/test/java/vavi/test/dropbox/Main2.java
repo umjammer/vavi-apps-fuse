@@ -1,5 +1,5 @@
 
-package vavi.net.fuse.dropbox;
+package vavi.test.dropbox;
 
 import java.util.Locale;
 import java.util.logging.Level;
@@ -12,7 +12,7 @@ import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.DbxWebAuth;
 import com.dropbox.core.DbxWebAuthNoRedirect;
 
-import vavi.net.fuse.Getter;
+import vavi.test.Getter;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 

@@ -1,4 +1,4 @@
-package vavi.net.fuse.box;
+package vavi.test.box;
 
 import java.io.IOException;
 import java.nio.file.Files;

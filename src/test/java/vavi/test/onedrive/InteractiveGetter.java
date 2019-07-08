@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.net.fuse.onedrive;
+package vavi.test.onedrive;
 
 import java.awt.Desktop;
 import java.io.BufferedReader;
@@ -13,7 +13,7 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import vavi.net.fuse.Getter;
+import vavi.test.Getter;
 
 
 /**

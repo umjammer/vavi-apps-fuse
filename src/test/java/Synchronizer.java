@@ -7,23 +7,18 @@
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-
-import com.github.fge.filesystem.provider.FileSystemRepository;
 
 import vavi.nio.file.Util;
-import vavi.nio.file.onedrive.OneDriveFileSystemProvider;
-import vavi.nio.file.onedrive.OneDriveFileSystemRepository;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
@@ -45,19 +40,9 @@ public final class Synchronizer {
         String cwd2 = args[2];
         boolean dryRun = false;
 
-        final URI uri = URI.create("onedrive://foo/");
-        final Map<String, String> env = new HashMap<>();
-        env.put("email", email);
+        URI uri = URI.create("onedrive:///?id=" + email);
 
-        /*
-         * Create the FileSystemProvider; this will be more simple once
-         * the filesystem is registered to the JRE, but right now you
-         * have to do like that, sorry...
-         */
-        final FileSystemRepository repository = new OneDriveFileSystemRepository();
-        final FileSystemProvider provider = new OneDriveFileSystemProvider(repository);
-
-        FileSystem onedrivefs = provider.newFileSystem(uri, env);
+        FileSystem onedrivefs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP);
 
         // onedrive
         Path root1 = onedrivefs.getPath(cwd1);

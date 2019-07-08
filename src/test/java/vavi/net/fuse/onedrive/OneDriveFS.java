@@ -17,9 +17,10 @@ import java.util.Map;
 import java.util.Properties;
 
 import vavi.net.auth.oauth2.Authenticator;
-import vavi.net.auth.oauth2.microsoft.OneDriveAuthenticator;
+import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
+import vavi.net.auth.oauth2.microsoft.OneDriveLocalAuthenticator;
 import vavi.util.Debug;
-import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
 import de.tuberlin.onedrivesdk.OneDriveException;
@@ -50,15 +51,10 @@ import net.fusejna.util.FuseFilesystemAdapterAssumeImplemented;
  * @version 0.00 2016/02/29 umjammer initial version <br>
  * @see "https://account.live.com/developers/applications/index"
  */
-@PropsEntity(url = "file://${user.home}/.vavifuse/onedrive.properties")
 public class OneDriveFS extends FuseFilesystemAdapterAssumeImplemented {
 
-    @Property(name = "onedrive.clientId")
-    private String clientId;
-    @Property(name = "onedrive.clientSecret")
-    private transient String clientSecret;
-    @Property(name = "onedrive.redirectUrl")
-    private String redirectUrl;
+    /** */
+    private BasicAppCredential credential;
 
     /** */
     private transient OneDriveSDK api;
@@ -77,11 +73,12 @@ public class OneDriveFS extends FuseFilesystemAdapterAssumeImplemented {
             // TODO why not work?
 //            Runtime.getRuntime().addShutdownHook(new Thread(() -> writeRefreshToken()));
 
-            PropsEntity.Util.bind(this, email);
+            credential = new MicrosoftLocalAppCredential();
+            PropsEntity.Util.bind(credential, email);
 
-            api = OneDriveFactory.createOneDriveSDK(clientId,
-                                                    clientSecret,
-                                                    redirectUrl,
+            api = OneDriveFactory.createOneDriveSDK(credential.getClientId(),
+                                                    credential.getClientSecret(),
+                                                    credential.getRedirectUrl(),
                                                     OneDriveScope.OFFLINE_ACCESS);
             String url = api.getAuthenticationURL();
 
@@ -110,7 +107,7 @@ Debug.println("root: " + folder.getName());
 
     /** */
     private void authenticateByBrowser(String url, String email) throws IOException, OneDriveException {
-        Authenticator authenticator = new OneDriveAuthenticator(email, redirectUrl);
+        Authenticator authenticator = new OneDriveLocalAuthenticator(email, credential.getRedirectUrl());
         String code = authenticator.get(url);
 
         api.authenticate(code);

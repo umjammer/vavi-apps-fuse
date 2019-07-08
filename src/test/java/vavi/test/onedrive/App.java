@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.net.fuse.onedrive;
+package vavi.test.onedrive;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +21,7 @@ import java.util.concurrent.Future;
 
 import com.google.common.collect.Maps;
 
-import vavi.net.fuse.Getter;
+import vavi.test.Getter;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
