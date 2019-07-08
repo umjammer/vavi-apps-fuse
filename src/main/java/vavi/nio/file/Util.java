@@ -6,6 +6,8 @@
 
 package vavi.nio.file;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,6 +25,8 @@ import java.text.Normalizer.Form;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import vavi.util.Debug;
 
 
 /**
@@ -43,7 +47,7 @@ public interface Util {
         return Normalizer.normalize(path.toRealPath().getFileName().toString(), Form.NFC);
     }
 
-    /** @see #ignoreAppleDouble */
+    /** @see "ignoreAppleDouble" */
     public static boolean isAppleDouble(Path path) throws IOException {
 //System.err.println("path.toRealPath(): " + path.toRealPath());
 //System.err.println("path.getFileName(): " + path.getFileName());
@@ -62,8 +66,9 @@ public interface Util {
             @Override
             public Iterator<Path> iterator() {
                 // required by the contract
-                if (alreadyOpen.getAndSet(true))
-                    throw new IllegalStateException();
+                if (alreadyOpen.getAndSet(true)) {
+                    throw new IllegalStateException("already open");
+                }
                 return list.iterator();
             }
 
@@ -85,25 +90,30 @@ public interface Util {
 
         protected abstract long getLeftOver() throws IOException;
 
+        @Override
         public boolean isOpen() {
             return wbc.isOpen();
         }
 
+        @Override
         public long position() throws IOException {
             return written;
         }
 
+        @Override
         public SeekableByteChannel position(long pos) throws IOException {
             written = pos;
             return this;
         }
 
+        @Override
         public int read(ByteBuffer dst) throws IOException {
             throw new NonReadableChannelException();
         }
 
+        @Override
         public SeekableByteChannel truncate(long size) throws IOException {
-System.out.println("writable byte channel: truncate: " + size + ", " + written);
+Debug.println("writable byte channel: truncate: " + size + ", " + written);
             // TODO implement correctly
 
             if (written > size) {
@@ -113,19 +123,22 @@ System.out.println("writable byte channel: truncate: " + size + ", " + written);
             return this;
         }
 
+        @Override
         public int write(ByteBuffer src) throws IOException {
             int n = wbc.write(src);
-System.out.println("writable byte channel: write: " + n);
+Debug.println("writable byte channel: write: " + n);
             written += n;
             return n;
         }
 
+        @Override
         public long size() throws IOException {
             return written;
         }
 
+        @Override
         public void close() throws IOException {
-System.out.println("writable byte channel: close");
+Debug.println("writable byte channel: close");
             wbc.close();
         }
     }
@@ -143,19 +156,23 @@ System.out.println("writable byte channel: close");
 
         protected abstract long getSize() throws IOException;
 
+        @Override
         public boolean isOpen() {
             return rbc.isOpen();
         }
 
+        @Override
         public long position() throws IOException {
             return read;
         }
 
+        @Override
         public SeekableByteChannel position(long pos) throws IOException {
             read = pos;
             return this;
         }
 
+        @Override
         public int read(ByteBuffer dst) throws IOException {
             int n = rbc.read(dst);
             if (n > 0) {
@@ -164,21 +181,70 @@ System.out.println("writable byte channel: close");
             return n;
         }
 
+        @Override
         public SeekableByteChannel truncate(long size) throws IOException {
             throw new NonWritableChannelException();
         }
 
+        @Override
         public int write(ByteBuffer src) throws IOException {
             throw new NonWritableChannelException();
         }
 
+        @Override
         public long size() throws IOException {
             return size;
         }
 
+        @Override
         public void close() throws IOException {
             rbc.close();
         }
+    }
+
+    /** */
+    public static abstract class OutputStreamForUploading extends OutputStream {
+        private final AtomicBoolean closed = new AtomicBoolean();
+
+        private ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        @Override
+        public void write(final int b) throws IOException {
+            baos.write(b);
+        }
+
+        @Override
+        public void write(final byte[] b) throws IOException {
+            baos.write(b);
+        }
+
+        @Override
+        public void write(final byte[] b, final int off, final int len) throws IOException {
+            baos.write(b, off, len);
+        }
+
+        @Override
+        public void flush() throws IOException {
+            baos.flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                if (closed.get()) {
+Debug.printf("Skip double close of stream %s", this);
+                    return;
+                }
+
+                baos.close();
+
+                upload(new ByteArrayInputStream(baos.toByteArray())); // TODO engine
+            } finally {
+                closed.set(true);
+            }
+        }
+
+        protected abstract void upload(InputStream in) throws IOException;
     }
 }
 

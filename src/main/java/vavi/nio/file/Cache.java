@@ -57,14 +57,20 @@ public abstract class Cache<T> {
     }
 
     /** */
+    public int getChildCount(Path path) throws IOException {
+        return containsFolder(path) ? getFolder(path).size() : -1;
+    }
+
+    /** */
     public List<Path> putFolder(Path path, List<Path> children) throws IOException {
         return folderCache.put(toPathString(path), children);
     }
 
     /** */
     public void addEntry(Path path, T entry) throws IOException {
+//new Exception("*** ADD ***").printStackTrace();
         entryCache.put(toPathString(path), entry);
-//System.out.println("path.parent: " + path.getParent() + ", " + folderCache.get(toString(path.getParent())));
+//System.out.println("CACHE A1: " + path);
         Path parentPath = path.getParent();
         List<Path> paths = folderCache.get(toPathString(parentPath));
         if (paths == null) {
@@ -72,15 +78,25 @@ public abstract class Cache<T> {
             folderCache.put(toPathString(parentPath), paths);
         }
         paths.add(path);
+//paths.forEach(p -> System.out.println("CACHE A2: " + p));
     }
 
     /** */
     public void removeEntry(Path path) throws IOException {
+//new Exception("*** DELETE ***").printStackTrace();
         entryCache.remove(toPathString(path));
+//System.out.println("CACHE D1: " + path);
         List<Path> paths = folderCache.get(toPathString(path.getParent()));
         if (paths != null) {
             paths.remove(path);
+//paths.forEach(p -> System.out.println("CACHE D2: " + p));
         }
+    }
+
+    /** TODO for onedrive only check!!!!! */
+    public void removeCache(Path path) throws IOException {
+        entryCache.remove(toPathString(path));
+        folderCache.remove(toPathString(path));
     }
 
     /**
