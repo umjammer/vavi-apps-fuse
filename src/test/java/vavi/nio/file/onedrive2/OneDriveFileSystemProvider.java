@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.file.onedrive.test;
+package vavi.nio.file.onedrive2;
 
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -29,7 +29,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import vavi.net.auth.oauth2.Authenticator;
-import vavi.net.auth.oauth2.microsoft.OneDriveAuthenticator;
+import vavi.net.auth.oauth2.microsoft.OneDriveLocalAuthenticator;
 import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
@@ -105,7 +105,7 @@ Debug.println("root: " + folder.getName());
 
     /** */
     private void authenticateByBrowser(String url, String email) throws IOException, OneDriveException {
-        Authenticator authenticator = new OneDriveAuthenticator(email, redirectUrl);
+        Authenticator authenticator = new OneDriveLocalAuthenticator(email, redirectUrl);
         String code = authenticator.get(url);
 
         api.authenticate(code);

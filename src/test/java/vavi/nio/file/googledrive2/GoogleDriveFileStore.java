@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.file.onedrive.test;
+package vavi.nio.file.googledrive2;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
@@ -13,27 +13,17 @@ import java.nio.file.attribute.FileStoreAttributeView;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.tuberlin.onedrivesdk.OneDriveException;
-import de.tuberlin.onedrivesdk.OneDriveSDK;
-import de.tuberlin.onedrivesdk.drive.DriveQuota;
+import com.google.api.services.drive.Drive;
+import com.google.api.services.drive.model.About.StorageQuota;
 
 
 /**
- * OneDriveFileStore.
+ * FlickrFileStore.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/05 umjammer initial version <br>
  */
-public class OneDriveFileStore extends FileStore {
-
-    private final OneDrivePath oneDrivePath;
-
-    /**
-     * @param oneDrivePath
-     */
-    public OneDriveFileStore(OneDrivePath oneDrivePath) {
-        this.oneDrivePath = oneDrivePath;
-    }
+public class GoogleDriveFileStore extends FileStore {
 
     /* @see java.nio.file.FileStore#name() */
     @Override
@@ -45,7 +35,7 @@ public class OneDriveFileStore extends FileStore {
     /* @see java.nio.file.FileStore#type() */
     @Override
     public String type() {
-        return "onedrive";
+        return "googledrive";
     }
 
     /* @see java.nio.file.FileStore#isReadOnly() */
@@ -97,31 +87,27 @@ public class OneDriveFileStore extends FileStore {
     }
 
     /** */
-    private OneDriveSDK api;
+    private Drive drive;
 
     /** */
     private Map<String, Object> getAttributs() throws IOException {
-        try {
-            DriveQuota quota = api.getDefaultDrive().getQuota();
+        StorageQuota quota = drive.about().get().execute().getStorageQuota();
 //Debug.println("total: " + quota.getTotal());
 //Debug.println("used: " + quota.getUsed());
 
-            long blockSize = 512;
+        long blockSize = 512;
 
-            long total = quota.getTotal() / blockSize;
-            long used = quota.getUsed() / blockSize;
-            long free = total - used;
+        long total = quota.getLimit() / blockSize;
+        long used = quota.getUsage() / blockSize;
+        long free = total - used;
 
-            Map<String, Object> attributes = new HashMap<>();
-            attributes.put("bavail", total - free);
-            attributes.put("bfree", free);
-            attributes.put("blocks", total);
-            attributes.put("bsize", blockSize);
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("bavail", total - free);
+        attributes.put("bfree", free);
+        attributes.put("blocks", total);
+        attributes.put("bsize", blockSize);
 
-            return attributes;
-        } catch (OneDriveException e) {
-            throw new IOException(e);
-        }
+        return attributes;
     }
 }
 
