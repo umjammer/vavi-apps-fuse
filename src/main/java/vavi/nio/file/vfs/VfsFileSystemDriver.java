@@ -82,6 +82,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
 
     /**
      * @see #ignoreAppleDouble
+     * @throws NoSuchFileException apple double file
      */
     private FileObject getEntry(Path path) throws IOException {
         String pathString = Util.toPathString(path);

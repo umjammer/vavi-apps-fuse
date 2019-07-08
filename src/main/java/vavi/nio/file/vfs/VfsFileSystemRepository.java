@@ -19,6 +19,7 @@ import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.VFS;
 import org.apache.commons.vfs2.auth.StaticUserAuthenticator;
 import org.apache.commons.vfs2.impl.DefaultFileSystemConfigBuilder;
+import org.apache.commons.vfs2.provider.sftp.IdentityInfo;
 import org.apache.commons.vfs2.provider.sftp.SftpFileSystemConfigBuilder;
 
 import com.github.fge.filesystem.driver.FileSystemDriver;
@@ -51,6 +52,7 @@ public final class VfsFileSystemRepository extends FileSystemRepositoryBase {
             switch (protocol) {
             case "smb": return new SmbOptions();
             case "sftp": return new SftpOptions();
+            case "webdav": return new WebdavOptions();
             default: throw new IllegalArgumentException(protocol);
             }
         }
@@ -112,14 +114,35 @@ public final class VfsFileSystemRepository extends FileSystemRepositoryBase {
         public FileSystemOptions getFileSystemOptions() throws IOException {
             FileSystemOptions options = new FileSystemOptions();
             SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(options, false);
-            SftpFileSystemConfigBuilder.getInstance().setTimeout(options, 10000);
+            SftpFileSystemConfigBuilder.getInstance().setSessionTimeoutMillis(options, 10000);
             SftpFileSystemConfigBuilder.getInstance().setUserInfo(options, new SftpPassphraseUserInfo(passphrase));
-            SftpFileSystemConfigBuilder.getInstance().setIdentities(options, new File[] { new File(keyPath) });
+            SftpFileSystemConfigBuilder.getInstance().setIdentityInfo(options, new IdentityInfo(new File(keyPath)));
             return options;
         }
         @Override
         public String buildBaseUrl(String baseUrl) {
             return String.format(baseUrl, username, host, port);
+        }
+    }
+
+    @PropsEntity(url = "file://${user.home}/.vavifuse/credentials.properties")
+    private static class WebdavOptions implements Options {
+        @Property(name = "vfs.username.{0}")
+        private String username;
+        @Property(name = "vfs.password.{0}")
+        private transient String password;
+        @Property(name = "vfs.host.{0}")
+        private String host;
+        @Property(name = "vfs.port.{0}")
+        private String port;
+        @Override
+        public FileSystemOptions getFileSystemOptions() throws IOException {
+            FileSystemOptions options = new FileSystemOptions();
+            return options;
+        }
+        @Override
+        public String buildBaseUrl(String baseUrl) {
+            return String.format(baseUrl, username, password, host, port);
         }
     }
 

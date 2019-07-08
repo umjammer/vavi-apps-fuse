@@ -7,7 +7,6 @@
 package vavi.nio.file.vfs;
 
 import com.github.fge.filesystem.provider.FileSystemProviderBase;
-import com.github.fge.filesystem.provider.FileSystemRepository;
 
 
 /**
@@ -18,7 +17,7 @@ import com.github.fge.filesystem.provider.FileSystemRepository;
  */
 public final class VfsFileSystemProvider extends FileSystemProviderBase {
 
-    public VfsFileSystemProvider(final FileSystemRepository repository) {
-        super(repository);
+    public VfsFileSystemProvider() {
+        super(new VfsFileSystemRepository());
     }
 }

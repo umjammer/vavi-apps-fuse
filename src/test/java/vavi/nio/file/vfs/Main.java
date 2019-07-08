@@ -9,12 +9,10 @@ package vavi.nio.file.vfs;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Paths;
-import java.nio.file.spi.FileSystemProvider;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.github.fge.filesystem.provider.FileSystemRepository;
 
 import co.paralleluniverse.javafs.JavaFS;
 
@@ -35,26 +33,17 @@ public class Main {
         String alias = args[2];
         String mountPoint = String.format(args[0], alias);
 
-        /*
-         * Create the necessary elements to create a filesystem.
-         * Note: the URI _must_ have a scheme of "vfs", and
-         * _must_ be hierarchical.
-         */
-        final URI uri = URI.create("vfs://foo/");
+        // Create the necessary elements to create a filesystem.
+        // Note: the URI _must_ have a scheme of "vfs", and
+        // _must_ be hierarchical.
+        final URI uri = URI.create("vfs:///");
+
         final Map<String, Object> env = new HashMap<>();
         env.put("alias", alias);
         env.put("baseUrl", baseUrl);
         env.put("ignoreAppleDouble", true);
 
-        /*
-         * Create the FileSystemProvider; this will be more simple once
-         * the filesystem is registered to the JRE, but right now you
-         * have to do like that, sorry...
-         */
-        final FileSystemRepository repository = new VfsFileSystemRepository();
-        final FileSystemProvider provider = new VfsFileSystemProvider(repository);
-
-        final FileSystem fs = provider.newFileSystem(uri, env);
+        FileSystem fs = FileSystems.newFileSystem(uri, env);
 
         Map<String, String> options = new HashMap<>();
         options.put("fsname", "vfs_fs" + "@" + System.currentTimeMillis());
