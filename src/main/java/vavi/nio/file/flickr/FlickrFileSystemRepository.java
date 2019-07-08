@@ -9,6 +9,7 @@ package vavi.nio.file.flickr;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -18,8 +19,7 @@ import com.flickr4java.flickr.REST;
 import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 
-import vavi.util.properties.annotation.Property;
-import vavi.util.properties.annotation.PropsEntity;
+import vavi.net.auth.oauth2.BasicAppCredential;
 
 
 /**
@@ -29,15 +29,7 @@ import vavi.util.properties.annotation.PropsEntity;
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-@PropsEntity(url = "file://${user.home}/.vavifuse/flickr.properties")
 public final class FlickrFileSystemRepository extends FileSystemRepositoryBase {
-
-    @Property(name = "flickr.clientId")
-    private String clientId;
-    @Property(name = "flickr.clientSecret")
-    private transient String clientSecret;
-    @Property(name = "flickr.redirectUrl")
-    private String redirectUrl;
 
     public FlickrFileSystemRepository() {
         super("flickr", new FlickrFileSystemFactoryProvider());
@@ -46,18 +38,25 @@ public final class FlickrFileSystemRepository extends FileSystemRepositoryBase {
     /** */
     private transient Flickr flickr;
 
+    /** */
+    private BasicAppCredential appCredential;
+
     @Nonnull
     @Override
     public FileSystemDriver createDriver(final URI uri, final Map<String, ?> env) throws IOException {
-        final String email = (String) env.get("email");
-        if (email == null)
-            throw new IllegalArgumentException("email not found");
+        if (!env.containsKey(FlickrFileSystemProvider.ENV_ID)) {
+            throw new NoSuchElementException(FlickrFileSystemProvider.ENV_ID);
+        }
+        String email = (String) env.get(FlickrFileSystemProvider.ENV_ID);
 
-        PropsEntity.Util.bind(this);
+        if (!env.containsKey(FlickrFileSystemProvider.ENV_CREDENTIAL)) {
+            throw new NoSuchElementException(FlickrFileSystemProvider.ENV_CREDENTIAL);
+        }
+        appCredential = BasicAppCredential.class.cast(env.get(FlickrFileSystemProvider.ENV_CREDENTIAL));
 
-        flickr = new Flickr(clientId, clientSecret, new REST());
+        flickr = new Flickr(appCredential.getClientId(), appCredential.getClientSecret(), new REST());
 
-        final FlickrFileStore fileStore = new FlickrFileStore(flickr, factoryProvider.getAttributesFactory());
+        FlickrFileStore fileStore = new FlickrFileStore(flickr, factoryProvider.getAttributesFactory());
         return new FlickrFileSystemDriver(fileStore, factoryProvider, flickr, env);
     }
 }

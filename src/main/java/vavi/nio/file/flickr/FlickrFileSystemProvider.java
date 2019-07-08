@@ -7,7 +7,6 @@
 package vavi.nio.file.flickr;
 
 import com.github.fge.filesystem.provider.FileSystemProviderBase;
-import com.github.fge.filesystem.provider.FileSystemRepository;
 
 
 /**
@@ -18,7 +17,11 @@ import com.github.fge.filesystem.provider.FileSystemRepository;
  */
 public final class FlickrFileSystemProvider extends FileSystemProviderBase {
 
-    public FlickrFileSystemProvider(final FileSystemRepository repository) {
-        super(repository);
+    public static final String ENV_ID = "email";
+
+    public static final String ENV_CREDENTIAL = "credential";
+
+    public FlickrFileSystemProvider() {
+        super(new FlickrFileSystemRepository());
     }
 }
