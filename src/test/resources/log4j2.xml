@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE xml>
 <Configuration status="off">
   <Appenders>
-    <Console name="Console" target="SYSTEM_OUT">
-      <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%-5p] %m%n\tat %t %c.%M(%F:%L)\n"/>
+    <Console name="Console" target="SYSTEM_ERR">
+      <PatternLayout pattern="%d{ISO8601} [%p] %m%n\tat %t%x %c.%M(%F:%L)\n"/>
     </Console>
   </Appenders>
   <Loggers>
