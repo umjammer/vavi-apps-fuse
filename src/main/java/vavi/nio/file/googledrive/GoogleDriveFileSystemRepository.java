@@ -7,6 +7,7 @@
 package vavi.nio.file.googledrive;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -19,7 +20,9 @@ import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.drive.Drive;
 
-import vavi.net.auth.oauth2.google.GoogleDriveLocalAuthenticator;
+import vavi.net.auth.oauth2.Authenticator;
+import vavi.util.properties.annotation.Property;
+import vavi.util.properties.annotation.PropsEntity;
 
 import static vavi.net.auth.oauth2.google.GoogleDriveLocalAuthenticator.HTTP_TRANSPORT;
 import static vavi.net.auth.oauth2.google.GoogleDriveLocalAuthenticator.JSON_FACTORY;
@@ -32,6 +35,7 @@ import static vavi.net.auth.oauth2.google.GoogleDriveLocalAuthenticator.JSON_FAC
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
+@PropsEntity(url = "classpath:googledrive.properties")
 public final class GoogleDriveFileSystemRepository extends FileSystemRepositoryBase {
 
     public GoogleDriveFileSystemRepository() {
@@ -40,6 +44,19 @@ public final class GoogleDriveFileSystemRepository extends FileSystemRepositoryB
 
     /** Application name. TODO app credencial? */
     private static final String APPLICATION_NAME = "vavi-apps-fuse";
+
+    /** should have a constructor without args */
+    @Property
+    private String authenticatorClassName;
+
+    /* */
+    {
+        try {
+            PropsEntity.Util.bind(this);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
 
     /**
      * TODO root from uri
@@ -54,8 +71,7 @@ public final class GoogleDriveFileSystemRepository extends FileSystemRepositoryB
         }
         final String email = params.get(GoogleDriveFileSystemProvider.PARAM_ID);
 
-        GoogleDriveLocalAuthenticator authenticator = new GoogleDriveLocalAuthenticator();
-        Credential credential = authenticator.authorize(email);
+        Credential credential = authorize(email);
         Drive drive = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
                     .setApplicationName(APPLICATION_NAME)
                     .build();
@@ -63,4 +79,16 @@ public final class GoogleDriveFileSystemRepository extends FileSystemRepositoryB
         GoogleDriveFileStore fileStore = new GoogleDriveFileStore(drive, factoryProvider.getAttributesFactory());
         return new GoogleDriveFileSystemDriver(fileStore, factoryProvider, drive, env);
     }
+
+    /** */
+    private Credential authorize(String id) throws IOException {
+        try {
+            Authenticator<Credential> authenticator = Authenticator.class.cast(Class.forName(authenticatorClassName)
+                .getDeclaredConstructor().newInstance());
+            return authenticator.authorize(id);
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException |
+                 InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
+            throw new IllegalStateException(e);
+        }
+    };
 }

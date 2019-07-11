@@ -9,7 +9,7 @@ package vavi.nio.file.googledrive;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,7 +23,7 @@ import co.paralleluniverse.javafs.JavaFS;
 
 
 /**
- * Main.
+ * Main. (java fs, google drive)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/04/03 umjammer initial version <br>
@@ -45,14 +45,14 @@ public class Main {
         Map<String, Object> env = new HashMap<>();
         env.put("ignoreAppleDouble", true);
 
-        FileSystem fs = FileSystems.newFileSystem(uri, env);
+        FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, env);
 
         Map<String, String> options = new HashMap<>();
         options.put("fsname", "googledrive_fs" + "@" + System.currentTimeMillis());
         options.put("noappledouble", null);
 //        options.put("noapplexattr", null);
 
-        JavaFS.mount(fs, Paths.get(args[0]), false, false, options);
+        JavaFS.mount(fs, Paths.get(args[0]), true, false, options);
     }
 
     @Test
@@ -62,5 +62,15 @@ public class Main {
         URI uri = URI.create("googledrive:///?id=" + email);
 
        testAll(new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
+    }
+
+//    @Test
+    void test02() throws Exception {
+        String email = "uniquro2004@gmail.com";
+
+        URI uri = URI.create("googledrive:///?id=" + email);
+
+        FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
+        Files.list(fs.getPath("/")).forEach(System.out::println);
     }
 }

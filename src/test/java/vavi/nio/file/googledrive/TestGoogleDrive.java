@@ -26,7 +26,7 @@ import co.paralleluniverse.javafs.JavaFS;
 
 
 /**
- * TestGoogleDrive.
+ * TestGoogleDrive. (fuse-jnr)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2017/03/19 umjammer initial version <br>
@@ -72,7 +72,7 @@ public class TestGoogleDrive {
         process.waitFor();
         assertEquals(0, process.exitValue());
         assertTrue(Files.exists(to));
-        assertEquals(Files.size(to), Files.size(to));
+        assertEquals(Files.size(from), Files.size(to));
     }
 
     //@Test

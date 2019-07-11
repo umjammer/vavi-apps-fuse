@@ -6,6 +6,8 @@
 
 package vavi.nio.file.googledrive;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -115,7 +117,7 @@ public final class GoogleDriveFileSystemDriver extends UnixLikeFileSystemDriverB
                     // TODO when a deep directory is specified at first, like '/Books/Novels'
                     // cache
                     if (cache.containsFile(path)) {
-                        removeEntry(path);
+                        cache.removeEntry(path);
                     }
 
                     throw (IOException) new NoSuchFileException("path: " + path).initCause(e);
@@ -146,9 +148,10 @@ public final class GoogleDriveFileSystemDriver extends UnixLikeFileSystemDriverB
             throw new IsDirectoryException("path: " + path);
         }
 
-        final java.io.File downloadFile = java.io.File.createTempFile("vavi-apps-fuse-", ".download");
-
-        return new GoogleDriveInputStream(drive, entry, downloadFile);
+        // TODO
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        drive.files().get(entry.getId()).executeMediaAndDownloadTo(baos);
+        return new ByteArrayInputStream(baos.toByteArray());
     }
 
     @Nonnull
@@ -174,7 +177,6 @@ options.forEach(o -> { System.err.println("newOutputStream: " + o); });
                     .filter(o -> GoogleDriveCopyOption.class.isInstance(o))
                     .map(o -> GoogleDriveCopyOption.class.cast(o).getMimeType()).findFirst().get();
         }
-
 
         return new Util.OutputStreamForUploading() {
 
