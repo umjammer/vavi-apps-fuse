@@ -1,61 +1,84 @@
-vavi-apps-fuse
-----
+[![Release](https://jitpack.io/v/umjammer/vavi-apps-fuse.svg)](https://jitpack.io/#umjammer/vavi-apps-fuse)
 
-# Depends
+# vavi-apps-fuse
 
- * [patch for OneDriveJavaSDK](https://gist.github.com/umjammer/1f7bd3b1cf10516b135258407d2091be)
- * [patch for javafs](https://gist.github.com/umjammer/156326deb769c62b11a834aef6f69e81)
- * [patch for java7-fs-dropbox](https://gist.github.com/umjammer/4bc15c64cc06ceb3366c098f6ec84e11)
- * [patch for java7-fs-box](https://gist.github.com/umjammer/ccc88380d38660a39a2c4181637d685c)
-
-# Licenses
+fuse for java and many file systems.
 
 # Status
 
-| fs                 | authentication | autologin | list | upload | download | copy | move | rm | mkdir | cache | watch |
-|--------------------|----------------|-----------|------|--------|----------|------|------|----|-------|-------|-------|
-| google drive       | ✔              |           | ✔    | ✔      | ✔        |      | ✔    | ✔  | ✔     |       |       |
-| one drive          | ✔              | ✔         | ✔    | ✔      | ✔        | ✔    | ✔    | ✔  | ✔     |       |       |
-| dropbox            | ✔              | ✔         | ✔    | ✔      | ✔        |      |      | ✔  | ✔     |       |       |
-| box                |                | ✔         | ✔    | ✔      | ✔        |      |      | ✔  | ✔     |       |       |
-| vfs                |✔               |-          |✔     |        |          |      |      |    |       |       |       |
-| amazon cloud drive |                |           |      |        |          |      |      |    |       |       |       |
-| flickr             |                |           |      |        |          |      |      |    |       |       |       |
+| fs                 | list | upload | download | copy | move | rm | mkdir | cache | watch | library |
+|--------------------|------|--------|----------|------|------|----|-------|-------|-------|---------|
+| google drive       | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | google-api-services-drive |
+| one drive (v1)     | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [OneDriveJavaSDK](https://github.com/umjammer/OneDriveJavaSDK) |
+| one drive (graph)  | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | |
+| dropbox            | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [java7-fs-dropbox](https://github.com/umjammer/java7-fs-dropbox) |
+| box                | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [java7-fs-box](https://github.com/umjammer/java7-fs-box) |
+| vfs ssh            | ✅    |        |          |      |      |    |       |       |       | [commons-vfs2]() |
+| vfs webdav         | ✅    |        |          |      |      |    |       |       |       | [commons-vfs2-sandbox]() |
+| archive            | ✅    |        |          |      |      |    |       |       |       | [vavi-util-archive]() |
+| hfs                | ✅    |        |          |      |      |    |       |       |       | [hfsexplorer](https://github.com/umjammer/hfsexplorer) |
 
-# Libraries
-
-  * fuse-jna
-  * javafs <- !!!
-  * jnr-fuse
-
-  * google-api-java-client
-  * OneDriveJavaSDK
-  * dropbox-core-sdk
-  * [box-java-sdk](https://github.com/box/box-java-sdk)
-  * [amazon](https://github.com/yetisno/ACD-JAPI)
 
 # TODO
 
- * amazon
- * adrive
- * flickr
- 
+ * ~~amazon~~
+ * ~~adrive~~
+ * ~~flickr~~
+
  * apache-commons-vfs
  * vavi-util-archive
- 
+
  * shutdownHook
- 
+
  * google authentication automation
- 
-# MISC
- 
+
+ * https://github.com/unsound/hfsexplorer
+
+ * virtualbox vdi
+
+ * mincraft nbt
+
+# Libraries
+
+## OAuth2
+
+ * google
+ * [oauth2-essentials](https://github.com/dmfs/oauth2-essentials) 🎯
+
 ## onedrive
-  
-  
+
+### SDK
+
+  * [OneDriveJavaSDK](https://github.com/tawalaya/OneDriveJavaSDK) (v1)
+  * [onedrive-java-client](https://github.com/iterate-ch/onedrive-java-client) (cyberduck version, v2 graph)
+  * [msgraph-sdk-java](https://github.com/microsoftgraph/msgraph-sdk-java) (v2 graph) 🎯
+
 ## googledrive
- 
+
+### SDK
+
+  * google-api-java-client
+
+## box
+
+### SDK
+
+  * [box-java-sdk](https://github.com/box/box-java-sdk)
+
+## dropbox
+
+### SDK
+
+  * [dropbox-core-sdk]
+
+## Amazon Data Cloud
+
+### SDK
+
+ * [amazon](https://github.com/yetisno/ACD-JAPI)
+
 ### fuse-jna
-  
+
  * https://github.com/smacke/gdrivefs (v2)
  * https://github.com/tbutter/gyingpan (v2)
  * https://github.com/stepank/jdbox (v2)
@@ -69,7 +92,7 @@ vavi-apps-fuse
  * https://github.com/bonifaido/zkfuse-jna (ZooKeeper)
  * https://github.com/Aypz/bcfusefs (BitCasa)
  * https://github.com/centic9/JGitFS
- 
+
  * http://yy.hatenablog.jp/entry/2014/06/01/000000
 
 ## jnr-fuse
@@ -87,10 +110,11 @@ vavi-apps-fuse
 
 ### javafs
 
- * https://github.com/fge/java7-fs-base (base?)
- 
+ * https://github.com/fge/java7-fs-base (javafs base) 🎯
+ * [patch for javafs](https://github.com/umjammer/javafs)
+
 ## javafs
 
  * https://github.com/fge/java7-fs-ftp (ftp)
- * https://github.com/fge/java7-fs-dropbox (dropbox) <- !!!
- * https://github.com/fge/java7-fs-box
+ * https://github.com/fge/java7-fs-dropbox (dropbox) 🎯
+ * https://github.com/fge/java7-fs-box 🎯

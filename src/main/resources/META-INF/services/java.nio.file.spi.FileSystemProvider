@@ -1,6 +1,7 @@
-vavi.nio.file.onedrive.OneDriveFileSystemProvider
+vavi.nio.file.onedrive4.OneDriveFileSystemProvider
 vavi.nio.file.googledrive.GoogleDriveFileSystemProvider
 vavi.nio.file.vfs.VfsFileSystemProvider
+vavi.nio.file.hfs.HfsFileSystemProvider
 vavi.nio.file.acd.AcdFileSystemProvider
 vavi.nio.file.flickr.FlickrFileSystemProvider
 vavi.nio.file.gathered.GatheredFileSystemProvider

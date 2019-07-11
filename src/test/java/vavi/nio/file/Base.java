@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.rainerhahnekamp.sneakythrow.Sneaky.sneaked;
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /**
@@ -85,6 +85,7 @@ Thread.sleep(300);
 System.out.println("$ [list]: " + dir);
 Files.list(dir).forEach(System.out::println);
         assertEquals(1, Files.list(dir).count());
+        assertEquals(Files.size(src), Files.size(src2));
 
 System.out.println("$ [copy (internal)]: " + src2 + " " + dir.resolve(src2.getFileName().toString() + "_C"));
         Path src3 = Files.copy(src2, dir.resolve(src2.getFileName().toString() + "_C")); // SPEC target should be file
@@ -139,6 +140,7 @@ Thread.sleep(300);
 System.out.println("$ [list]: " + dst2.getParent());
 Files.list(dst2.getParent()).forEach(System.out::println);
         assertTrue(Files.exists(dst2));
+        assertEquals(Files.size(src6), Files.size(dst2));
 
 System.out.println("$ [delete file]: " + src2);
         Files.delete(src2);
