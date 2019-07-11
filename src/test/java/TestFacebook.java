@@ -41,7 +41,7 @@ public class TestFacebook {
     void process() throws IOException {
         String url = "https://www.facebook.com/dialog/oauth?client_id=%s&redirect_uri=%s&response_type=token";
         String redirectUrl = "https://www.facebook.com/connect/login_success.html";
-        String token = new FacebookAuthenticator("ns777@104.net", clientId, redirectUrl).get(url);
+        String token = new FacebookAuthenticator("ns777@104.net", clientId, redirectUrl).authorize(url);
         System.err.println("token: " + token);
     }
 }

@@ -105,8 +105,8 @@ Debug.println("root: " + folder.getName());
 
     /** */
     private void authenticateByBrowser(String url, String email) throws IOException, OneDriveException {
-        Authenticator authenticator = new OneDriveLocalAuthenticator(email, redirectUrl);
-        String code = authenticator.get(url);
+        Authenticator<String> authenticator = new OneDriveLocalAuthenticator(email, redirectUrl);
+        String code = authenticator.authorize(url);
 
         api.authenticate(code);
     }

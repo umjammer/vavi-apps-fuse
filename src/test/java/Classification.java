@@ -15,10 +15,16 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
+import vavi.nio.file.onedrive.OneDriveFileSystemProvider;
+import vavi.util.properties.annotation.PropsEntity;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
@@ -41,7 +47,13 @@ public final class Classification {
 
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        FileSystem onedrivefs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP);
+        BasicAppCredential appCredential = new MicrosoftLocalAppCredential();
+        PropsEntity.Util.bind(appCredential);
+
+        Map<String, Object> env = new HashMap<>();
+        env.put(OneDriveFileSystemProvider.ENV_CREDENTIAL, appCredential);
+
+        FileSystem onedrivefs = FileSystems.newFileSystem(uri, env);
 
         Path root = onedrivefs.getPath(cwd);
         FileSearcher fileSearcher = new FileSearcher();

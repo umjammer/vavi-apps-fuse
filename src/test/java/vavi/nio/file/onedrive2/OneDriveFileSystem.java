@@ -44,7 +44,7 @@ public class OneDriveFileSystem extends FileSystem {
     /** */
     private final OneDriveFileSystemProvider provider;
     /** */
-    private final Path ofpath;
+    private final Path path;
     /** */
     private boolean readOnly = false;
 
@@ -52,17 +52,17 @@ public class OneDriveFileSystem extends FileSystem {
      * @throws IOException
      */
     public OneDriveFileSystem(OneDriveFileSystemProvider provider,
-                              Path ofpath,
+                              Path path,
                               Map<String, ?> env) throws IOException {
         this.provider = provider;
-        this.ofpath = ofpath;
+        this.path = path;
 
-        if (Files.notExists(ofpath)) {
-            throw new FileSystemNotFoundException(ofpath.toString());
+        if (Files.notExists(path)) {
+            throw new FileSystemNotFoundException(path.toString());
         }
         // sm and existence check
-       ofpath.getFileSystem().provider().checkAccess(ofpath, AccessMode.READ);
-        if (!Files.isWritable(ofpath)) {
+       path.getFileSystem().provider().checkAccess(path, AccessMode.READ);
+        if (!Files.isWritable(path)) {
             this.readOnly = true;
         }
     }
