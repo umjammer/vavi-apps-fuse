@@ -22,8 +22,7 @@ import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 
 import vavi.net.auth.oauth2.BasicAppCredential;
-import vavi.net.auth.oauth2.OAuth2;
-import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
+import vavi.net.auth.oauth2.LocalOAuth2;
 import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
@@ -47,14 +46,15 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         super("onedrive", new OneDriveFileSystemFactoryProvider());
     }
 
-    /** */
-    @Property
+    /** should be {@link vavi.net.auth.oauth2.Authenticator} and have a constructor with args (String, String) */
+    @Property(value = "vavi.net.auth.oauth2.microsoft.OneDriveLocalAuthenticator")
     private String authenticatorClassName;
 
     /* */
     {
         try {
             PropsEntity.Util.bind(this);
+Debug.println("authenticatorClassName: " + authenticatorClassName);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
@@ -73,10 +73,12 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         }
         final String email = params.get(OneDriveFileSystemProvider.PARAM_ID);
 
-        BasicAppCredential appCredential = new MicrosoftGraphLocalAppCredential();
-        PropsEntity.Util.bind(appCredential);
+        if (!env.containsKey(OneDriveFileSystemProvider.ENV_CREDENTIAL)) {
+            throw new NoSuchElementException("app credential not contains a param " + OneDriveFileSystemProvider.ENV_CREDENTIAL);
+        }
+        BasicAppCredential appCredential = BasicAppCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_CREDENTIAL));
 
-        String accessToken = new OAuth2(appCredential, true, authenticatorClassName).getAccessToken(email);
+        String accessToken = new LocalOAuth2(appCredential, true, authenticatorClassName).authorize(email);
 Debug.println("accessToken: " + accessToken);
 
         IGraphServiceClient graphClient = GraphServiceClient.builder()

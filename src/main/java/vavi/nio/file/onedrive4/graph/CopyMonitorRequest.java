@@ -16,7 +16,7 @@ import com.microsoft.graph.requests.extensions.GraphServiceClient;
 
 
 /**
- * The chunk upload request.
+ * The copy monitor request.
  */
 public class CopyMonitorRequest {
 
@@ -26,8 +26,8 @@ public class CopyMonitorRequest {
     private final BaseRequest baseRequest;
 
     /**
-     * Construct the ChunkedUploadRequest
-     *
+     * Construct the CopyMonitorRequest
+     * Note: This request does not require authentication, since the URL is short-lived and unique to the original caller.
      * @param requestUrl The upload URL.
      * @param client The Graph client.
      */
@@ -45,7 +45,7 @@ public class CopyMonitorRequest {
     }
 
     /**
-     * Upload a chunk with tries.
+     * Monitor a copy.
      *
      * @param responseHandler The handler to handle the HTTP response.
      * @return The monitor result.

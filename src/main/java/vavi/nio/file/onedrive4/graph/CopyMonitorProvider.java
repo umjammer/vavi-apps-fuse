@@ -19,6 +19,7 @@ import vavi.util.StringUtil;
 /**
  * CopyMonitorProvider service provider
  *
+ * @see "https://docs.microsoft.com/en-us/onedrive/developer/rest-api/concepts/long-running-actions?view=odsp-graph-online"
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2019/07/08 umjammer initial version <br>
  */
@@ -52,7 +53,7 @@ public class CopyMonitorProvider<MonitorType> {
     /**
      * Creates the CopyMonitorProvider
      *
-     * @param copySession   the initial upload session
+     * @param copySession   the initial copy session
      * @param client          the Graph client
      * @param uploadTypeClass the upload type class
      */

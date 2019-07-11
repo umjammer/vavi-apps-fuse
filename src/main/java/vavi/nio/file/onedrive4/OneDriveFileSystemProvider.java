@@ -22,6 +22,8 @@ public final class OneDriveFileSystemProvider extends FileSystemProviderBase {
 
     public static final String PARAM_ID = "id";
 
+    public static final String ENV_CREDENTIAL = "credential";
+
     public OneDriveFileSystemProvider() {
         super(new OneDriveFileSystemRepository());
     }

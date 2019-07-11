@@ -133,7 +133,7 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
                 } catch (GraphServiceException e) {
                     if (e.getMessage().startsWith("Error code: itemNotFound")) {
                         if (cache.containsFile(path)) {
-                            removeEntry(path);
+                            cache.removeEntry(path);
                         }
                         throw new NoSuchFileException(pathString);
                     } else {
@@ -150,7 +150,7 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
         final DriveItem entry = cache.getEntry(path);
 
         // TODO: metadata driver
-        if (entry.folder != null) {
+        if (isFolder(entry)) {
             throw new IsDirectoryException("path: " + path);
         }
 
@@ -177,9 +177,8 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
     @Nonnull
     @Override
     public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
-        DriveItem entry = null;
         try {
-            entry = cache.getEntry(path);
+            DriveItem entry = cache.getEntry(path);
 
             if (isFolder(entry)) {
                 throw new IsDirectoryException("path: " + path);
@@ -361,7 +360,7 @@ System.out.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
         final DriveItem entry = cache.getEntry(path);
 
-        if (isFile(entry)) {
+        if (!isFile(entry)) {
             return;
         }
 
@@ -379,7 +378,7 @@ System.out.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(
     }
 
     /**
-     * @throws IOException if you use this with javafs (jnr-fuse), you should throw {@link NoSuchFileException} when the file not found.
+     * @throws IOException you should throw {@link NoSuchFileException} when the file not found.
      */
     @Nonnull
     @Override
@@ -393,7 +392,7 @@ System.out.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(
 
         if (!isFolder(entry)) {
 //System.err.println(entry.name + ", " + entry.id + ", " + entry.hashCode());
-            throw new NotDirectoryException("dir: " + dir);
+            throw new NotDirectoryException(dir.toString());
         }
 
         List<Path> list = null;
@@ -495,6 +494,7 @@ Debug.println("copy done: " + result.id);
                 cache.addEntry(target, patchedEntry);
             }
         } else if (isFolder(sourceEntry)) {
+            // TODO java spec. allows empty folder
             throw new IsDirectoryException("source can not be a folder: " + source);
         }
     }
