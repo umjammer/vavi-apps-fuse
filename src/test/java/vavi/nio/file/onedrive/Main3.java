@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,6 +18,10 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
+
+import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
+import vavi.util.properties.annotation.PropsEntity;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
@@ -39,10 +42,14 @@ public final class Main3 {
         // _must_ be hierarchical.
         URI uri = URI.create("onedrive:///?id=" + email);
 
+        BasicAppCredential appCredential = new MicrosoftLocalAppCredential();
+        PropsEntity.Util.bind(appCredential);
+
         Map<String, Object> env = new HashMap<>();
+        env.put(OneDriveFileSystemProvider.ENV_CREDENTIAL, appCredential);
 
         // Create the filesystem...
-        try (FileSystem onedrivefs = FileSystems.newFileSystem(uri, env)) {
+        try (FileSystem onedrivefs = new OneDriveFileSystemProvider().newFileSystem(uri, env)) {
 
             // And use it! You should of course adapt this code...
             // Equivalent to FileSystems.getDefault().getPath(...)

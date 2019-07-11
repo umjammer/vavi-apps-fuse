@@ -24,7 +24,6 @@ import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 
 import vavi.net.auth.oauth2.Authenticator;
 import vavi.net.auth.oauth2.BasicAppCredential;
-import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
 import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
@@ -62,11 +61,9 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
     /** for refreshToken */
     private File file;
 
+    /** should be {@link vavi.net.auth.oauth2.Authenticator} and have a constructor with args (String, String) */
     @Property
     private String authenticatorClassName;
-
-    /** */
-    private Authenticator authenticator;
 
     {
         try {
@@ -90,8 +87,10 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
             }
             final String email = params.get(OneDriveFileSystemProvider.PARAM_ID);
 
-            appCredential = new MicrosoftLocalAppCredential();
-            PropsEntity.Util.bind(appCredential);
+            if (!env.containsKey(OneDriveFileSystemProvider.ENV_CREDENTIAL)) {
+                throw new NoSuchElementException("app credential not contains a param " + OneDriveFileSystemProvider.ENV_CREDENTIAL);
+            }
+            BasicAppCredential appCredential = BasicAppCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_CREDENTIAL));
 
             file = new File(System.getProperty("user.home"), ".vavifuse/" + appCredential.getScheme() + "/" + email);
 
@@ -127,9 +126,9 @@ Debug.println("refreshToken: timeout?");
     /** */
     private void authenticate(String url, String email) throws IOException, OneDriveException {
         try {
-            authenticator = Authenticator.class.cast(Class.forName(authenticatorClassName)
+            Authenticator<String> authenticator = Authenticator.class.cast(Class.forName(authenticatorClassName)
                 .getDeclaredConstructor(String.class, String.class).newInstance(email, appCredential.getRedirectUrl()));
-            String code = authenticator.get(url);
+            String code = authenticator.authorize(url);
             code = code.substring(code.indexOf("code=") + "code=".length());
             client.authenticate(code);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException |

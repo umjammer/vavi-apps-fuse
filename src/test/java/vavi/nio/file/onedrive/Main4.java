@@ -9,16 +9,20 @@ package vavi.nio.file.onedrive;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
+
+import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
+import vavi.util.properties.annotation.PropsEntity;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
@@ -39,7 +43,13 @@ public final class Main4 {
         // _must_ be hierarchical.
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        try (FileSystem onedrivefs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP)) {
+        BasicAppCredential appCredential = new MicrosoftLocalAppCredential();
+        PropsEntity.Util.bind(appCredential);
+
+        Map<String, Object> env = new HashMap<>();
+        env.put(OneDriveFileSystemProvider.ENV_CREDENTIAL, appCredential);
+
+        try (FileSystem onedrivefs = new OneDriveFileSystemProvider().newFileSystem(uri, env)) {
 
             Path root = onedrivefs.getRootDirectories().iterator().next();
             FileRenamer.Replacer replacer = new RegexReplacer("\\ \\ ", " ");

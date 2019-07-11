@@ -107,7 +107,7 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
                 // TODO focus only file not found
                 // cache
                 if (cache.containsFile(path)) {
-                    removeEntry(path);
+                    cache.removeEntry(path);
                 }
 
                 throw (IOException) new NoSuchFileException("path: " + path).initCause(e);
@@ -167,7 +167,7 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
             }
         } catch (NoSuchFileException e) {
 System.out.println("newOutputStream: " + e.getMessage());
-new Exception("*** DUMMY ***").printStackTrace();
+//new Exception("*** DUMMY ***").printStackTrace();
         }
 
         OneFolder dirEntry = (OneFolder) cache.getEntry(path.getParent());

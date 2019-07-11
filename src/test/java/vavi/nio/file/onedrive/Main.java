@@ -9,13 +9,15 @@ package vavi.nio.file.onedrive;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+
+import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
+import vavi.util.properties.annotation.PropsEntity;
 
 import static vavi.nio.file.Base.testAll;
 
@@ -38,16 +40,20 @@ public class Main {
         // _must_ be hierarchical.
         URI uri = URI.create("onedrive:///?id=" + email);
 
+        BasicAppCredential appCredential = new MicrosoftLocalAppCredential();
+        PropsEntity.Util.bind(appCredential);
+
         Map<String, Object> env = new HashMap<>();
+        env.put(OneDriveFileSystemProvider.ENV_CREDENTIAL, appCredential);
         env.put("ignoreAppleDouble", true);
 
-        FileSystem fs = FileSystems.newFileSystem(uri, env);
+        FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, env);
 
         Map<String, String> options = new HashMap<>();
         options.put("fsname", "onedrive_fs" + "@" + System.currentTimeMillis());
         options.put("noappledouble", null);
 
-        JavaFS.mount(fs, Paths.get(args[0]), false, false, options);
+        JavaFS.mount(fs, Paths.get(args[0]), true, false, options);
     }
 
     @Test
@@ -56,6 +62,12 @@ public class Main {
 
         URI uri = URI.create("onedrive:///?id=" + email);
 
-       testAll(new OneDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
+        BasicAppCredential appCredential = new MicrosoftLocalAppCredential();
+        PropsEntity.Util.bind(appCredential);
+
+        Map<String, Object> env = new HashMap<>();
+        env.put(OneDriveFileSystemProvider.ENV_CREDENTIAL, appCredential);
+
+        testAll(new OneDriveFileSystemProvider().newFileSystem(uri, env));
     }
 }
