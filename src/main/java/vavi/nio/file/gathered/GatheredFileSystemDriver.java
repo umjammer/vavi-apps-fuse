@@ -17,6 +17,7 @@ import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -35,6 +37,8 @@ import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import vavi.nio.file.Util;
 import vavi.util.Debug;
+
+import static vavi.nio.file.Util.toPathString;
 
 
 /**
@@ -46,10 +50,11 @@ import vavi.util.Debug;
 @ParametersAreNonnullByDefault
 public final class GatheredFileSystemDriver extends UnixLikeFileSystemDriverBase {
 
+    /** should be unaccessible from outer */
     private final Map<String, FileSystem> fileSystems;
 
     /**
-     * @param env
+     * @param env 
      */
     public GatheredFileSystemDriver(final FileStore fileStore,
             final FileSystemFactoryProvider provider,
@@ -126,32 +131,64 @@ public final class GatheredFileSystemDriver extends UnixLikeFileSystemDriverBase
     }
 
     /**
-     * @throws IOException if you use this with javafs (jnr-fuse), you should throw {@link NoSuchFileException} when the file not found.
+     * @throws IOException you should throw {@link NoSuchFileException} when the file not found.
      */
     @Nonnull
     @Override
     public Object getPathMetadata(final Path path) throws IOException {
 Debug.println("path: " + path);
-        switch (path.toAbsolutePath().toString()) {
-        case "/":
-Debug.println("root: " +  path.getFileSystem().provider().getScheme());
-            return path.getFileSystem();
-        default:
-Debug.println("child: " +  path.getFileSystem().provider().getScheme());
-            return fileSystems.get(URLDecoder.decode(path.getFileName().toString(), "utf-8"));
+        if (path.getNameCount() < 2) {
+            return getFileSystemOf(path);
+        } else {
+            return toLocalPath(path);
         }
     }
 
     /** */
     private List<Path> getDirectoryEntries(final Path dir) throws IOException {
-        // TODO check root
-        List<Path> list = new ArrayList<>(fileSystems.size());
+        if (dir.getNameCount() == 0) {
+            List<Path> list = new ArrayList<>(fileSystems.size());
 
-        for (String id : fileSystems.keySet()) {
-            Path childPath = dir.resolve(URLEncoder.encode(id, "utf-8"));
-            list.add(childPath);
+            for (String id : fileSystems.keySet()) {
+                Path childPath = dir.resolve(URLEncoder.encode(id, "utf-8"));
+                list.add(childPath);
+            }
+
+            return list;
+        } else {
+            return Files.list(toLocalPathForDir(dir)).collect(Collectors.toList());
         }
+    }
 
-        return list;
+    /** */
+    private FileSystem getFileSystemOf(Path path) throws IOException {
+Debug.println("path: " + path);
+        if (path.getNameCount() == 0) {
+            return path.getFileSystem();
+        } else {
+            String first = URLDecoder.decode(path.getName(0).toString(), "utf-8");
+Debug.println("first: " + first);
+            if (!fileSystems.containsKey(first)) {
+                throw new NoSuchFileException(path.toString());
+            }
+            return fileSystems.get(first);
+        }
+    }
+
+    /** */
+    private Path toLocalPathForDir(Path path) throws IOException {
+        String subParhString = toPathString(path.subpath(1, path.getNameCount()));
+Debug.println("subParhString:" + subParhString);
+        FileSystem fileSystem = getFileSystemOf(path);
+        return fileSystem.getPath(subParhString);
+    }
+
+    /** */
+    private Path toLocalPath(Path path) throws IOException {
+        if (path.getNameCount() == 1) {
+            return path;
+        } else {
+            return toLocalPathForDir(path);
+        }
     }
 }

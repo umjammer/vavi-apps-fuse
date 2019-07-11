@@ -33,7 +33,10 @@ public final class GatheredFileSystemRepository extends FileSystemRepositoryBase
     }
 
     /**
-     * @param env { "fileSystems":  }
+     * @param env ENV_FILESYSTEMS must be set.
+     * <pre>
+     * { "id", FileSystem }
+     * </pre>
      */
     @Nonnull
     @Override

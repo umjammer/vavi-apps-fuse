@@ -6,8 +6,6 @@
 
 package vavi.nio.file.gathered;
 
-import java.nio.file.FileSystem;
-
 import com.github.fge.filesystem.attributes.FileAttributesFactory;
 
 
@@ -20,7 +18,7 @@ import com.github.fge.filesystem.attributes.FileAttributesFactory;
 public final class GatheredFileAttributesFactory extends FileAttributesFactory {
 
     public GatheredFileAttributesFactory() {
-        setMetadataClass(FileSystem.class);
+        setMetadataClass(Object.class);
         addImplementation("basic", GatheredBasicFileAttributesProvider.class);
     }
 }

@@ -8,6 +8,8 @@ package vavi.nio.file.gathered;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.GroupPrincipal;
@@ -24,20 +26,13 @@ import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider
 
 /**
  * {@link BasicFileAttributes} implementation for Gathered FS
- *
- * <p>
- * Note: VFS has poor support for file times; as required by the {@link
- * BasicFileAttributes} contract, all methods returning a {@link FileTime} for
- * which there is no support will return Unix's epoch (that is, Jan 1st, 1970
- * at 00:00:00 GMT).
- * </p>
  */
 public final class GatheredBasicFileAttributesProvider extends BasicFileAttributesProvider implements PosixFileAttributes {
 
-    private FileSystem fileSystem;
+    private Object entry;
 
-    public GatheredBasicFileAttributesProvider(@Nonnull final FileSystem entry) throws IOException {
-        this.fileSystem = entry;
+    public GatheredBasicFileAttributesProvider(@Nonnull final Object entry) throws IOException {
+        this.entry = entry;
     }
 
     /**
@@ -53,7 +48,18 @@ public final class GatheredBasicFileAttributesProvider extends BasicFileAttribut
      */
     @Override
     public FileTime lastModifiedTime() {
-        return FileTime.fromMillis(0);
+        try {
+            if (FileSystem.class.isInstance(entry)) {
+                return FileTime.fromMillis(0);
+            } else if (Path.class.isInstance(entry)) {
+                return Files.getLastModifiedTime(Path.class.cast(entry));
+            } else {
+                throw new IllegalStateException("unsupported type: " + entry.getClass().getName());
+            }
+        } catch (IOException e) {
+e.printStackTrace();
+            return FileTime.fromMillis(0);
+        }
     }
 
     /**
@@ -61,7 +67,13 @@ public final class GatheredBasicFileAttributesProvider extends BasicFileAttribut
      */
     @Override
     public boolean isRegularFile() {
-        return false;
+        if (FileSystem.class.isInstance(entry)) {
+            return false;
+        } else if (Path.class.isInstance(entry)) {
+            return Files.isRegularFile(Path.class.cast(entry));
+        } else {
+            throw new IllegalStateException("unsupported type: " + entry.getClass().getName());
+        }
     }
 
     /**
@@ -69,7 +81,13 @@ public final class GatheredBasicFileAttributesProvider extends BasicFileAttribut
      */
     @Override
     public boolean isDirectory() {
-        return true;
+        if (FileSystem.class.isInstance(entry)) {
+            return true;
+        } else if (Path.class.isInstance(entry)) {
+            return Files.isRegularFile(Path.class.cast(entry));
+        } else {
+            throw new IllegalStateException("unsupported type: " + entry.getClass().getName());
+        }
     }
 
     /**
@@ -84,8 +102,15 @@ public final class GatheredBasicFileAttributesProvider extends BasicFileAttribut
     @Override
     public long size() {
         try {
-            return fileSystem.getFileStores().iterator().next().getTotalSpace();
+            if (FileSystem.class.isInstance(entry)) {
+                return FileSystem.class.cast(entry).getFileStores().iterator().next().getTotalSpace();
+            } else if (Path.class.isInstance(entry)) {
+                return Files.size(Path.class.cast(entry));
+            } else {
+                throw new IllegalStateException("unsupported type: " + entry.getClass().getName());
+            }
         } catch (IOException e) {
+e.printStackTrace();
             return 0;
         }
     }
@@ -102,6 +127,6 @@ public final class GatheredBasicFileAttributesProvider extends BasicFileAttribut
 
     @Override
     public Set<PosixFilePermission> permissions() {
-        return PosixFilePermissions.fromString("rwxr-xr-x");
+        return isDirectory() ? PosixFilePermissions.fromString("rwxr-xr-x") : PosixFilePermissions.fromString("rw-r--r--");
     }
 }
