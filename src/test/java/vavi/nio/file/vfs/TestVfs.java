@@ -1,4 +1,4 @@
-package vavi.test.vfs;
+package vavi.nio.file.vfs;
 /*
  * Copyright (c) 2016 by Naohide Sano, All rights reserved.
  *
