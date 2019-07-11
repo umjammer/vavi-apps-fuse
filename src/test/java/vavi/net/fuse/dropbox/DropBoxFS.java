@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import vavi.net.auth.oauth2.Authenticator;
-import vavi.net.auth.oauth2.dropbox.DropBoxAuthenticator;
+import vavi.net.auth.oauth2.dropbox.DropBoxLocalAuthenticator;
 import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
