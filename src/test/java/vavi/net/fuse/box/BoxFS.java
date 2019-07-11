@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import vavi.net.auth.oauth2.Authenticator;
-import vavi.net.auth.oauth2.box.BoxAuthenticator;
+import vavi.net.auth.oauth2.box.BoxLocalAuthenticator;
 import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
@@ -47,8 +47,8 @@ public class BoxFS extends FuseFilesystemAdapterAssumeImplemented {
             PropsEntity.Util.bind(this);
 
             String url = null;
-            Authenticator authenticator = new BoxAuthenticator(email, redirectUrl);
-            String code = authenticator.get(url);
+            Authenticator<String> authenticator = new BoxLocalAuthenticator(email, redirectUrl);
+            String code = authenticator.authorize(url);
 
         } catch (IOException e) {
             throw new IllegalStateException(e);
