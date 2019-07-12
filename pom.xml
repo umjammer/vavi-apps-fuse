@@ -4,7 +4,7 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.0.4-SNAPSHOT</version>
+  <version>0.0.4</version>
   <packaging>jar</packaging>
 
   <name>vavi-apps-fuse</name>
@@ -112,14 +112,7 @@ TODO
       <!-- fuse jnr -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>javafs</artifactId>
-      <version>0.1.0v</version>
-    </dependency>
-
-    <dependency>
-      <!-- fuse jna (deprecated) -->
-      <groupId>com.github.EtiennePerot</groupId>
-      <artifactId>fuse-jna</artifactId>
-      <version>eced84f81a</version>
+      <version>0.1.1v</version>
     </dependency>
 
     <dependency>
@@ -138,7 +131,7 @@ TODO
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-net-auth</artifactId>
-      <version>0.0.1</version>
+      <version>0.0.2</version>
     </dependency>
 
     <dependency>
@@ -199,7 +192,7 @@ TODO
       <!-- java-fs box -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>java7-fs-box</artifactId>
-      <version>0.0.3v</version>
+      <version>0.1.0v</version>
     </dependency>
 
     <dependency>
@@ -325,6 +318,14 @@ TODO
       <groupId>com.github.Querz</groupId>
       <artifactId>NBT</artifactId>
       <version>4.0</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <!-- fuse jna (deprecated) -->
+      <groupId>com.github.EtiennePerot</groupId>
+      <artifactId>fuse-jna</artifactId>
+      <version>eced84f81a</version>
       <scope>test</scope>
     </dependency>
 

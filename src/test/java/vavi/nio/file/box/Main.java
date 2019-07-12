@@ -6,8 +6,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.junit.jupiter.api.Test;
 
@@ -36,8 +34,6 @@ public class Main {
     public static void main(final String... args) throws IOException {
         String email = args[1];
 
-        Logger.getLogger("com.box.sdk").setLevel(Level.ALL);
-
         BasicAppCredential appCredential = new BoxLocalAppCredential();
         PropsEntity.Util.bind(appCredential);
 
@@ -48,13 +44,14 @@ public class Main {
 
         final Map<String, Object> env = new HashMap<>();
         env.put(BoxFileSystemProvider.ENV_CREDENTIAL, appCredential);
+        env.put("ignoreAppleDouble", true);
 
         final FileSystem fs = new BoxFileSystemProvider().newFileSystem(uri, env);
 
         Map<String, String> options = new HashMap<>();
         options.put("fsname", "box_fs" + "@" + System.currentTimeMillis());
 
-        JavaFS.mount(fs, Paths.get(args[0]), false, true, options);
+        JavaFS.mount(fs, Paths.get(args[0]), true, true, options);
     }
 
     @Test
