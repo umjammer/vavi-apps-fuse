@@ -17,6 +17,7 @@ fuse for java and many file systems.
 | vfs webdav         | ✅    |        |          |      |      |    |       |       |       | [commons-vfs2-sandbox]() |
 | archive            | ✅    |        |          |      |      |    |       |       |       | [vavi-util-archive]() |
 | hfs                | ✅    |        |          |      |      |    |       |       |       | [hfsexplorer](https://github.com/umjammer/hfsexplorer) |
+| gathered           | ✅    |        |          |      |      |    |       |       |       | |
 
 
 # TODO
