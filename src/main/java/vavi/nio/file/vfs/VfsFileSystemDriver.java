@@ -21,6 +21,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
@@ -77,21 +78,25 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
         baseUrl = options.buildBaseUrl((String) env.get("baseUrl"));
-        manager.resolveFile(baseUrl + "/", opts);
     }
 
     /**
+     * VFS might have cache?
      * @see #ignoreAppleDouble
      * @throws NoSuchFileException apple double file
      */
     private FileObject getEntry(Path path) throws IOException {
-        String pathString = Util.toPathString(path);
-        if (ignoreAppleDouble && path.getFileName() != null && Util.isAppleDouble(path)) {
-            throw new NoSuchFileException("ignore apple double file: " + path);
-        }
+        try {
+            String pathString = Util.toPathString(path);
+            if (ignoreAppleDouble && path.getFileName() != null && Util.isAppleDouble(path)) {
+                throw new NoSuchFileException("ignore apple double file: " + path);
+            }
 
-        FileObject entry = manager.resolveFile(baseUrl + pathString, opts);
-        return entry;
+            FileObject entry = manager.resolveFile(baseUrl + pathString, opts);
+            return entry;
+        } catch (org.apache.commons.vfs2.FileNotFoundException e) {
+            throw (IOException) new NoSuchFileException(path.toString()).initCause(e);
+        }
     }
 
     @Nonnull
@@ -99,8 +104,9 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
     public InputStream newInputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
         final FileObject entry = getEntry(path);
 
-        if (entry.getType().equals(FileType.FOLDER))
-            throw new IsDirectoryException("path: " + path);
+        if (entry.isFolder()) {
+            throw new IsDirectoryException(path.toString());
+        }
 
         return entry.getContent().getInputStream();
     }
@@ -111,10 +117,11 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
         final FileObject entry = getEntry(path);
 
         if (entry.exists()) {
-            if (entry.getType().equals(FileType.FOLDER))
-                throw new IsDirectoryException("path: " + path);
-            else
-                throw new FileAlreadyExistsException("path: " + path);
+            if (entry.isFolder()) {
+                throw new IsDirectoryException(path.toString());
+            } else {
+                throw new FileAlreadyExistsException(path.toString());
+            }
         } else {
             entry.createFile();
         }
@@ -164,75 +171,63 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
     @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
         FileObject dirEntry = getEntry(dir);
-        if (dirEntry.exists())
-            throw new FileAlreadyExistsException("dir: " + dir);
+        if (dirEntry.exists()) { // TODO check necessity
+            throw new FileAlreadyExistsException(dir.toString());
+        }
+
         dirEntry.createFolder();
     }
 
     @Override
     public void delete(final Path path) throws IOException {
-        final String pathString = Util.toPathString(path);
-        final FileObject entry = getEntry(path);
-
-        if (entry.getType().equals(FileType.FOLDER)) {
-            final FileObject[] list = entry.getChildren();
-
-            if (list.length > 0)
-                throw new DirectoryNotEmptyException(pathString);
-        }
-
-        if (!entry.delete())
-            throw new VfsIOException("delete: " + path);
+        removeEntry(path);
     }
 
     @Override
     public void copy(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
         FileObject targetEntry = getEntry(target);
-
-        if (targetEntry.getType().equals(FileType.FOLDER)) {
-            final FileObject[] list = targetEntry.getChildren();
-
-            if (list.length > 0)
-                throw new DirectoryNotEmptyException("path: " + target);
+        if (targetEntry.exists()) {
+            if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
+                removeEntry(target);
+            } else {
+                throw new FileAlreadyExistsException(target.toString());
+            }
         }
-
-        if (!targetEntry.delete())
-            throw new VfsIOException("delete: " + target);
-        targetEntry = getEntry(target.getParent());
-
-        final FileObject sourceEntry = getEntry(source);
-
-        if (!sourceEntry.getType().equals(FileType.FOLDER)) {
-            targetEntry.copyFrom(sourceEntry, Selectors.SELECT_ALL);
-        } else {
-            throw new UnsupportedOperationException("source can not be a folder");
-        }
+        copyEntry(source, target);
     }
 
     @Override
     public void move(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
-        final String targetString = Util.toPathString(source);
         FileObject targetEntry = getEntry(target);
-
-        if (targetEntry.getType().equals(FileType.FOLDER)) {
-            final FileObject[] list = targetEntry.getChildren();
-
-            if (list.length > 0)
-                throw new DirectoryNotEmptyException(targetString);
-        }
-        // TODO: unknown what happens when a move operation is performed
-        // and the target already exists
-        if (!targetEntry.delete())
-            throw new VfsIOException("delete: " + target);
-        targetEntry = getEntry(target.getParent());
-
-        final FileObject sourceEntry = getEntry(source);
-
-        // TODO: how to diagnose?
-        if (!sourceEntry.getType().equals(FileType.FOLDER)) {
-            sourceEntry.moveTo(targetEntry);
+        if (targetEntry.exists()) {
+            if (targetEntry.isFolder()) {
+                if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
+                    // replace the target
+                    if (targetEntry.getChildren().length > 0) {
+                        throw new DirectoryNotEmptyException(target.toString());
+                    } else {
+                        removeEntry(target);
+                        moveEntry(source, target, false);
+                    }
+                } else {
+                    // move into the target
+                    moveEntry(source, target, true);
+                }
+            } else {
+                if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
+                    removeEntry(target);
+                    moveEntry(source, target, false);
+                } else {
+                    throw new FileAlreadyExistsException(target.toString());
+                }
+            }
         } else {
-            throw new UnsupportedOperationException("source can not be a folder");
+            if (source.getParent().equals(target.getParent())) {
+                // rename
+                renameEntry(source, target);
+            } else {
+                moveEntry(source, target, false);
+            }
         }
     }
 
@@ -251,23 +246,17 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
      */
     @Override
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
-        try {
-            final String pathString = Util.toPathString(path);
-            final FileObject entry = getEntry(path);
+        final FileObject entry = getEntry(path);
 
-            if (entry.getType().equals(FileType.FOLDER)) {
-                return;
+        if (entry.isFolder()) {
+            return;
+        }
+
+        // TODO: assumed; not a file == directory
+        for (final AccessMode mode : modes) {
+            if (mode == AccessMode.EXECUTE) {
+                throw new AccessDeniedException(path.toString());
             }
-
-            // TODO: assumed; not a file == directory
-            for (final AccessMode mode : modes) {
-                if (mode == AccessMode.EXECUTE) {
-                    throw new AccessDeniedException(pathString);
-                }
-            }
-
-        } catch (org.apache.commons.vfs2.FileNotFolderException e) {
-            throw (IOException) new NoSuchFileException("path: " + path).initCause(e);
         }
     }
 
@@ -282,11 +271,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
     @Nonnull
     @Override
     public Object getPathMetadata(final Path path) throws IOException {
-        try {
-            return getEntry(path);
-        } catch (org.apache.commons.vfs2.FileNotFolderException e) {
-            throw (IOException) new NoSuchFileException("path: " + path).initCause(e);
-        }
+        return getEntry(path);
     }
 
     /** */
@@ -309,5 +294,62 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
         }
 
         return list;
+    }
+
+    /** */
+    private void removeEntry(Path path) throws IOException {
+        final FileObject entry = getEntry(path);
+
+        if (entry.getType().equals(FileType.FOLDER)) {
+            final FileObject[] list = entry.getChildren();
+
+            if (list.length > 0) {
+                throw new DirectoryNotEmptyException(path.toString());
+            }
+        }
+
+        if (!entry.delete()) {
+            throw new IOException("delete: " + path);
+        }
+    }
+
+    /** */
+    private void copyEntry(final Path source, final Path target) throws IOException {
+        FileObject targetEntry = getEntry(target);
+        FileObject sourceEntry = getEntry(source);
+
+        if (sourceEntry.isFile()) {
+            targetEntry.copyFrom(sourceEntry, Selectors.SELECT_ALL);
+        } else if (sourceEntry.isFolder()) {
+            // TODO java spec. allows empty folder
+            throw new IsDirectoryException(source.toString());
+        }
+    }
+
+    /**
+     * @param targetIsParent if the target is folder
+     */
+    private void moveEntry(final Path source, final Path target, boolean targetIsParent) throws IOException {
+        FileObject sourceEntry = getEntry(source);
+        FileObject targetEntry = getEntry(targetIsParent ? target.getParent().resolve(Util.toFilenameString(source)): target);
+
+        if (sourceEntry.isFile()) {
+            sourceEntry.moveTo(targetEntry);
+        } else if (sourceEntry.isFolder()) {
+            // TODO java spec. allows empty folder
+            throw new IsDirectoryException(source.toString());
+        }
+    }
+
+    /** */
+    private void renameEntry(final Path source, final Path target) throws IOException {
+        FileObject sourceEntry = getEntry(source);
+        FileObject targetEntry = getEntry(target);
+
+        if (sourceEntry.isFile()) {
+            sourceEntry.moveTo(targetEntry);
+        } else if (sourceEntry.isFolder()) {
+            throw new IsDirectoryException(source.toString());
+        }
     }
 }

@@ -9,33 +9,33 @@ package vavi.nio.file.vfs;
 import java.io.IOException;
 import java.nio.file.FileStore;
 
+import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 
 import com.github.fge.filesystem.attributes.FileAttributesFactory;
 import com.github.fge.filesystem.filestore.FileStoreBase;
-import com.google.api.services.drive.model.About.StorageQuota;
 
 
 /**
  * A simple Commons VFS2 {@link FileStore}
  *
  * <p>
- * This makes use of information available in {@link StorageQuota}.
+ * This makes use of information available in {@link FileSystemManager}.
  * Information is computed in "real time".
  * </p>
  */
 public final class VfsFileStore extends FileStoreBase {
 
-    private final FileSystemManager manager;
+    private final FileObject entry; // TODO
 
     /**
      * Constructor
      *
      * @param manager the (valid) Commons VFS drive to use
      */
-    public VfsFileStore(final FileSystemManager manager, final FileAttributesFactory factory) {
+    public VfsFileStore(final FileObject manager, final FileAttributesFactory factory) {
         super("vfs", factory, false);
-        this.manager = manager;
+        this.entry = manager;
     }
 
     /**
@@ -68,8 +68,6 @@ public final class VfsFileStore extends FileStoreBase {
      */
     @Override
     public long getUsableSpace() throws IOException {
-//        final StorageQuota quota = getQuota();
-//        return quota.getLimit() - quota.getUsage();
         return 1024 * 1024 * 1024;
     }
 
@@ -89,13 +87,6 @@ public final class VfsFileStore extends FileStoreBase {
      */
     @Override
     public long getUnallocatedSpace() throws IOException {
-//        final StorageQuota quota = getQuota();
-//        return quota.getLimit() - quota.getUsage();
         return 1024 * 1024 * 1024;
-    }
-
-    /** */
-    private Object getQuota() throws IOException {
-        return null;
     }
 }

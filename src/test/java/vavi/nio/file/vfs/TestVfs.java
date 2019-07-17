@@ -10,7 +10,6 @@ import java.io.IOException;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
-import org.apache.commons.vfs2.FileType;
 import org.apache.commons.vfs2.VFS;
 import org.apache.commons.vfs2.auth.StaticUserAuthenticator;
 import org.apache.commons.vfs2.impl.DefaultFileSystemConfigBuilder;
@@ -58,7 +57,7 @@ public class TestVfs {
 System.err.println("Connecting \"" + baseUrl + "\" with " + opts);
         FileObject smbFile = fs.resolveFile(baseUrl, opts); // added opts!
 System.err.println(smbFile.exists() + " " + smbFile.getContent().getLastModifiedTime());
-        if (smbFile.getType().equals(FileType.FOLDER)) {
+        if (smbFile.isFolder()) {
             for (FileObject fo : smbFile.getChildren()) {
 System.err.println(fo.getName());
             }

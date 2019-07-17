@@ -10,10 +10,13 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.VFS;
@@ -173,7 +176,19 @@ System.err.println("protocol: " + protocol);
         if (!manager.hasProvider(protocol)) {
             throw new IllegalStateException("missing provider: " + protocol);
         }
-        final VfsFileStore fileStore = new VfsFileStore(manager, factoryProvider.getAttributesFactory());
+        FileObject root = manager.resolveFile(baseUrl, options.getFileSystemOptions());
+        final VfsFileStore fileStore = new VfsFileStore(root, factoryProvider.getAttributesFactory());
         return new VfsFileSystemDriver(fileStore, factoryProvider, manager, options, env);
+    }
+
+    /* ad-hoc hack for ignoring checking opacity */
+    protected void checkURI(@Nullable final URI uri) {
+        Objects.requireNonNull(uri);
+        if (!uri.isAbsolute()) {
+            throw new IllegalArgumentException("uri is not absolute");
+        }
+        if (!getScheme().equals(uri.getScheme())) {
+            throw new IllegalArgumentException("bad scheme");
+        }
     }
 }

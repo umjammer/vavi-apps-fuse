@@ -21,7 +21,6 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
-import org.apache.commons.vfs2.FileType;
 
 import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider;
 
@@ -60,8 +59,8 @@ public final class VfsBasicFileAttributesProvider extends BasicFileAttributesPro
         try {
             return FileTime.fromMillis(entry.getContent().getLastModifiedTime());
         } catch (FileSystemException e) {
-            System.err.println("error code: " + e.getCode());
-            e.printStackTrace();
+System.err.println("error code: " + e.getCode());
+e.printStackTrace();
             return FileTime.fromMillis(0);
         }
     }
@@ -72,9 +71,9 @@ public final class VfsBasicFileAttributesProvider extends BasicFileAttributesPro
     @Override
     public boolean isRegularFile() {
         try {
-            return entry.getType().equals(FileType.FILE);
+            return entry.isFile();
         } catch (FileSystemException e) {
-            e.printStackTrace();
+e.printStackTrace();
             return false;
         }
     }
@@ -85,9 +84,9 @@ public final class VfsBasicFileAttributesProvider extends BasicFileAttributesPro
     @Override
     public boolean isDirectory() {
         try {
-            return entry.getType().equals(FileType.FOLDER);
+            return entry.isFolder();
         } catch (FileSystemException e) {
-            e.printStackTrace();
+e.printStackTrace();
             return false;
         }
     }
@@ -106,8 +105,8 @@ public final class VfsBasicFileAttributesProvider extends BasicFileAttributesPro
         try {
             return isDirectory() ? 0 : entry.getContent().getSize();
         } catch (FileSystemException e) {
-            System.err.println("error code: " + e.getCode());
-            e.printStackTrace();
+System.err.println("error code: " + e.getCode());
+e.printStackTrace();
             return 0;
         }
     }
