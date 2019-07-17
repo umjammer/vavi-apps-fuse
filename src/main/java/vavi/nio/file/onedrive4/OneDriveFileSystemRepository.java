@@ -17,12 +17,9 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 import com.microsoft.graph.authentication.IAuthenticationProvider;
-import com.microsoft.graph.core.DefaultClientConfig;
-import com.microsoft.graph.core.IClientConfig;
 import com.microsoft.graph.http.IHttpRequest;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
-import com.microsoft.graph.serializer.DefaultSerializer;
 
 import vavi.net.auth.oauth2.BasicAppCredential;
 import vavi.net.auth.oauth2.LocalOAuth2;
@@ -82,7 +79,7 @@ Debug.println("authenticatorClassName: " + authenticatorClassName);
         BasicAppCredential appCredential = BasicAppCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_CREDENTIAL));
 
         String accessToken = new LocalOAuth2(appCredential, true, authenticatorClassName).authorize(email);
-Debug.println("accessToken: " + accessToken);
+//Debug.println("accessToken: " + accessToken);
 
         IAuthenticationProvider authenticationProvider = new IAuthenticationProvider() {
             @Override
@@ -90,17 +87,8 @@ Debug.println("accessToken: " + accessToken);
                 request.addHeader("Authorization", "Bearer " + accessToken);
             }
         };
-        IClientConfig config = DefaultClientConfig.createWithAuthenticationProvider(authenticationProvider); // debug
         IGraphServiceClient graphClient = GraphServiceClient.builder()
             .authenticationProvider(authenticationProvider)
-            .serializer(new DefaultSerializer(config.getLogger()) { // debug
-                @Override
-                public <T> String serializeObject(final T serializableObject) {
-                    String result = super.serializeObject(serializableObject);
-Debug.println("serialized: " + result);
-                    return result;
-                }
-            })
             .buildClient();
 
         final OneDriveFileStore fileStore = new OneDriveFileStore(graphClient, factoryProvider.getAttributesFactory());
