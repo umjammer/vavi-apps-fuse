@@ -7,17 +7,11 @@
 package vavi.nio.file.onedrive3;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Scanner;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -30,11 +24,9 @@ import org.nuxeo.onedrive.client.RequestHeader;
 
 import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
-import com.google.api.client.util.LoggingOutputStream;
 
 import vavi.net.auth.oauth2.BasicAppCredential;
 import vavi.net.auth.oauth2.LocalOAuth2;
-import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -89,7 +81,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         BasicAppCredential appCredential = BasicAppCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_CREDENTIAL));
 
         String accessToken = new LocalOAuth2(appCredential, true, authenticatorClassName).authorize(email);
-Debug.println("accessToken: " + accessToken);
+//Debug.println("accessToken: " + accessToken);
 
         RequestExecutor executor = new JavaNetRequestExecutor(accessToken) {
             @Override
@@ -103,39 +95,7 @@ Debug.println("accessToken: " + accessToken);
             public Upload doPatch(URL url, Set<RequestHeader> headers) throws IOException {
                 headers.add(new RequestHeader("X-HTTP-Method-Override", "PATCH"));
                 headers.add(new RequestHeader("X-HTTP-Method", "PATCH"));
-                HttpURLConnection connection = this.createConnection(url, "POST", headers);
-                connection.setDoOutput(true);
-                connection.connect();
-                return new Upload() {
-                    @Override
-                    public OutputStream getOutputStream() throws IOException {
-                        return new LoggingOutputStream(connection.getOutputStream(), Logger.getGlobal(), Level.INFO, Integer.MAX_VALUE); // debug
-                    }
-
-                    @Override
-                    public Response getResponse() throws IOException {
-                        return toResponse(connection);
-                    }
-                };
-            }
-
-            /** TODO for debug */
-            @Override
-            protected Response toResponse(final HttpURLConnection connection) throws IOException {
-                int responseCode = connection.getResponseCode();
-                if (responseCode >= 400 || responseCode == -1) {
-                    StringBuilder sb = new StringBuilder();
-                    InputStream stream = connection.getErrorStream();
-                    Scanner scanner = new Scanner(stream);
-                    while (scanner.hasNextLine()) {
-                        sb.append(scanner.nextLine());
-                        sb.append("\n");
-                    }
-                    scanner.close();
-new Exception(sb.toString()).printStackTrace();
-                    throw new Error();
-                }
-                return super.toResponse(connection);
+                return super.doPost(url, headers);
             }
         };
 
