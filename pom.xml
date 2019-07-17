@@ -4,12 +4,17 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.0.4</version>
+  <version>0.0.5-SANPSHOT</version>
   <packaging>jar</packaging>
 
   <name>vavi-apps-fuse</name>
   <url>https://github.com/umjammer/vavi-apps-fuse</url>
-  <description>0.0.4
+  <description>0.0.5
+
+    relive fuse-jna as generic
+    make onedrive (cyberduck engine) work
+
+0.0.4
 
     separate nio base
     separate oauth2
@@ -129,9 +134,9 @@ TODO
     </dependency>
 
     <dependency>
-      <groupId>com.github.umjammer</groupId>
+      <groupId>vavi</groupId>
       <artifactId>vavi-net-auth</artifactId>
-      <version>0.0.2</version>
+      <version>0.0.3</version>
     </dependency>
 
     <dependency>
@@ -185,14 +190,14 @@ TODO
       <!-- java-fs dropbox -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>java7-fs-dropbox</artifactId>
-      <version>0.0.4v</version>
+      <version>0.0.6v</version>
     </dependency>
 
     <dependency>
       <!-- java-fs box -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>java7-fs-box</artifactId>
-      <version>0.1.0v</version>
+      <version>0.1.1v</version>
     </dependency>
 
     <dependency>
@@ -281,6 +286,13 @@ TODO
     </dependency>
 
     <dependency>
+      <!-- fuse jna (deprecated) -->
+      <groupId>com.github.EtiennePerot</groupId>
+      <artifactId>fuse-jna</artifactId>
+      <version>eced84f81a</version>
+    </dependency>
+
+    <dependency>
       <groupId>com.rainerhahnekamp</groupId>
       <artifactId>sneakythrow</artifactId>
       <version>1.2.0</version>
@@ -324,14 +336,6 @@ TODO
       <groupId>com.github.Querz</groupId>
       <artifactId>NBT</artifactId>
       <version>4.0</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <!-- fuse jna (deprecated) -->
-      <groupId>com.github.EtiennePerot</groupId>
-      <artifactId>fuse-jna</artifactId>
-      <version>eced84f81a</version>
       <scope>test</scope>
     </dependency>
 
