@@ -79,15 +79,16 @@ Debug.println("authenticatorClassName: " + authenticatorClassName);
         BasicAppCredential appCredential = BasicAppCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_CREDENTIAL));
 
         String accessToken = new LocalOAuth2(appCredential, true, authenticatorClassName).authorize(email);
-Debug.println("accessToken: " + accessToken);
+//Debug.println("accessToken: " + accessToken);
 
+        IAuthenticationProvider authenticationProvider = new IAuthenticationProvider() {
+            @Override
+            public void authenticateRequest(IHttpRequest request) {
+                request.addHeader("Authorization", "Bearer " + accessToken);
+            }
+        };
         IGraphServiceClient graphClient = GraphServiceClient.builder()
-            .authenticationProvider(new IAuthenticationProvider() {
-                @Override
-                public void authenticateRequest(IHttpRequest request) {
-                    request.addHeader("Authorization", "Bearer " + accessToken);
-                }
-            })
+            .authenticationProvider(authenticationProvider)
             .buildClient();
 
         final OneDriveFileStore fileStore = new OneDriveFileStore(graphClient, factoryProvider.getAttributesFactory());

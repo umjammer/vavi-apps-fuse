@@ -7,12 +7,10 @@
 package vavi.nio.file.onedrive3;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Scanner;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -21,6 +19,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import org.nuxeo.onedrive.client.JavaNetRequestExecutor;
 import org.nuxeo.onedrive.client.OneDriveAPI;
 import org.nuxeo.onedrive.client.OneDriveBasicAPI;
+import org.nuxeo.onedrive.client.OneDriveDrive;
 import org.nuxeo.onedrive.client.RequestExecutor;
 import org.nuxeo.onedrive.client.RequestHeader;
 
@@ -29,7 +28,6 @@ import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 
 import vavi.net.auth.oauth2.BasicAppCredential;
 import vavi.net.auth.oauth2.LocalOAuth2;
-import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -84,33 +82,21 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         BasicAppCredential appCredential = BasicAppCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_CREDENTIAL));
 
         String accessToken = new LocalOAuth2(appCredential, true, authenticatorClassName).authorize(email);
-Debug.println("accessToken: " + accessToken);
+//Debug.println("accessToken: " + accessToken);
 
         RequestExecutor executor = new JavaNetRequestExecutor(accessToken) {
             @Override
             public void addAuthorizationHeader(final Set<RequestHeader> headers) {
-                headers.add(new RequestHeader("Authorization", String.format("Bearer %s", accessToken)));
+                super.addAuthorizationHeader(headers);
                 // HttpURLConnection adds "accept" header which is unavailable to onedrive.
                 headers.add(new RequestHeader("Accept", "application/json"));
             }
 
-            /** TODO for debug */
             @Override
-            protected Response toResponse(final HttpURLConnection connection) throws IOException {
-                int responseCode = connection.getResponseCode();
-                if (responseCode >= 400 || responseCode == -1) {
-                    StringBuilder sb = new StringBuilder();
-                    InputStream stream = connection.getErrorStream();
-                    Scanner scanner = new Scanner(stream);
-                    while (scanner.hasNextLine()) {
-                        sb.append(scanner.nextLine());
-                        sb.append("\n");
-                    }
-                    scanner.close();
-new Exception(sb.toString()).printStackTrace();
-                    throw new Error();
-                }
-                return super.toResponse(connection);
+            public Upload doPatch(URL url, Set<RequestHeader> headers) throws IOException {
+                headers.add(new RequestHeader("X-HTTP-Method-Override", "PATCH"));
+                headers.add(new RequestHeader("X-HTTP-Method", "PATCH"));
+                return super.doPost(url, headers);
             }
         };
 
@@ -132,7 +118,7 @@ new Exception(sb.toString()).printStackTrace();
 
             @Override
             public String getBaseURL() {
-                return String.format("https://graph.microsoft.com%s", "/v1.0/me");
+                return String.format("https://graph.microsoft.com%s", "/v1.0");
             }
 
             @Override
@@ -141,7 +127,8 @@ new Exception(sb.toString()).printStackTrace();
             }
         };
 
-        final OneDriveFileStore fileStore = new OneDriveFileStore(client, factoryProvider.getAttributesFactory());
-        return new OneDriveFileSystemDriver(fileStore, factoryProvider, client, env);
+        OneDriveDrive drive = OneDriveDrive.getDefaultDrive(client);
+        final OneDriveFileStore fileStore = new OneDriveFileStore(drive, factoryProvider.getAttributesFactory());
+        return new OneDriveFileSystemDriver(fileStore, factoryProvider, client, drive, env);
     }
 }

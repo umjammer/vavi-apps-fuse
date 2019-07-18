@@ -11,9 +11,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URLEncoder;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -29,10 +32,12 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
-import java.time.ZonedDateTime;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -43,16 +48,15 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import org.nuxeo.onedrive.client.OneDriveAPI;
 import org.nuxeo.onedrive.client.OneDriveCopyOperation;
 import org.nuxeo.onedrive.client.OneDriveDrive;
-import org.nuxeo.onedrive.client.OneDriveExpand;
 import org.nuxeo.onedrive.client.OneDriveFile;
 import org.nuxeo.onedrive.client.OneDriveFolder;
 import org.nuxeo.onedrive.client.OneDriveItem;
 import org.nuxeo.onedrive.client.OneDriveItem.ItemIdentifierType;
+import org.nuxeo.onedrive.client.facets.FileSystemInfoFacet;
 import org.nuxeo.onedrive.client.OneDriveLongRunningAction;
 import org.nuxeo.onedrive.client.OneDrivePatchOperation;
 import org.nuxeo.onedrive.client.OneDriveUploadSession;
 
-import com.eclipsesource.json.JsonObject;
 import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
@@ -75,19 +79,20 @@ import static vavi.nio.file.Util.toPathString;
 public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase {
 
     private final OneDriveAPI client;
-    private OneDriveDrive drive;
+    private final OneDriveDrive drive;
     private boolean ignoreAppleDouble = false;
 
     @SuppressWarnings("unchecked")
     public OneDriveFileSystemDriver(final FileStore fileStore,
             final FileSystemFactoryProvider provider,
             final OneDriveAPI client,
+            final OneDriveDrive drive,
             final Map<String, ?> env) {
         super(fileStore, provider);
         this.client = client;
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
-        drive = OneDriveDrive.getDefaultDrive(client);
+        this.drive = drive;
     }
 
     /** */
@@ -105,40 +110,27 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
                     throw new NoSuchFileException("ignore apple double file: " + path);
                 }
 
-                String pathString = toPathString(path);
-Debug.println("path: " + pathString);
+//                String pathString = toPathString(path);
+//Debug.println("path: " + pathString);
                 OneDriveItem entry;
-                if (pathString.equals("/")) {
-                    entry = new OneDriveFolder(client, drive, URLEncoder.encode(pathString, "utf-8"), ItemIdentifierType.Path) {
-                        public String getFullyQualifiedPath() {
-                            return "/drive/root";
-                        }
-
-                        @Override
-                        public OneDriveFolder.Metadata getMetadata(OneDriveExpand... expands) throws IOException {
-                            return new OneDriveFolder.Metadata(new JsonObject()) {
-                                @Override
-                                public ZonedDateTime getLastModifiedDateTime() {
-                                    return ZonedDateTime.now();
-                                }
-                                @Override
-                                public long getSize() {
-                                    return 0;
-                                }
-                            };
-                        }
-                    };
+                if (path.getNameCount() == 0) {
+                    entry = drive.getRoot();
+                    cache.putFile(path, entry);
+                    return entry;
                 } else {
-                    entry = new OneDriveItem(client, drive, URLEncoder.encode(pathString, "utf-8"), ItemIdentifierType.Path) {
-                        @Override
-                        public Metadata getMetadata(OneDriveExpand... expand) throws IOException {
-                            // TODO Auto-generated method stub
-                            return null;
-                        }
-                    };
+                    List<Path> siblings;
+                    if (!cache.containsFolder(path.getParent())) {
+                        siblings = getDirectoryEntries(path.getParent());
+                    } else {
+                        siblings = cache.getFolder(path.getParent());
+                    }
+                    Optional<Path> found = siblings.stream().filter(p -> p.getFileName().equals(path.getFileName())).findFirst();
+                    if (found.isPresent()) {
+                        return cache.getEntry(found.get());
+                    } else {
+                        throw new NoSuchFileException(path.toString());
+                    }
                 }
-                cache.putFile(path, entry);
-                return entry;
             }
         }
     };
@@ -170,8 +162,8 @@ Debug.println("path: " + pathString);
                 throw new FileAlreadyExistsException("path: " + path);
             }
         } catch (NoSuchFileException e) {
-System.out.println("newOutputStream: " + e.getMessage());
-new Exception("*** DUMMY ***").printStackTrace();
+Debug.println("newOutputStream: " + e.getMessage());
+//new Exception("*** DUMMY ***").printStackTrace();
         }
 
         return new Util.OutputStreamForUploading() {
@@ -180,7 +172,23 @@ new Exception("*** DUMMY ***").printStackTrace();
                 OneDriveFolder dirEntry = OneDriveFolder.class.cast(cache.getEntry(path.getParent()));
                 OneDriveFile entry = new OneDriveFile(client, dirEntry, toFilenameString(path), ItemIdentifierType.Path);
                 final OneDriveUploadSession uploadSession = entry.createUploadSession();
-                // TODO @see ch.cyberduck.core.onedrive.features.GraphWriteFeature
+                OutputStream os = new OneDriveOutputStream(uploadSession, path, is.available(), newEntry -> {
+                    try {
+                        cache.addEntry(path, newEntry);
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                });
+                WritableByteChannel wbc = Channels.newChannel(os);
+                ReadableByteChannel rbc = Channels.newChannel(is);
+                ByteBuffer buffer = ByteBuffer.allocateDirect(32 * 1024);
+                while (rbc.read(buffer) != -1 || buffer.position() > 0) {
+                    buffer.flip();
+                    wbc.write(buffer);
+                    buffer.compact();
+                }
+                wbc.close();
+                rbc.close();
             }
         };
     }
@@ -348,14 +356,14 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
         final OneDriveItem entry = cache.getEntry(dir);
 
         if (!entry.getMetadata().isFolder()) {
-            throw new NotDirectoryException("dir: " + dir);
+            throw new NotDirectoryException(dir.toString());
         }
 
         List<Path> list = null;
         if (cache.containsFolder(dir)) {
             list = cache.getFolder(dir);
         } else {
-            list = new ArrayList<>((int) OneDriveFolder.class.cast(entry).getMetadata().asFolder().getChildCount());
+            list = new ArrayList<>();
 
             for (final OneDriveItem.Metadata child : OneDriveFolder.class.cast(entry).getChildren()) {
                 Path childPath = dir.resolve(child.getName());
@@ -369,6 +377,26 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
         }
 
         return list;
+    }
+
+    /** */
+    private OneDriveItem getEntry(Path path) throws IOException {
+        final OneDriveItem parentEntry = cache.getEntry(path.getParent());
+
+        Optional<OneDriveItem.Metadata> found = StreamSupport.stream(OneDriveFolder.class.cast(parentEntry).getChildren().spliterator(), false)
+            .filter(child -> {
+                try {
+//System.out.println(child.getName() + ", " + toFilenameString(path));
+                    return child.getName().equals(toFilenameString(path));
+                } catch (IOException e) {
+                    throw new IllegalStateException(e);
+                }
+            }).findFirst();
+        if (found.isPresent()) {
+            return found.get().getResource();
+        } else {
+            throw new NoSuchFileException(path.toString());
+        }
     }
 
     /** */
@@ -397,15 +425,16 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
         OneDriveItem targetParentEntry = cache.getEntry(target.getParent());
         if (sourceEntry.getMetadata().isFile()) {
             OneDriveCopyOperation operation = new OneDriveCopyOperation();
+            operation.rename(toFilenameString(target));
             operation.copy(OneDriveFolder.class.cast(targetParentEntry));
             OneDriveLongRunningAction action = OneDriveFile.class.cast(sourceEntry).copy(operation);
             action.await(statusObject -> {
-                System.err.printf("Copy Progress Operation %s progress %f status %s",
+                Debug.printf("Copy Progress Operation %s progress %f status %s",
                     statusObject.getOperation(),
                     statusObject.getPercentage(),
                     statusObject.getStatus());
             });
-            cache.getEntry(target); // for add
+            cache.addEntry(target, getEntry(target));
         } else if (sourceEntry.getMetadata().isFolder()) {
             throw new IsDirectoryException("source can not be a folder: " + source);
         }
@@ -418,14 +447,18 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
         OneDriveItem sourceEntry = cache.getEntry(source);
         OneDriveItem targetParentEntry = cache.getEntry(targetIsParent ? target : target.getParent());
         if (sourceEntry.getMetadata().isFile()) {
-            OneDrivePatchOperation patchOperation = new OneDrivePatchOperation();
-            patchOperation.move(OneDriveFolder.class.cast(targetParentEntry));
-            OneDriveFile.class.cast(sourceEntry).patch(patchOperation);
+            OneDrivePatchOperation operation = new OneDrivePatchOperation();
+            operation.rename(targetIsParent ? toFilenameString(source) : toFilenameString(target));
+            operation.move(OneDriveFolder.class.cast(targetParentEntry));
+            final FileSystemInfoFacet info = new FileSystemInfoFacet();
+            info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getMetadata().getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
+            operation.facet("fileSystemInfo", info);
+            OneDriveFile.class.cast(sourceEntry).patch(operation);
             cache.removeEntry(source);
             if (targetIsParent) {
-//                cache.addEntry(target.resolve(source.getFileName()), patchedEntry); TODO
+                cache.addEntry(target.resolve(source.getFileName()), getEntry(target.resolve(source.getFileName())));
             } else {
-//                cache.addEntry(target, patchedEntry); TODO
+                cache.addEntry(target, getEntry(target));
             }
         } else if (sourceEntry.getMetadata().isFolder()) {
             throw new IsDirectoryException("source can not be a folder: " + source);
@@ -436,10 +469,10 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
     private void renameEntry(final Path source, final Path target) throws IOException {
         OneDriveItem sourceEntry = cache.getEntry(source);
 
-        OneDrivePatchOperation patchOperation = new OneDrivePatchOperation();
-        patchOperation.rename(toFilenameString(target));
-        sourceEntry.patch(patchOperation);
+        OneDrivePatchOperation operation = new OneDrivePatchOperation();
+        operation.rename(toFilenameString(target));
+        sourceEntry.patch(operation);
         cache.removeEntry(source);
-//        cache.addEntry(target, patchedEntry); TODO
+        cache.addEntry(target, getEntry(target));
     }
 }

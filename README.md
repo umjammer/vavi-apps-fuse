@@ -8,16 +8,18 @@ fuse for java and many file systems.
 
 | fs                 | list | upload | download | copy | move | rm | mkdir | cache | watch | library |
 |--------------------|------|--------|----------|------|------|----|-------|-------|-------|---------|
-| google drive       | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [google-api-services-drive](https://developers.google.com/api-client-library/java/) |
+| google drive (v3)  | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [google-api-services-drive](https://developers.google.com/api-client-library/java/) |
 | one drive (v1)     | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [OneDriveJavaSDK](https://github.com/umjammer/OneDriveJavaSDK) |
 | one drive (graph)  | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [msgraph-sdk-java](https://github.com/microsoftgraph/msgraph-sdk-java) |
-| dropbox            | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [java7-fs-dropbox](https://github.com/umjammer/java7-fs-dropbox) |
-| box                | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [java7-fs-box](https://github.com/umjammer/java7-fs-box) |
-| vfs ssh            | ✅    |        |          |      |      |    |       |       |       | [commons-vfs2]() |
-| vfs webdav         | ✅    |        |          |      |      |    |       |       |       | [commons-vfs2-sandbox]() |
-| archive            | ✅    |        |          |      |      |    |       |       |       | [vavi-util-archive]() |
+| one drive (graph)  | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [onedrive-java-client](https://github.com/iterate-ch/onedrive-java-client) |
+| dropbox (v3)       | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [java7-fs-dropbox](https://github.com/umjammer/java7-fs-dropbox) |
+| box (v2)           | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [java7-fs-box](https://github.com/umjammer/java7-fs-box) |
+| vfs ssh            | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [commons-vfs2](), [jcifs](), [jsch]() |
+| vfs webdav         | ✅    |        |          |      |      |    |       |       |       | [commons-vfs2-sandbox](), [jackrabbit-webdav 1.6.0]() |
+| archive            | ✅    |        |          |      |      |    |       |       |       | [vavi-util-archive](https://github.com/umjammer/vavi-util-archive) |
 | hfs                | ✅    |        |          |      |      |    |       |       |       | [hfsexplorer](https://github.com/umjammer/hfsexplorer) |
 | gathered           | ✅    |        |          |      |      |    |       |       |       | |
+| cyberduck          | ✅    |        |          |      |      |    |       |       |       | [vavi-nio-file-cyberduck](https://github.com/umjammer/vavi-nio-file-cyberduck), [cyberduck](https://github.com/iterate-ch/cyberduck) |
 
 
 # TODO
@@ -76,20 +78,21 @@ fuse for java and many file systems.
  * [javafs](https://github.com/puniverse/javafs) 🎯
    * [patch for javafs](https://github.com/umjammer/javafs)
  * [jnr-fuse](https://github.com/SerCeMan/jnr-fuse)
- * [fuse-jna](https://github.com/EtiennePerot/fuse-jna)
+ * [fuse-jna](https://github.com/EtiennePerot/fuse-jna) 🎯
+   * [fuse-jna for java nio file](https://github.com/umjammer/javafs)
 
 
 ### fuse-jna
 
- * https://github.com/smacke/gdrivefs (v2)
- * https://github.com/tbutter/gyingpan (v2)
- * https://github.com/stepank/jdbox (v2)
+ * https://github.com/smacke/gdrivefs (googledrive v2)
+ * https://github.com/tbutter/gyingpan (googledrive v2)
+ * https://github.com/stepank/jdbox (googledrive v2)
 
  * https://github.com/bonifaido/zkfuse-jna (ZooKeeper)
  * https://github.com/Aypz/bcfusefs (BitCasa)
- * https://github.com/centic9/JGitFS
+ * https://github.com/centic9/JGitFS (github)
 
- * http://yy.hatenablog.jp/entry/2014/06/01/000000
+ * http://yy.hatenablog.jp/entry/2014/06/01/000000 (📔 in 🇯🇵)
 
 ### jnr-fuse
 
@@ -97,14 +100,14 @@ fuse for java and many file systems.
 
 ## java.nio.file.spi.FileSystemProvider
 
- * https://github.com/elek/jfs (google drive)
- * https://github.com/usrflo/encfs4j (enc)
+ * https://github.com/elek/jfs (googledrive v1)
+ * https://github.com/usrflo/encfs4j (encrypted)
  * https://github.com/platformlayer/openstack-fileprovider (OpenStack Swift)
- * https://github.com/google/jimfs (mem)
+ * https://github.com/google/jimfs (memory)
  * https://github.com/marschall/zipfilesystem-standalone (zip)
  * https://github.com/lucastheisen/jsch-nio (ssh, sftp)
  * https://github.com/heikkipora/Amazon-S3-FileSystem-NIO2 (aws s3)
- * https://github.com/fge/java7-fs-base (java7 nio file base) 🎯
+ * https://github.com/fge/java7-fs-base (java nio file base) 🎯
 
 ### java7-fs
 
@@ -114,5 +117,6 @@ fuse for java and many file systems.
 
 ## vfs
 
- * [jbossvfs](https://github.com/jbossas/jboss-vfs)
+ * [cyberduck](https://github.com/iterate-ch/cyberduck)
  * [truevfs](http://truevfs.net/)
+ * [jbossvfs](https://github.com/jbossas/jboss-vfs)

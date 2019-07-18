@@ -11,7 +11,6 @@ import java.net.URLEncoder;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
-import org.apache.commons.vfs2.FileType;
 import org.apache.commons.vfs2.VFS;
 import org.apache.commons.vfs2.provider.webdav.WebdavFileSystemConfigBuilder;
 
@@ -64,7 +63,7 @@ public class TestVfsWebdav {
 System.err.println("Connecting \"" + baseUrl + "\" with " + options);
         FileObject davFile = fs.resolveFile(baseUrl, options); // added opts!
 //System.err.println(smbFile.exists() + " " + smbFile.getContent().getLastModifiedTime());
-        if (davFile.getType().equals(FileType.FOLDER)) {
+        if (davFile.isFolder()) {
             for (FileObject fo : davFile.getChildren()) {
 System.err.println(fo.getName()); // TODO 文字化け
             }

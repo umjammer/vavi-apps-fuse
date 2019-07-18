@@ -5,14 +5,12 @@ package vavi.nio.file.vfs;
  * Programmed by Naohide Sano
  */
 
-import java.io.File;
 import java.io.IOException;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.VFS;
-import org.apache.commons.vfs2.provider.sftp.IdentityInfo;
 import org.apache.commons.vfs2.provider.sftp.SftpFileSystemConfigBuilder;
 
 import com.jcraft.jsch.UserInfo;
@@ -28,15 +26,13 @@ import vavi.util.properties.annotation.PropsEntity;
  * @version 0.00 2016/08/09 umjammer initial version <br>
  */
 @PropsEntity(url = "file://${user.home}/.vavifuse/credentials.properties")
-public class TestVfsSftp {
+public class TestVfsSftp2 {
 
-    @Property(name = "vfs.keyPath.{0}")
-    private String keyPath;
-    @Property(name = "vfs.passphrase.{0}")
+    @Property(name = "vfs.password.{0}")
     private transient String passphrase;
     @Property(name = "vfs.host.{0}")
     private String host;
-    @Property(name = "vfs.port.{0}", value = "22")
+    @Property(name = "vfs.port.{0}")
     private String port;
     @Property(name = "vfs.username.{0}")
     private String username;
@@ -47,29 +43,29 @@ public class TestVfsSftp {
      * @param args 0: base url (should be replaced by user name, host, port), 1: alias
      */
     public static void main(String[] args) throws Exception {
-        TestVfsSftp app = new TestVfsSftp();
+        TestVfsSftp2 app = new TestVfsSftp2();
         app.alias = args[1];
         PropsEntity.Util.bind(app, app.alias);
         app.baseUrl = args[0];
         app.proceed();
     }
 
-    public static class SftpPassphraseUserInfo implements UserInfo {
-        private String passphrase = null;
-        public SftpPassphraseUserInfo(final String pp) {
-            passphrase = pp;
+    public static class SftpPasswordUserInfo implements UserInfo {
+        private String password = null;
+        public SftpPasswordUserInfo(final String pw) {
+            password = pw;
         }
         public String getPassphrase() {
-            return passphrase;
-        }
-        public String getPassword() {
             return null;
         }
+        public String getPassword() {
+            return password;
+        }
         public boolean promptPassphrase(String prompt) {
-            return true;
+            return false;
         }
         public boolean promptPassword(String prompt) {
-            return false;
+            return true;
         }
         public void showMessage(String message) {
         }
@@ -83,20 +79,16 @@ public class TestVfsSftp {
 //        SftpFileSystemConfigBuilder.getInstance().setStrictHostKeyChecking(options, "no");
         SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(options, false);
         SftpFileSystemConfigBuilder.getInstance().setSessionTimeoutMillis(options, 10000);
-        SftpFileSystemConfigBuilder.getInstance().setUserInfo(options, new SftpPassphraseUserInfo(passphrase));
-        SftpFileSystemConfigBuilder.getInstance().setIdentityInfo(options, new IdentityInfo(new File(keyPath)));
+        SftpFileSystemConfigBuilder.getInstance().setUserInfo(options, new SftpPasswordUserInfo(passphrase));
         FileSystemManager fs = VFS.getManager();
         if (!fs.hasProvider("sftp"))
             throw new RuntimeException("Provider missing: sftp");
         String baseUrl = String.format(this.baseUrl, username, host, port);
 System.err.println("Connecting \"" + baseUrl + "\" with " + options);
-        FileObject File = fs.resolveFile(baseUrl, options); // added opts!
-System.err.println("providerCapabilities ---");
-fs.getProviderCapabilities("sftp").forEach(System.err::println);
-System.err.println("---");
+        FileObject file = fs.resolveFile(baseUrl, options); // added opts!
 //System.err.println(smbFile.exists() + " " + smbFile.getContent().getLastModifiedTime());
-        if (File.isFolder()) {
-            for (FileObject fo : File.getChildren()) {
+        if (file.isFolder()) {
+            for (FileObject fo : file.getChildren()) {
 System.err.println(fo.getName());
             }
         }

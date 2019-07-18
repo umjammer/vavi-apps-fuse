@@ -9,11 +9,16 @@ package vavi.nio.file.vfs;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.VFS;
@@ -26,6 +31,8 @@ import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 import com.jcraft.jsch.UserInfo;
 
+import vavi.nio.file.onedrive4.OneDriveFileSystemProvider;
+import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -43,29 +50,79 @@ public final class VfsFileSystemRepository extends FileSystemRepositoryBase {
         super("vfs", new VfsFileSystemFactoryProvider());
     }
 
-    public interface Options {
-        FileSystemOptions getFileSystemOptions() throws IOException;
-        default String buildBaseUrl(String baseUrl) {
-            return baseUrl;
+    /** */
+    static abstract class Factory {
+        @Property(name = "vfs.username.{0}")
+        protected String username;
+        @Property(name = "vfs.password.{0}")
+        protected transient String password;
+        @Property(name = "vfs.host.{0}")
+        protected String host;
+        @Property(name = "vfs.port.{0}")
+        protected String port;
+        /** */
+        protected URI uri;
+
+        /** */
+        Factory(URI uri) {
+            this.uri = uri;
+            String[] userInfo = uri.getUserInfo() != null ? uri.getUserInfo().split(":") : null;
+            this.username = userInfo != null && !userInfo[0].isEmpty() ? userInfo[0] : null;
+            this.password = userInfo != null && !userInfo[1].isEmpty() ? userInfo[1] : null;
+            this.host = uri.getHost();
+            this.port = uri.getPort() != -1 ? String.valueOf(uri.getPort()) : null;
         }
-        static Options getOptions(String protocol) {
+
+        /** */
+        public String buildBaseUrl() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(uri.getScheme());
+            sb.append("://");
+            if (username != null) {
+                sb.append(username);
+            }
+            if (password != null) {
+                sb.append(":");
+                sb.append(password);
+            }
+            if (host != null) {
+                if (username != null || password != null) {
+                    sb.append("@");
+                }
+                sb.append(host);
+            }
+            if (port != null) {
+                sb.append(":");
+                sb.append(port);
+            }
+            if (uri.getPath() != null) {
+                sb.append(uri.getPath());
+            }
+            return sb.toString();
+        }
+
+        /** */
+        abstract FileSystemOptions getFileSystemOptions() throws IOException;
+
+        /** */
+        static Factory getFactory(URI uri) {
+            String protocol = uri.getScheme();
             switch (protocol) {
-            case "smb": return new SmbOptions();
-            case "sftp": return new SftpOptions();
-            case "webdav": return new WebdavOptions();
+            case "smb": return new SmbFactory(uri);
+            case "sftp": return new SftpFactory(uri);
+            case "webdav": return new WebdavFactory(uri);
             default: throw new IllegalArgumentException(protocol);
             }
         }
     }
 
     @PropsEntity(url = "file://${user.home}/.vavifuse/credentials.properties")
-    private static class SmbOptions implements Options {
+    private static class SmbFactory extends Factory {
         @Property(name = "vfs.domain.{0}")
         private String domain;
-        @Property(name = "vfs.username.{0}")
-        private String username;
-        @Property(name = "vfs.password.{0}")
-        private transient String password;
+        SmbFactory(URI uri) {
+            super(uri);
+        }
         @Override
         public FileSystemOptions getFileSystemOptions() throws IOException {
             FileSystemOptions options = new FileSystemOptions();
@@ -73,26 +130,45 @@ public final class VfsFileSystemRepository extends FileSystemRepositoryBase {
             DefaultFileSystemConfigBuilder.getInstance().setUserAuthenticator(options, auth);
             return options;
         }
+        /** */
+        public String buildBaseUrl() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(uri.getScheme());
+            sb.append("://");
+            if (host != null) {
+                sb.append(host);
+            }
+            if (port != null) {
+                sb.append(":");
+                sb.append(port);
+            }
+            if (uri.getPath() != null) {
+                sb.append(uri.getPath());
+            }
+            return sb.toString();
+        }
     }
 
     @PropsEntity(url = "file://${user.home}/.vavifuse/credentials.properties")
-    private static class SftpOptions implements Options {
-        class SftpPassphraseUserInfo implements UserInfo {
-            String passPhrase = null;
-            public SftpPassphraseUserInfo(final String pp) {
-                passPhrase = pp;
+    private static class SftpFactory extends Factory {
+        class SftpUserInfo implements UserInfo {
+            boolean ssl;
+            String passString = null;
+            public SftpUserInfo(final String passString, boolean ssl) {
+                this.passString = passString;
+                this.ssl = ssl;
             }
             public String getPassphrase() {
-                return passPhrase;
+                return ssl ? passString : null;
             }
             public String getPassword() {
-                return null;
+                return ssl ? null : passString;
             }
             public boolean promptPassphrase(String prompt) {
-                return true;
+                return ssl;
             }
             public boolean promptPassword(String prompt) {
-                return false;
+                return !ssl;
             }
             public void showMessage(String message) {
             }
@@ -104,76 +180,104 @@ public final class VfsFileSystemRepository extends FileSystemRepositoryBase {
         private String keyPath;
         @Property(name = "vfs.passphrase.{0}")
         private transient String passphrase;
-        @Property(name = "vfs.host.{0}")
-        private String host;
-        @Property(name = "vfs.port.{0}")
-        private String port;
-        @Property(name = "vfs.username.{0}")
-        private String username;
+        SftpFactory(URI uri) {
+            super(uri);
+        }
         @Override
         public FileSystemOptions getFileSystemOptions() throws IOException {
+            boolean ssl = passphrase != null;
             FileSystemOptions options = new FileSystemOptions();
             SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(options, false);
             SftpFileSystemConfigBuilder.getInstance().setSessionTimeoutMillis(options, 10000);
-            SftpFileSystemConfigBuilder.getInstance().setUserInfo(options, new SftpPassphraseUserInfo(passphrase));
-            SftpFileSystemConfigBuilder.getInstance().setIdentityInfo(options, new IdentityInfo(new File(keyPath)));
+            SftpFileSystemConfigBuilder.getInstance().setUserInfo(options, new SftpUserInfo(ssl ? passphrase : password, ssl));
+            if (ssl) {
+                SftpFileSystemConfigBuilder.getInstance().setIdentityInfo(options, new IdentityInfo(new File(keyPath)));
+            }
             return options;
         }
         @Override
-        public String buildBaseUrl(String baseUrl) {
-            return String.format(baseUrl, username, host, port);
+        public String buildBaseUrl() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(uri.getScheme());
+            sb.append("://");
+            if (username != null) {
+                sb.append(username);
+            }
+            if (host != null) {
+                if (username != null) {
+                    sb.append("@");
+                }
+                sb.append(host);
+            }
+            if (port != null) {
+                sb.append(":");
+                sb.append(port);
+            }
+            if (uri.getPath() != null) {
+                sb.append(uri.getPath());
+            }
+            return sb.toString();
         }
     }
 
     @PropsEntity(url = "file://${user.home}/.vavifuse/credentials.properties")
-    private static class WebdavOptions implements Options {
-        @Property(name = "vfs.username.{0}")
-        private String username;
-        @Property(name = "vfs.password.{0}")
-        private transient String password;
-        @Property(name = "vfs.host.{0}")
-        private String host;
-        @Property(name = "vfs.port.{0}")
-        private String port;
+    private static class WebdavFactory extends Factory {
+        WebdavFactory(URI uri) {
+            super(uri);
+        }
         @Override
         public FileSystemOptions getFileSystemOptions() throws IOException {
             FileSystemOptions options = new FileSystemOptions();
             return options;
         }
-        @Override
-        public String buildBaseUrl(String baseUrl) {
-            return String.format(baseUrl, username, password, host, port);
-        }
     }
 
     /**
-     * @param env { "baseUrl": "smb://10.3.1.1/Temporary Share/", "alias": "cysconas" }
+     * @param uri "vfs:protocol:///?id=alias", sub url (after "vfs:") parts will be replaced by properties.
      */
     @Nonnull
     @Override
     public FileSystemDriver createDriver(final URI uri, final Map<String, ?> env) throws IOException {
-        final String alias = (String) env.get("alias");
-        if (alias == null) {
-            throw new IllegalArgumentException("env: alias not found");
-        }
-        final String baseUrl = (String) env.get("baseUrl");
-        if (baseUrl == null) {
-            throw new IllegalArgumentException("env: baseUrl not found");
-        }
+        try {
+            String uriString = uri.toString();
+            URI subUri = new URI(uriString.substring(uriString.indexOf(':') + 1));
+            String protocol = subUri.getScheme();
+Debug.println("protocol: " + protocol);
 
-        String protocol = baseUrl.substring(0, baseUrl.indexOf(':'));
-System.err.println("protocol: " + protocol);
-        Options options = Options.getOptions(protocol);
-        PropsEntity.Util.bind(options, alias);
+            Map<String, String> params = getParamsMap(subUri);
+            if (!params.containsKey(OneDriveFileSystemProvider.PARAM_ID)) {
+                throw new NoSuchElementException("sub uri not contains a param " + OneDriveFileSystemProvider.PARAM_ID);
+            }
+            final String alias = params.get(OneDriveFileSystemProvider.PARAM_ID);
 
-        FileSystemManager manager = VFS.getManager();
-        for (String scheme : manager.getSchemes()) {
-            System.err.println("scheme: " + scheme);
+            Factory factory = Factory.getFactory(subUri);
+            PropsEntity.Util.bind(factory, alias);
+Debug.println("baseUrl: " + factory.buildBaseUrl());
+
+            FileSystemManager manager = VFS.getManager();
+//for (String scheme : manager.getSchemes()) {
+// System.err.println("scheme: " + scheme);
+//}
+            if (!manager.hasProvider(protocol)) {
+                throw new IllegalStateException("missing provider: " + protocol);
+            }
+
+            FileObject root = manager.resolveFile(factory.buildBaseUrl(), factory.getFileSystemOptions());
+            final VfsFileStore fileStore = new VfsFileStore(root, factoryProvider.getAttributesFactory());
+            return new VfsFileSystemDriver(fileStore, factoryProvider, manager, factory, env);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
         }
-        if (!manager.hasProvider(protocol)) {
-            throw new IllegalStateException("missing provider: " + protocol);
+    }
+
+    /* ad-hoc hack for ignoring checking opacity */
+    protected void checkURI(@Nullable final URI uri) {
+        Objects.requireNonNull(uri);
+        if (!uri.isAbsolute()) {
+            throw new IllegalArgumentException("uri is not absolute");
         }
-        final VfsFileStore fileStore = new VfsFileStore(manager, factoryProvider.getAttributesFactory());
-        return new VfsFileSystemDriver(fileStore, factoryProvider, manager, options, env);
+        if (!getScheme().equals(uri.getScheme())) {
+            throw new IllegalArgumentException("bad scheme");
+        }
     }
 }
