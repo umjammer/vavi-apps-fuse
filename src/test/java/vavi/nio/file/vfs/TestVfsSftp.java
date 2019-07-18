@@ -36,7 +36,7 @@ public class TestVfsSftp {
     private transient String passphrase;
     @Property(name = "vfs.host.{0}")
     private String host;
-    @Property(name = "vfs.port.{0}")
+    @Property(name = "vfs.port.{0}", value = "22")
     private String port;
     @Property(name = "vfs.username.{0}")
     private String username;
@@ -90,13 +90,13 @@ public class TestVfsSftp {
             throw new RuntimeException("Provider missing: sftp");
         String baseUrl = String.format(this.baseUrl, username, host, port);
 System.err.println("Connecting \"" + baseUrl + "\" with " + options);
-        FileObject smbFile = fs.resolveFile(baseUrl, options); // added opts!
+        FileObject File = fs.resolveFile(baseUrl, options); // added opts!
 System.err.println("providerCapabilities ---");
 fs.getProviderCapabilities("sftp").forEach(System.err::println);
 System.err.println("---");
 //System.err.println(smbFile.exists() + " " + smbFile.getContent().getLastModifiedTime());
-        if (smbFile.isFolder()) {
-            for (FileObject fo : smbFile.getChildren()) {
+        if (File.isFolder()) {
+            for (FileObject fo : File.getChildren()) {
 System.err.println(fo.getName());
             }
         }

@@ -55,10 +55,10 @@ public class TestVfs {
         if (!fs.hasProvider("smb"))
             throw new RuntimeException("Provider missing: smb");
 System.err.println("Connecting \"" + baseUrl + "\" with " + opts);
-        FileObject smbFile = fs.resolveFile(baseUrl, opts); // added opts!
-System.err.println(smbFile.exists() + " " + smbFile.getContent().getLastModifiedTime());
-        if (smbFile.isFolder()) {
-            for (FileObject fo : smbFile.getChildren()) {
+        FileObject File = fs.resolveFile(baseUrl, opts); // added opts!
+System.err.println(File.exists() + " " + File.getContent().getLastModifiedTime());
+        if (File.isFolder()) {
+            for (FileObject fo : File.getChildren()) {
 System.err.println(fo.getName());
             }
         }

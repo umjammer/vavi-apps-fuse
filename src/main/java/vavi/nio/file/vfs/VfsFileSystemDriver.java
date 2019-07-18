@@ -61,7 +61,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
 
     private boolean ignoreAppleDouble = false;
 
-    private String baseUrl;
+    private final String baseUrl;
 
     /**
      * @param env { "baseUrl": "smb://10.3.1.1/Temporary Share/", "ignoreAppleDouble": boolean }
@@ -70,14 +70,14 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
     public VfsFileSystemDriver(final FileStore fileStore,
             final FileSystemFactoryProvider provider,
             final FileSystemManager manager,
-            final VfsFileSystemRepository.Options options,
+            final VfsFileSystemRepository.Factory options,
             final Map<String, ?> env) throws IOException {
         super(fileStore, provider);
         this.manager = manager;
         this.opts = options.getFileSystemOptions();
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
-        baseUrl = options.buildBaseUrl((String) env.get("baseUrl"));
+        this.baseUrl = options.buildBaseUrl();
     }
 
     /**
@@ -86,16 +86,27 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
      * @throws NoSuchFileException apple double file
      */
     private FileObject getEntry(Path path) throws IOException {
-        try {
-            String pathString = Util.toPathString(path);
-            if (ignoreAppleDouble && path.getFileName() != null && Util.isAppleDouble(path)) {
-                throw new NoSuchFileException("ignore apple double file: " + path);
-            }
+        return getEntry(path, true);
+    }
 
-            FileObject entry = manager.resolveFile(baseUrl + pathString, opts);
+    /** */
+    private FileObject getEntry(Path path, boolean check) throws IOException {
+//System.err.println("path: " + path);
+        String pathString = Util.toPathString(path);
+        if (ignoreAppleDouble && path.getFileName() != null && Util.isAppleDouble(path)) {
+            throw new NoSuchFileException("ignore apple double file: " + path);
+        }
+
+        FileObject entry = manager.resolveFile(baseUrl + pathString, opts);
+//System.err.println("entry: " + entry + ", " + entry.exists());
+        if (check) {
+            if (entry.exists()) {
+                return entry;
+            } else {
+                throw new NoSuchFileException(path.toString());
+            }
+        } else {
             return entry;
-        } catch (org.apache.commons.vfs2.FileNotFoundException e) {
-            throw (IOException) new NoSuchFileException(path.toString()).initCause(e);
         }
     }
 
@@ -114,7 +125,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
     @Nonnull
     @Override
     public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
-        final FileObject entry = getEntry(path);
+        final FileObject entry = getEntry(path, false);
 
         if (entry.exists()) {
             if (entry.isFolder()) {
@@ -170,8 +181,8 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
 
     @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
-        FileObject dirEntry = getEntry(dir);
-        if (dirEntry.exists()) { // TODO check necessity
+        FileObject dirEntry = getEntry(dir, false);
+        if (dirEntry.exists()) {
             throw new FileAlreadyExistsException(dir.toString());
         }
 
@@ -185,7 +196,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
 
     @Override
     public void copy(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
-        FileObject targetEntry = getEntry(target);
+        FileObject targetEntry = getEntry(target, false);
         if (targetEntry.exists()) {
             if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
                 removeEntry(target);
@@ -198,7 +209,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
 
     @Override
     public void move(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
-        FileObject targetEntry = getEntry(target);
+        FileObject targetEntry = getEntry(target, false);
         if (targetEntry.exists()) {
             if (targetEntry.isFolder()) {
                 if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
@@ -278,7 +289,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
     private List<Path> getDirectoryEntries(final Path dir) throws IOException {
         final FileObject entry = getEntry(dir);
 
-        if (!entry.getType().equals(FileType.FOLDER)) {
+        if (!entry.isFolder()) {
             throw new NotDirectoryException("dir: " + dir);
         }
 
@@ -286,11 +297,9 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
         final FileObject[] children = entry.getChildren();
         list = new ArrayList<>(children.length);
 
-        // TODO nextPageToken
         for (final FileObject child : children) {
-            Path childPath = dir.resolve(child.getName().toString());
+            Path childPath = dir.resolve(child.getName().getBaseName());
             list.add(childPath);
-//System.err.println("child: " + childPath.toRealPath().toString());
         }
 
         return list;
@@ -300,7 +309,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
     private void removeEntry(Path path) throws IOException {
         final FileObject entry = getEntry(path);
 
-        if (entry.getType().equals(FileType.FOLDER)) {
+        if (entry.isFolder()) {
             final FileObject[] list = entry.getChildren();
 
             if (list.length > 0) {
@@ -315,7 +324,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
 
     /** */
     private void copyEntry(final Path source, final Path target) throws IOException {
-        FileObject targetEntry = getEntry(target);
+        FileObject targetEntry = getEntry(target, false);
         FileObject sourceEntry = getEntry(source);
 
         if (sourceEntry.isFile()) {
@@ -331,7 +340,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
      */
     private void moveEntry(final Path source, final Path target, boolean targetIsParent) throws IOException {
         FileObject sourceEntry = getEntry(source);
-        FileObject targetEntry = getEntry(targetIsParent ? target.getParent().resolve(Util.toFilenameString(source)): target);
+        FileObject targetEntry = getEntry(targetIsParent ? target.resolve(Util.toFilenameString(source)) : target, false);
 
         if (sourceEntry.isFile()) {
             sourceEntry.moveTo(targetEntry);
@@ -344,7 +353,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
     /** */
     private void renameEntry(final Path source, final Path target) throws IOException {
         FileObject sourceEntry = getEntry(source);
-        FileObject targetEntry = getEntry(target);
+        FileObject targetEntry = getEntry(target, false);
 
         if (sourceEntry.isFile()) {
             sourceEntry.moveTo(targetEntry);

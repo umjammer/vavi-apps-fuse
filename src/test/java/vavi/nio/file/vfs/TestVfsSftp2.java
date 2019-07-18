@@ -85,10 +85,10 @@ public class TestVfsSftp2 {
             throw new RuntimeException("Provider missing: sftp");
         String baseUrl = String.format(this.baseUrl, username, host, port);
 System.err.println("Connecting \"" + baseUrl + "\" with " + options);
-        FileObject smbFile = fs.resolveFile(baseUrl, options); // added opts!
+        FileObject file = fs.resolveFile(baseUrl, options); // added opts!
 //System.err.println(smbFile.exists() + " " + smbFile.getContent().getLastModifiedTime());
-        if (smbFile.isFolder()) {
-            for (FileObject fo : smbFile.getChildren()) {
+        if (file.isFolder()) {
+            for (FileObject fo : file.getChildren()) {
 System.err.println(fo.getName());
             }
         }
