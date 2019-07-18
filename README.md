@@ -14,7 +14,7 @@ fuse for java and many file systems.
 | one drive (graph)  | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [onedrive-java-client](https://github.com/iterate-ch/onedrive-java-client) |
 | dropbox (v3)       | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [java7-fs-dropbox](https://github.com/umjammer/java7-fs-dropbox) |
 | box (v2)           | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [java7-fs-box](https://github.com/umjammer/java7-fs-box) |
-| vfs ssh            | ✅    |        |          |      |      |    |       |       |       | [commons-vfs2](), [jcifs](), [jsch]() |
+| vfs ssh            | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [commons-vfs2](), [jcifs](), [jsch]() |
 | vfs webdav         | ✅    |        |          |      |      |    |       |       |       | [commons-vfs2-sandbox](), [jackrabbit-webdav 1.6.0]() |
 | archive            | ✅    |        |          |      |      |    |       |       |       | [vavi-util-archive](https://github.com/umjammer/vavi-util-archive) |
 | hfs                | ✅    |        |          |      |      |    |       |       |       | [hfsexplorer](https://github.com/umjammer/hfsexplorer) |

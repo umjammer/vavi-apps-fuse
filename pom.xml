@@ -4,7 +4,7 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.0.5-SANPSHOT</version>
+  <version>0.0.5</version>
   <packaging>jar</packaging>
 
   <name>vavi-apps-fuse</name>
@@ -13,6 +13,7 @@
 
     relive fuse-jna as generic
     make onedrive (cyberduck engine) work
+    make vfs (ssh engine) work
 
 0.0.4
 
@@ -40,21 +41,10 @@
 
 TODO
 
-    amazon cloud drive
-    flickr
     apple photos.app
 
-    box (nfc normalize)
-    dropbox (nfc normalize)
-
-    box authentication (give me example!)
     google automatic authentication (how to click button)
-
-    fuse-jna
-
-        googledrive
-        box
-        dropbox</description>
+</description>
   <scm>
     <url>https://github.com/umjammer/vavi-apps-fuse</url>
   </scm>
@@ -121,10 +111,9 @@ TODO
     </dependency>
 
     <dependency>
-      <!-- tiny http server for oauth -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
-      <version>1.0.10</version>
+      <version>1.0.11</version>
     </dependency>
 
     <dependency>
@@ -134,7 +123,7 @@ TODO
     </dependency>
 
     <dependency>
-      <groupId>vavi</groupId>
+      <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-net-auth</artifactId>
       <version>0.0.3</version>
     </dependency>
@@ -142,7 +131,7 @@ TODO
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-nio-file</artifactId>
-      <version>0.0.1</version>
+      <version>0.0.2</version>
     </dependency>
 
     <dependency>
@@ -184,20 +173,6 @@ TODO
           <artifactId>guava-jdk5</artifactId>
         </exclusion>
       </exclusions>
-    </dependency>
-
-    <dependency>
-      <!-- java-fs dropbox -->
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>java7-fs-dropbox</artifactId>
-      <version>0.0.6v</version>
-    </dependency>
-
-    <dependency>
-      <!-- java-fs box -->
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>java7-fs-box</artifactId>
-      <version>0.1.1v</version>
     </dependency>
 
     <dependency>
@@ -312,6 +287,22 @@ TODO
     </dependency>
 
     <dependency>
+      <!-- java-fs dropbox -->
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>java7-fs-dropbox</artifactId>
+      <version>0.0.6v</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <!-- java-fs box -->
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>java7-fs-box</artifactId>
+      <version>0.1.1v</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>com.sun.mail</groupId>
       <artifactId>javax.mail</artifactId>
       <version>1.6.2</version>
@@ -339,6 +330,13 @@ TODO
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>vavi-nio-file</artifactId>
+      <version>0.0.2</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 </project>
