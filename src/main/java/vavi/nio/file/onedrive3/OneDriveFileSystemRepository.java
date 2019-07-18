@@ -19,6 +19,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import org.nuxeo.onedrive.client.JavaNetRequestExecutor;
 import org.nuxeo.onedrive.client.OneDriveAPI;
 import org.nuxeo.onedrive.client.OneDriveBasicAPI;
+import org.nuxeo.onedrive.client.OneDriveDrive;
 import org.nuxeo.onedrive.client.RequestExecutor;
 import org.nuxeo.onedrive.client.RequestHeader;
 
@@ -126,7 +127,8 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
             }
         };
 
-        final OneDriveFileStore fileStore = new OneDriveFileStore(client, factoryProvider.getAttributesFactory());
-        return new OneDriveFileSystemDriver(fileStore, factoryProvider, client, env);
+        OneDriveDrive drive = OneDriveDrive.getDefaultDrive(client);
+        final OneDriveFileStore fileStore = new OneDriveFileStore(drive, factoryProvider.getAttributesFactory());
+        return new OneDriveFileSystemDriver(fileStore, factoryProvider, client, drive, env);
     }
 }

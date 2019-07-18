@@ -79,19 +79,20 @@ import static vavi.nio.file.Util.toPathString;
 public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase {
 
     private final OneDriveAPI client;
-    private OneDriveDrive drive;
+    private final OneDriveDrive drive;
     private boolean ignoreAppleDouble = false;
 
     @SuppressWarnings("unchecked")
     public OneDriveFileSystemDriver(final FileStore fileStore,
             final FileSystemFactoryProvider provider,
             final OneDriveAPI client,
+            final OneDriveDrive drive,
             final Map<String, ?> env) {
         super(fileStore, provider);
         this.client = client;
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
-        drive = OneDriveDrive.getDefaultDrive(client);
+        this.drive = drive;
     }
 
     /** */

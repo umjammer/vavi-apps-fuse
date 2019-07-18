@@ -9,7 +9,6 @@ package vavi.nio.file.onedrive3;
 import java.io.IOException;
 import java.nio.file.FileStore;
 
-import org.nuxeo.onedrive.client.OneDriveAPI;
 import org.nuxeo.onedrive.client.OneDriveDrive;
 import org.nuxeo.onedrive.client.OneDriveDrive.Metadata;
 
@@ -27,16 +26,16 @@ import com.github.fge.filesystem.filestore.FileStoreBase;
  */
 public final class OneDriveFileStore extends FileStoreBase {
 
-    private final OneDriveAPI client;
+    private final OneDriveDrive drive;
 
     /**
      * Constructor
      *
-     * @param client the (valid) OneDrive client to use
+     * @param drive the (valid) OneDrive client to use
      */
-    public OneDriveFileStore(final OneDriveAPI client, final FileAttributesFactory factory) {
+    public OneDriveFileStore(final OneDriveDrive drive, final FileAttributesFactory factory) {
         super("onedrive", factory, false);
-        this.client = client;
+        this.drive = drive;
     }
 
     /**
@@ -110,7 +109,7 @@ public final class OneDriveFileStore extends FileStoreBase {
         if (cache != null) {
             return cache;
         } else {
-            cache = OneDriveDrive.getDefaultDrive(client).getMetadata();
+            cache = drive.getMetadata();
             return cache;
         }
     }
