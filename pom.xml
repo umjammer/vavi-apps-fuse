@@ -290,7 +290,7 @@ TODO
       <!-- java-fs dropbox -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>java7-fs-dropbox</artifactId>
-      <version>0.0.6v</version>
+      <version>0.0.7v</version>
       <scope>test</scope>
     </dependency>
 
@@ -298,7 +298,7 @@ TODO
       <!-- java-fs box -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>java7-fs-box</artifactId>
-      <version>0.1.1v</version>
+      <version>0.1.2v</version>
       <scope>test</scope>
     </dependency>
 

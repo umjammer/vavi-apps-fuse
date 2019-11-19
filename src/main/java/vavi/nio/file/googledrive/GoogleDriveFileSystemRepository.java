@@ -11,6 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.logging.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -46,7 +47,7 @@ public final class GoogleDriveFileSystemRepository extends FileSystemRepositoryB
     private static final String APPLICATION_NAME = "vavi-apps-fuse";
 
     /** should have a constructor without args */
-    @Property
+    @Property(value = "vavi.net.auth.oauth2.google.GoogleDriveLocalAuthenticator")
     private String authenticatorClassName;
 
     /* */
@@ -54,7 +55,8 @@ public final class GoogleDriveFileSystemRepository extends FileSystemRepositoryB
         try {
             PropsEntity.Util.bind(this);
         } catch (Exception e) {
-            throw new IllegalStateException(e);
+Debug.println(Level.WARNING, "no onedrive.properties in classpath, use defaut");
+            authenticatorClassName = "vavi.net.auth.oauth2.google.GoogleDriveLocalAuthenticator";
         }
     }
 
