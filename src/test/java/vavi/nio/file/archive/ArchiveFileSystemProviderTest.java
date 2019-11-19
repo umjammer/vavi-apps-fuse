@@ -62,6 +62,16 @@ System.err.println("rawFragment: " + uri.getRawFragment());
         FileSystem fs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP);
         Files.list(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
     }
+
+    /**
+     * @param args
+     */
+    public static void main(String[] args) throws Exception {
+        String file = "/Users/nsano/Documents/Games/PC98/bacumed/88/ALPHO.D88";
+        URI uri = new URI("archive:file:" + file);
+        FileSystem fs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP);
+        Files.list(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
+    }
 }
 
 /* */
