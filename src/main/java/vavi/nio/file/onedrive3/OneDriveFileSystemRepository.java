@@ -12,6 +12,7 @@ import java.net.URL;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.logging.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -28,6 +29,7 @@ import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 
 import vavi.net.auth.oauth2.BasicAppCredential;
 import vavi.net.auth.oauth2.LocalOAuth2;
+import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -51,7 +53,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
     }
 
     /** should be {@link vavi.net.auth.oauth2.Authenticator} and have a constructor with args (String, String) */
-    @Property
+    @Property(value = "vavi.net.auth.oauth2.microsoft.OneDriveLocalAuthenticator")
     private String authenticatorClassName;
 
     /* */
@@ -59,7 +61,8 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         try {
             PropsEntity.Util.bind(this);
         } catch (Exception e) {
-            throw new IllegalStateException(e);
+Debug.println(Level.WARNING, "no onedrive.properties in classpath, use defaut");
+            authenticatorClassName = "vavi.net.auth.oauth2.microsoft.OneDriveLocalAuthenticator";
         }
     }
 

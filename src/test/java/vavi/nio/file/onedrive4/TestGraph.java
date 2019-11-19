@@ -55,10 +55,10 @@ public class TestGraph {
     private String authenticatorClassName;
 
     /**
-     * @param args
+     * @param args 0: email
      */
     public static void main(String[] args) throws Exception {
-        String email = "snaohide@hotmail.com";
+        String email = args[0];
 
         TestGraph app = new TestGraph();
         app.auth(email);

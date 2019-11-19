@@ -21,6 +21,7 @@ import javax.annotation.Nonnull;
 import org.catacombae.storage.fs.FSEntry;
 import org.catacombae.storage.fs.FSFile;
 import org.catacombae.storage.fs.FSFolder;
+import org.catacombae.storage.fs.FSForkType;
 
 import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider;
 
@@ -37,7 +38,7 @@ import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider
  */
 public final class HfsBasicFileAttributesProvider extends BasicFileAttributesProvider implements PosixFileAttributes {
 
-    private FSEntry entry;
+    private FSEntry entry; // TODO
 
     public HfsBasicFileAttributesProvider(@Nonnull final FSEntry entry) throws IOException {
         this.entry = entry;
@@ -64,7 +65,7 @@ public final class HfsBasicFileAttributesProvider extends BasicFileAttributesPro
      */
     @Override
     public boolean isRegularFile() {
-        return !FSFile.class.isInstance(entry);
+        return FSFile.class.isInstance(entry);
     }
 
     /**
@@ -72,7 +73,7 @@ public final class HfsBasicFileAttributesProvider extends BasicFileAttributesPro
      */
     @Override
     public boolean isDirectory() {
-        return !FSFolder.class.isInstance(entry);
+        return FSFolder.class.isInstance(entry);
     }
 
     /**
@@ -86,7 +87,7 @@ public final class HfsBasicFileAttributesProvider extends BasicFileAttributesPro
      */
     @Override
     public long size() {
-        return entry.getCombinedLength();
+        return entry.getForkByType(FSForkType.DATA).getLength();
     }
 
     @Override

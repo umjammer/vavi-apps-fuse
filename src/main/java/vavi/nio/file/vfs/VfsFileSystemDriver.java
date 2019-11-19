@@ -45,6 +45,10 @@ import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import vavi.nio.file.Util;
 
+import static vavi.nio.file.Util.isAppleDouble;
+import static vavi.nio.file.Util.toFilenameString;
+import static vavi.nio.file.Util.toPathString;
+
 
 /**
  * VfsFileSystemDriver.
@@ -92,12 +96,11 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
     /** */
     private FileObject getEntry(Path path, boolean check) throws IOException {
 //System.err.println("path: " + path);
-        String pathString = Util.toPathString(path);
-        if (ignoreAppleDouble && path.getFileName() != null && Util.isAppleDouble(path)) {
+        if (ignoreAppleDouble && path.getFileName() != null && isAppleDouble(path)) {
             throw new NoSuchFileException("ignore apple double file: " + path);
         }
 
-        FileObject entry = manager.resolveFile(baseUrl + pathString, opts);
+        FileObject entry = manager.resolveFile(baseUrl + toPathString(path), opts);
 //System.err.println("entry: " + entry + ", " + entry.exists());
         if (check) {
             if (entry.exists()) {
@@ -290,7 +293,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
         final FileObject entry = getEntry(dir);
 
         if (!entry.isFolder()) {
-            throw new NotDirectoryException("dir: " + dir);
+            throw new NotDirectoryException(dir.toString());
         }
 
         List<Path> list = null;
@@ -340,7 +343,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
      */
     private void moveEntry(final Path source, final Path target, boolean targetIsParent) throws IOException {
         FileObject sourceEntry = getEntry(source);
-        FileObject targetEntry = getEntry(targetIsParent ? target.resolve(Util.toFilenameString(source)) : target, false);
+        FileObject targetEntry = getEntry(targetIsParent ? target.resolve(toFilenameString(source)) : target, false);
 
         if (sourceEntry.isFile()) {
             sourceEntry.moveTo(targetEntry);

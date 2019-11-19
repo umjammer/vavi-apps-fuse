@@ -8,7 +8,6 @@ package vavi.nio.file.hfs;
 
 import java.net.URI;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.Collections;
 

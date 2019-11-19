@@ -98,7 +98,11 @@ public final class FlickrFileSystemDriver extends UnixLikeFileSystemDriverBase {
                     cache.putFile(path, entry);
                     return entry;
                 } catch (FlickrException e) {
-                    throw new IOException(e);
+                    if (e.getMessage().startsWith("404")) { // TODO
+                        throw new NoSuchFileException(path.toString());
+                    } else {
+                        throw new IOException(e);
+                    }
                 }
             }
         }
@@ -269,21 +273,12 @@ System.err.println(e);
      */
     @Override
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
-        try {
-            cache.getEntry(path);
+        cache.getEntry(path);
 
-            // TODO: assumed; not a file == directory
-            for (final AccessMode mode : modes) {
-                if (mode == AccessMode.EXECUTE) {
-                    throw new AccessDeniedException(path.toString());
-                }
-            }
-
-        } catch (IOException e) {
-            if (e.getMessage().startsWith("404")) { // TODO
-                throw (IOException) new NoSuchFileException("path: " + path).initCause(e);
-            } else {
-                throw e;
+        // TODO: assumed; not a file == directory
+        for (final AccessMode mode : modes) {
+            if (mode == AccessMode.EXECUTE) {
+                throw new AccessDeniedException(path.toString());
             }
         }
     }
@@ -305,15 +300,8 @@ System.out.println("uploading...");
     photo.setTitle(Util.toFilenameString(path));
     return photo;
 }
-        try {
-            return cache.getEntry(path);
-        } catch (IOException e) {
-            if (e.getMessage().startsWith("404")) { // TODO
-                throw (IOException) new NoSuchFileException("path: " + path).initCause(e);
-            } else {
-                throw e;
-            }
-        }
+
+        return cache.getEntry(path);
     }
 
     /** */

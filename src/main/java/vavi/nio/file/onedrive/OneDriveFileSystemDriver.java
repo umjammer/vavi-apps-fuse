@@ -397,7 +397,7 @@ System.out.println("uploading... (meta): " + toPathString(path));
         final OneItem entry = cache.getEntry(dir);
 
         if (!entry.isFolder()) {
-            throw new NotDirectoryException("dir: " + dir);
+            throw new NotDirectoryException(dir.toString());
         }
 
         List<Path> list = null;

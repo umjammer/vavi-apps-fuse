@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.logging.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -56,7 +57,8 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
             PropsEntity.Util.bind(this);
 Debug.println("authenticatorClassName: " + authenticatorClassName);
         } catch (Exception e) {
-            throw new IllegalStateException(e);
+Debug.println(Level.WARNING, "no onedrive.properties in classpath, use defaut");
+            authenticatorClassName = "vavi.net.auth.oauth2.microsoft.OneDriveLocalAuthenticator";
         }
     }
 
