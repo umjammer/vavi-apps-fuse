@@ -63,7 +63,7 @@ public final class FlickrInputStream extends InputStream {
                 System.out.println(file.getTitle() + "\t" + file.getOriginalUrl() + " was written to " + downloadFile.getName());
             }
         } catch (FlickrException e) {
-            throw new FlickrIOException(e);
+            throw new IOException(e);
         }
         delegate = new FileInputStream(downloadFile);
     }

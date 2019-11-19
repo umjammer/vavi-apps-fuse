@@ -119,7 +119,7 @@ System.out.println("here: 2");
             consumer.accept(null);
         } catch (FlickrException e) {
             if (exception == null)
-                exception = new FlickrIOException(e);
+                exception = new IOException(e);
             else
                 exception.addSuppressed(e);
         }

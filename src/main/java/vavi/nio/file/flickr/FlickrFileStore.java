@@ -104,7 +104,7 @@ public final class FlickrFileStore extends FileStoreBase {
             try {
                 cache = flickr.getPeopleInterface().getUploadStatus();
             } catch (FlickrException e) {
-                throw new FlickrIOException(e);
+                throw new IOException(e);
             }
             return cache;
         }
