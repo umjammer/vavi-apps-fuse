@@ -152,23 +152,23 @@ public final class VfsFileSystemRepository extends FileSystemRepositoryBase {
     @PropsEntity(url = "file://${user.home}/.vavifuse/credentials.properties")
     private static class SftpFactory extends Factory {
         class SftpUserInfo implements UserInfo {
-            boolean ssl;
+            boolean pkc;
             String passString = null;
-            public SftpUserInfo(final String passString, boolean ssl) {
+            public SftpUserInfo(final String passString, boolean pkc) {
                 this.passString = passString;
-                this.ssl = ssl;
+                this.pkc = pkc;
             }
             public String getPassphrase() {
-                return ssl ? passString : null;
+                return pkc ? passString : null;
             }
             public String getPassword() {
-                return ssl ? null : passString;
+                return pkc ? null : passString;
             }
             public boolean promptPassphrase(String prompt) {
-                return ssl;
+                return pkc;
             }
             public boolean promptPassword(String prompt) {
-                return !ssl;
+                return !pkc;
             }
             public void showMessage(String message) {
             }
@@ -185,12 +185,12 @@ public final class VfsFileSystemRepository extends FileSystemRepositoryBase {
         }
         @Override
         public FileSystemOptions getFileSystemOptions() throws IOException {
-            boolean ssl = passphrase != null;
+            boolean pkc = passphrase != null;
             FileSystemOptions options = new FileSystemOptions();
             SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(options, false);
             SftpFileSystemConfigBuilder.getInstance().setSessionTimeoutMillis(options, 10000);
-            SftpFileSystemConfigBuilder.getInstance().setUserInfo(options, new SftpUserInfo(ssl ? passphrase : password, ssl));
-            if (ssl) {
+            SftpFileSystemConfigBuilder.getInstance().setUserInfo(options, new SftpUserInfo(pkc ? passphrase : password, pkc));
+            if (pkc) {
                 SftpFileSystemConfigBuilder.getInstance().setIdentityInfo(options, new IdentityInfo(new File(keyPath)));
             }
             return options;

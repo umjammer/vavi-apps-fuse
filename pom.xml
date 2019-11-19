@@ -4,7 +4,7 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.0.5</version>
+  <version>0.0.6-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>vavi-apps-fuse</name>
@@ -113,7 +113,7 @@ TODO
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
-      <version>1.0.11</version>
+      <version>1.0.12</version>
     </dependency>
 
     <dependency>
@@ -123,9 +123,9 @@ TODO
     </dependency>
 
     <dependency>
-      <groupId>com.github.umjammer</groupId>
+      <groupId>vavi</groupId>
       <artifactId>vavi-net-auth</artifactId>
-      <version>0.0.3</version>
+      <version>0.0.4-SNAPSHOT</version>
     </dependency>
 
     <dependency>
@@ -242,9 +242,9 @@ TODO
       <version>1.0.6</version>
     </dependency>
     <dependency>
-      <groupId>com.github.umjammer</groupId>
+      <groupId>vavi</groupId>
       <artifactId>vavi-util-archive-sandbox</artifactId>
-      <version>1.0.0</version>
+      <version>1.0.1-SNAPSHOT</version>
     </dependency>
 
     <dependency>
@@ -261,7 +261,7 @@ TODO
     </dependency>
 
     <dependency>
-      <!-- fuse jna (deprecated) -->
+      <!-- fuse jna -->
       <groupId>com.github.EtiennePerot</groupId>
       <artifactId>fuse-jna</artifactId>
       <version>eced84f81a</version>

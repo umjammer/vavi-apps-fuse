@@ -151,7 +151,7 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
 
         // TODO: metadata driver
         if (isFolder(entry)) {
-            throw new IsDirectoryException("path: " + path);
+            throw new IsDirectoryException(path.toString());
         }
 
         return client.drive().items(entry.id).content().buildRequest().get();
@@ -181,9 +181,9 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
             DriveItem entry = cache.getEntry(path);
 
             if (isFolder(entry)) {
-                throw new IsDirectoryException("path: " + path);
+                throw new IsDirectoryException(path.toString());
             } else {
-                throw new FileAlreadyExistsException("path: " + path);
+                throw new FileAlreadyExistsException(path.toString());
             }
         } catch (NoSuchFileException e) {
 Debug.println("newOutputStream: " + e.getMessage());

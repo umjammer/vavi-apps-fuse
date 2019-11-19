@@ -17,9 +17,10 @@ fuse for java and many file systems.
 | vfs ssh            | ✅    | ✅      | ✅        | ✅    | ✅    | ✅  | ✅     | ✅     |       | [commons-vfs2](), [jcifs](), [jsch]() |
 | vfs webdav         | ✅    |        |          |      |      |    |       |       |       | [commons-vfs2-sandbox](), [jackrabbit-webdav 1.6.0]() |
 | archive            | ✅    |        |          |      |      |    |       |       |       | [vavi-util-archive](https://github.com/umjammer/vavi-util-archive) |
-| hfs                | ✅    |        |          |      |      |    |       |       |       | [hfsexplorer](https://github.com/umjammer/hfsexplorer) |
+| hfs+ (dmg)         | ✅    |        |          |      |      |    |       |       |       | [hfsexplorer](https://github.com/umjammer/hfsexplorer) |
 | gathered           | ✅    |        |          |      |      |    |       |       |       | |
 | cyberduck          | ✅    |        |          |      |      |    |       |       |       | [vavi-nio-file-cyberduck](https://github.com/umjammer/vavi-nio-file-cyberduck), [cyberduck](https://github.com/iterate-ch/cyberduck) |
+| discutils (vhd/ntfs) | ✅    |        |          |      |      |    |       |       |       | [vavi-nio-file-discutils](https://github.com/umjammer/vavi-nio-file-discutils) |
 
 
 # TODO
@@ -35,7 +36,7 @@ fuse for java and many file systems.
 
  * ~~https://github.com/unsound/hfsexplorer~~ (wip)
 
- * virtualbox vdi
+ * ~~virtualbox vdi~~ ([wip](https://github.com/umjammer/vavi-nio-file-discutils))
 
  * mincraft nbt
 
@@ -79,7 +80,7 @@ fuse for java and many file systems.
    * [patch for javafs](https://github.com/umjammer/javafs)
  * [jnr-fuse](https://github.com/SerCeMan/jnr-fuse)
  * [fuse-jna](https://github.com/EtiennePerot/fuse-jna) 🎯
-   * [fuse-jna for java nio file](https://github.com/umjammer/javafs)
+   * [fuse-jna for java nio file](https://github.com/umjammer/vavi-apps-fuse/blob/master/src/main/java/vavi/net/fuse/JavaFsFS.java)
 
 
 ### fuse-jna
@@ -92,7 +93,7 @@ fuse for java and many file systems.
  * https://github.com/Aypz/bcfusefs (BitCasa)
  * https://github.com/centic9/JGitFS (github)
 
- * http://yy.hatenablog.jp/entry/2014/06/01/000000 (📔 in 🇯🇵)
+ * http://yy.hatenablog.jp/entry/2014/06/01/000000 🇯🇵
 
 ### jnr-fuse
 
