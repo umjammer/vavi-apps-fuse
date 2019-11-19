@@ -21,12 +21,10 @@ import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.drive.Drive;
 
-import vavi.net.auth.oauth2.Authenticator;
+import vavi.net.auth.oauth2.google.GoogleAuthenticator;
+import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
-
-import static vavi.net.auth.oauth2.google.GoogleDriveLocalAuthenticator.HTTP_TRANSPORT;
-import static vavi.net.auth.oauth2.google.GoogleDriveLocalAuthenticator.JSON_FACTORY;
 
 
 /**
@@ -73,8 +71,9 @@ Debug.println(Level.WARNING, "no onedrive.properties in classpath, use defaut");
         }
         final String email = params.get(GoogleDriveFileSystemProvider.PARAM_ID);
 
-        Credential credential = authorize(email);
-        Drive drive = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
+        GoogleAuthenticator<Credential> authenticator = getAuthenticator();
+        Credential credential = authenticator.authorize(email);
+        Drive drive = new Drive.Builder(authenticator.getHttpTransport(), authenticator.getJsonFactory(), credential)
                     .setApplicationName(APPLICATION_NAME)
                     .build();
 
@@ -83,11 +82,11 @@ Debug.println(Level.WARNING, "no onedrive.properties in classpath, use defaut");
     }
 
     /** */
-    private Credential authorize(String id) throws IOException {
+    private GoogleAuthenticator<Credential> getAuthenticator() {
         try {
-            Authenticator<Credential> authenticator = Authenticator.class.cast(Class.forName(authenticatorClassName)
+            GoogleAuthenticator<Credential> authenticator = GoogleAuthenticator.class.cast(Class.forName(authenticatorClassName)
                 .getDeclaredConstructor().newInstance());
-            return authenticator.authorize(id);
+            return authenticator;
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException |
                  InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
             throw new IllegalStateException(e);
