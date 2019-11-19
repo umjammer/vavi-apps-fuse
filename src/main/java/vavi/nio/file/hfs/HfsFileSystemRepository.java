@@ -81,7 +81,7 @@ Debug.println("file: " + Paths.get(file).toAbsolutePath());
 
             HFSCommonFileSystemHandler fsHandler = loadFSWithUDIFAutodetect(Paths.get(file).toAbsolutePath().toString());
 
-            HfsFileStore fileStore = new HfsFileStore(factoryProvider.getAttributesFactory());
+            HfsFileStore fileStore = new HfsFileStore(fsHandler, factoryProvider.getAttributesFactory());
             return new HfsFileSystemDriver(fileStore, factoryProvider, fsHandler, env);
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException(e);
@@ -112,8 +112,7 @@ String password = ""; // TODO env
 Debug.println(Level.FINE, "CEncryptedEncoding structure found! Creating filter stream...");
                 char[] res = password.toCharArray();
                 try {
-                    ReadableCEncryptedEncodingStream stream =
-                            new ReadableCEncryptedEncodingStream(fsFile, res);
+                    ReadableCEncryptedEncodingStream stream = new ReadableCEncryptedEncodingStream(fsFile, res);
 
                     try {
                         stream.read(new byte[512]);
@@ -122,92 +121,77 @@ Debug.println(Level.FINE, "CEncryptedEncoding structure found! Creating filter s
                     } catch (Exception e) {
                         Throwable cause = e.getCause();
 
-                        if (!(cause instanceof InvalidKeyException))
-                        {
+                        if (!(cause instanceof InvalidKeyException)) {
                             throw e;
                         }
 
-                        Debug.println(
-                                "Unsupported AES key size: " +
-                                "If you were trying to load an " +
-                                "AES-256 encrypted image and\n" +
-                                "are using Sun/Oracle's Java " +
-                                "Runtime Environment, then \n" +
-                                "please check if you have " +
-                                "installed the Java " +
-                                "Cryptography\n" +
-                                "Extension (JCE) Unlimited " +
-                                "Strength Jurisdiction Policy\n" +
-                                "Files, which are required for " +
-                                "AES-256 support in Java.");
+Debug.println(
+ "Unsupported AES key size: " +
+ "If you were trying to load an AES-256 encrypted image and\n" +
+ "are using Sun/Oracle's Java Runtime Environment, then \n" +
+ "please check if you have installed the Java Cryptography\n" +
+ "Extension (JCE) Unlimited Strength Jurisdiction Policy\n" +
+ "Files, which are required for AES-256 support in Java.");
                     }
                 } catch (Exception e) {
-                    throw new IllegalArgumentException(
-                           "Reading encrypted disk image...: " + "Incorrect password.");
+                    throw new IllegalArgumentException("Reading encrypted disk image...: " + "Incorrect password.");
                 }
             } else {
-                Debug.println(Level.FINER, "CEncryptedEncoding structure not found. Proceeding...");
+Debug.println(Level.FINER, "CEncryptedEncoding structure not found. Proceeding...");
             }
         } catch (Exception e) {
-            Debug.println(Level.FINER, "Non-critical exception while trying to detect CEncryptedEncoding structure:");
-            e.printStackTrace();
+Debug.println(Level.FINER, "Non-critical exception while trying to detect CEncryptedEncoding structure:");
+e.printStackTrace();
         }
 
         try {
-            Debug.println(Level.FINE, "Detecting sparseimage structure...");
+Debug.println(Level.FINE, "Detecting sparseimage structure...");
             if (SparseImageRecognizer.isSparseImage(fsFile)) {
-                Debug.println(Level.FINE, "sparseimage structure found! Creating " +
-                        "filter stream...");
+Debug.println(Level.FINE, "sparseimage structure found! Creating filter stream...");
 
                 try {
-                    ReadableSparseImageStream stream =
-                            new ReadableSparseImageStream(fsFile);
+                    ReadableSparseImageStream stream = new ReadableSparseImageStream(fsFile);
                     fsFile = stream;
                 } catch (Exception e) {
-                    Debug.println("Exception while creating readable " +
-                            "sparseimage stream:");
+Debug.println("Exception while creating readable sparseimage stream:");
                     e.printStackTrace();
                 }
             }
         } catch (Exception e) {
-            Debug.println("Non-critical exception while " +
-                    "trying to detect sparseimage structure:");
-            e.printStackTrace();
+Debug.println("Non-critical exception while trying to detect sparseimage structure:");
+e.printStackTrace();
         }
 
         try {
-            Debug.println(Level.FINER, "Trying to detect UDIF structure...");
+Debug.println(Level.FINER, "Trying to detect UDIF structure...");
             if (UDIFDetector.isUDIFEncoded(fsFile)) {
-                Debug.println(Level.FINE, "UDIF structure found! Creating filter stream...");
+Debug.println(Level.FINE, "UDIF structure found! Creating filter stream...");
                 UDIFRandomAccessStream stream = null;
                 try {
                     stream = new UDIFRandomAccessStream(fsFile);
                 } catch (Exception e) {
-                    e.printStackTrace();
+e.printStackTrace();
                     if (e.getMessage().startsWith("java.lang.RuntimeException: No handler for block type")) {
                         throw new IllegalArgumentException(
                                 "UDIF file contains unsupported block types!\n" +
                                 "(The file was probably created with BZIP2 or ADC " +
                                 "compression, which is unsupported currently)");
                     } else {
-                        throw new IllegalArgumentException(
-                                "UDIF file unsupported or damaged!");
+                        throw new IllegalArgumentException("UDIF file unsupported or damaged!");
                     }
                 }
                 if (stream != null) {
                     fsFile = stream;
                 }
             } else {
-                Debug.println(Level.FINER, "UDIF structure not found. Proceeding...");
+Debug.println(Level.FINER, "UDIF structure not found. Proceeding...");
             }
         } catch(Exception e) {
-            Debug.println("Non-critical exception while trying to detect UDIF structure:");
-            e.printStackTrace();
+Debug.println("Non-critical exception while trying to detect UDIF structure:");
+e.printStackTrace();
         }
 
-
-        SynchronizedReadableRandomAccessStream syncStream =
-                new SynchronizedReadableRandomAccessStream(fsFile);
+        SynchronizedReadableRandomAccessStream syncStream = new SynchronizedReadableRandomAccessStream(fsFile);
 
         try {
             return loadFS(syncStream);
@@ -222,8 +206,7 @@ Debug.println(Level.FINE, "CEncryptedEncoding structure found! Creating filter s
         long fsLength;
 
         // Detect partition system
-        PartitionSystemType[] matchingTypes =
-                PartitionSystemDetector.detectPartitionSystem(syncStream, false);
+        PartitionSystemType[] matchingTypes = PartitionSystemDetector.detectPartitionSystem(syncStream, false);
 
         if (matchingTypes.length > 1) {
             String message = "Multiple partition system types detected:";
@@ -234,8 +217,7 @@ Debug.println(Level.FINE, "CEncryptedEncoding structure found! Creating filter s
 
         } else if (matchingTypes.length == 1) {
             PartitionSystemType psType = matchingTypes[0];
-            PartitionSystemHandlerFactory psFact =
-                    psType.createDefaultHandlerFactory();
+            PartitionSystemHandlerFactory psFact = psType.createDefaultHandlerFactory();
 
             if (psFact == null) {
                 throw new IllegalArgumentException("Unsupported partition system: " +
@@ -244,8 +226,7 @@ Debug.println(Level.FINE, "CEncryptedEncoding structure found! Creating filter s
             }
 
             PartitionSystemHandler psHandler =
-                    psFact.createHandler(new ReadableStreamDataLocator(
-                    new ReadableRandomAccessSubstream(syncStream)));
+                    psFact.createHandler(new ReadableStreamDataLocator(new ReadableRandomAccessSubstream(syncStream)));
 
             Partition[] partitions;
             try {
@@ -289,7 +270,7 @@ Debug.println("patitions: " + partitions.length + ", default: " + defaultSelecti
                             selectedPartition.getType() + "\"");
                 }
 
-                /* A selection was made. */
+                // A selection was made.
                 fsOffset = selectedPartition.getStartOffset();
                 fsLength = selectedPartition.getLength();
             }
@@ -299,8 +280,7 @@ Debug.println("patitions: " + partitions.length + ", default: " + defaultSelecti
         }
 
         // Detect HFS file system
-        FileSystemType fsType = HFSCommonFileSystemRecognizer.detectFileSystem(
-                syncStream, fsOffset);
+        FileSystemType fsType = HFSCommonFileSystemRecognizer.detectFileSystem(syncStream, fsOffset);
 
         switch (fsType) {
         case HFS:
@@ -321,12 +301,11 @@ Debug.println("patitions: " + partitions.length + ", default: " + defaultSelecti
                 fsMajorType = FileSystemMajorType.APPLE_HFSX;
                 break;
             default:
-                throw new IllegalStateException("Unhandled type: " + fsType);
+                throw new IllegalArgumentException("Unhandled type: " + fsType);
             }
 
 boolean cachingEnabled = true; // TODO env
-            FileSystemHandlerFactory factory =
-                    fsMajorType.createDefaultHandlerFactory();
+            FileSystemHandlerFactory factory = fsMajorType.createDefaultHandlerFactory();
             if (factory.isSupported(StandardAttribute.CACHING_ENABLED)) {
                 factory.getCreateAttributes().setBooleanAttribute(
                         StandardAttribute.CACHING_ENABLED,
@@ -341,7 +320,7 @@ boolean cachingEnabled = true; // TODO env
             } else if (fsOffset == 0) {
                 stage1 = new ReadableRandomAccessSubstream(syncStream);
             } else {
-                throw new RuntimeException("length undefined and offset " +
+                throw new IllegalStateException("length undefined and offset " +
                         "!= 0 (fsLength=" + fsLength + " fsOffset=" +
                         fsOffset + ")");
             }
@@ -351,8 +330,8 @@ boolean cachingEnabled = true; // TODO env
             return (HFSCommonFileSystemHandler) factory.createHandler(fsDataLocator);
 
         default:
-            throw new IllegalArgumentException("Unsupported file system type: " + "Invalid HFS type.\n" +
-                    "HFSExplorer supports:\n" +
+            throw new IllegalArgumentException("Unsupported file system type: Invalid HFS type.\n" +
+                    "hfs supports:\n" +
                     "    " + FileSystemType.HFS_PLUS + "\n" +
                     "    " + FileSystemType.HFSX + "\n" +
                     "    " + FileSystemType.HFS_WRAPPED_HFS_PLUS + "\n" +

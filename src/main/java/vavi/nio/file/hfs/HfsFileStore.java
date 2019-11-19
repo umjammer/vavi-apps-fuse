@@ -9,26 +9,32 @@ package vavi.nio.file.hfs;
 import java.io.IOException;
 import java.nio.file.FileStore;
 
+import org.catacombae.storage.fs.FSFolder;
+import org.catacombae.storage.fs.FSForkType;
+import org.catacombae.storage.fs.hfscommon.HFSCommonFileSystemHandler;
+
 import com.github.fge.filesystem.attributes.FileAttributesFactory;
 import com.github.fge.filesystem.filestore.FileStoreBase;
-import com.google.api.services.drive.model.About.StorageQuota;
 
 
 /**
  * A simple HFS {@link FileStore}
  *
  * <p>
- * This makes use of information available in {@link StorageQuota}.
+ * This makes use of information available in {@link FSFolder}.
  * Information is computed in "real time".
  * </p>
  */
 public final class HfsFileStore extends FileStoreBase {
 
+    private final FSFolder root;
+
     /**
      * Constructor
      */
-    public HfsFileStore(final FileAttributesFactory factory) {
+    public HfsFileStore(HFSCommonFileSystemHandler handler, final FileAttributesFactory factory) {
         super("hfs", factory, false);
+        this.root = handler.getRoot();
     }
 
     /**
@@ -40,7 +46,7 @@ public final class HfsFileStore extends FileStoreBase {
      */
     @Override
     public long getTotalSpace() throws IOException {
-        return 0;
+        return root.getForkByType(FSForkType.DATA).getLength();
     }
 
     /**
@@ -61,7 +67,7 @@ public final class HfsFileStore extends FileStoreBase {
      */
     @Override
     public long getUsableSpace() throws IOException {
-        return 0;
+        return root.getForkByType(FSForkType.DATA).getLength();
     }
 
     /**
@@ -80,6 +86,6 @@ public final class HfsFileStore extends FileStoreBase {
      */
     @Override
     public long getUnallocatedSpace() throws IOException {
-        return 0;
+        return root.getForkByType(FSForkType.DATA).getLength();
     }
 }
