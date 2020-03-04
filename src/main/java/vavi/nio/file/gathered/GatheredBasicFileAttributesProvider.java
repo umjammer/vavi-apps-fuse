@@ -52,6 +52,7 @@ public final class GatheredBasicFileAttributesProvider extends BasicFileAttribut
             if (FileSystem.class.isInstance(entry)) {
                 return FileTime.fromMillis(0);
             } else if (Path.class.isInstance(entry)) {
+System.err.println("@@@: " + entry + ", " + Path.class.cast(entry).getFileSystem().provider());
                 return Files.getLastModifiedTime(Path.class.cast(entry));
             } else {
                 throw new IllegalStateException("unsupported type: " + entry.getClass().getName());

@@ -90,11 +90,10 @@ public final class GoogleDriveFileSystemDriver extends UnixLikeFileSystemDriverB
         {
             // TODO datetime
 //          File root = drive.files().get("fileId=root").execute();
-            entryCache.put("/", new File().setName("/").setId("root").setMimeType(MIME_TYPE_DIR).setModifiedTime(new DateTime(0)).setSize(0L));
+            entryCache.put("/", new File().setName("/").setId("root").setMimeType(MIME_TYPE_DIR).setModifiedTime(new DateTime(System.currentTimeMillis())).setSize(0L));
         }
 
         /**
-         * TODO when the parent is not cached
          * @see #ignoreAppleDouble
          */
         public File getEntry(Path path) throws IOException {
@@ -107,14 +106,30 @@ public final class GoogleDriveFileSystemDriver extends UnixLikeFileSystemDriverB
                         throw new NoSuchFileException("ignore apple double file: " + path);
                     }
 
-                    File entry = drive.files().get(toPathString(path)).execute(); // TODO
+                    File entry;
+                    if (path.getNameCount() == 0) {
+                        entry = drive.files().get(toPathString(path)).execute();
+                        cache.putFile(path, entry);
+                        return entry;
+                    } else {
+                        List<Path> siblings;
+                        if (!cache.containsFolder(path.getParent())) {
+                            siblings = getDirectoryEntries(path.getParent());
+                        } else {
+                            siblings = cache.getFolder(path.getParent());
+                        }
+                        for (int i = 0; i < siblings.size(); i++) { // avoid ConcurrentModificationException
+                            Path p = siblings.get(i);
+                            if (p.getFileName().equals(path.getFileName())) {
+                                return cache.getEntry(p);
+                            }
+                        }
+                        throw new NoSuchFileException(path.toString());
+                    }
 //System.err.println("GOT: path: " + path + ", id: " + entry.getId());
-                    cache.putFile(path, entry);
-                    return entry;
                 }
             } catch (GoogleJsonResponseException e) {
                 if (e.getMessage().startsWith("404")) {
-                    // TODO when a deep directory is specified at first, like '/Books/Novels'
                     // cache
                     if (cache.containsFile(path)) {
                         cache.removeEntry(path);
@@ -148,9 +163,15 @@ public final class GoogleDriveFileSystemDriver extends UnixLikeFileSystemDriverB
             throw new IsDirectoryException("path: " + path);
         }
 
-        // TODO
+        // TODO detect automatically?
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        drive.files().get(entry.getId()).executeMediaAndDownloadTo(baos);
+        if (options.stream().anyMatch(o -> GoogleDriveOpenOption.class.isInstance(o))) {
+            GoogleDriveOpenOption option = GoogleDriveOpenOption.class
+                    .cast(options.stream().filter(o -> GoogleDriveOpenOption.class.isInstance(o)).findFirst().get());
+            drive.files().export(entry.getId(), option.getValue()).executeMediaAndDownloadTo(baos);
+        } else {
+            drive.files().get(entry.getId()).executeMediaAndDownloadTo(baos);
+        }
         return new ByteArrayInputStream(baos.toByteArray());
     }
 
@@ -171,11 +192,11 @@ System.out.println("newOutputStream: " + e.getMessage());
 options.forEach(o -> { System.err.println("newOutputStream: " + o); });
         }
 
-        // TODO mime type
-        if (options.stream().anyMatch(o -> GoogleDriveCopyOption.class.isInstance(o))) {
-            String mimeType = options.stream()
-                    .filter(o -> GoogleDriveCopyOption.class.isInstance(o))
-                    .map(o -> GoogleDriveCopyOption.class.cast(o).getMimeType()).findFirst().get();
+        // TODO detect automatically?
+        if (options.stream().anyMatch(o -> GoogleDriveOpenOption.class.isInstance(o))) {
+            @SuppressWarnings("unused")
+            GoogleDriveOpenOption option = GoogleDriveOpenOption.class
+                    .cast(options.stream().filter(o -> GoogleDriveOpenOption.class.isInstance(o)).findFirst().get());
         }
 
         return new Util.OutputStreamForUploading() {
@@ -272,7 +293,7 @@ if (lock != null) {
                 @Override
                 public void close() throws IOException {
                     if (lock != null) {
-                        System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
+System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
                         return;
                     }
                     super.close();
@@ -321,7 +342,7 @@ if (lock != null) {
             }
         }
 
-        copyEntry(source, target);
+        copyEntry(source, target, options);
     }
 
     @Override
@@ -464,13 +485,16 @@ if (lock != null) {
     }
 
     /** */
-    private void copyEntry(final Path source, final Path target) throws IOException {
+    private void copyEntry(final Path source, final Path target, Set<CopyOption> options) throws IOException {
         final File sourceEntry = cache.getEntry(source);
         File targetParentEntry = cache.getEntry(target.getParent());
         if (!isFolder(sourceEntry)) {
             File entry = new File();
             entry.setName(toFilenameString(target));
             entry.setParents(Arrays.asList(targetParentEntry.getId()));
+            if (options.stream().anyMatch(o -> o.equals(GoogleDriveCopyOption.EXPORT_AS_GDOCS))) {
+                entry.setMimeType(GoogleDriveCopyOption.EXPORT_AS_GDOCS.getValue());
+            }
             File newEntry = drive.files().copy(sourceEntry.getId(), entry)
                         .setFields("id, parents, name, size, mimeType, createdTime").execute();
 

@@ -46,6 +46,7 @@ class GatheredFileSystemProviderTest {
         URI uri = URI.create("gatheredfs:///");
 
         Map<String, FileSystem> fileSystems = new HashMap<>();
+        Map<String, String> nameMap = new HashMap<>();
         Arrays.asList(
             "googledrive:umjammer@gmail.com",
             "onedrive:snaohide@hotmail.com",
@@ -53,7 +54,8 @@ class GatheredFileSystemProviderTest {
         ).forEach(id -> {
             try {
                 fileSystems.put(id, app.getFileSystem(id));
-System.err.println("ADD: " + id);
+                nameMap.put(id, id.replaceAll("[:_@]", "_"));
+System.err.println("ADD: " + id + ", " + nameMap.get(id));
             } catch (IOException e) {
                 System.err.println(e);
             }
@@ -61,6 +63,7 @@ System.err.println("ADD: " + id);
 
         Map<String, Object> env = new HashMap<>();
         env.put(GatheredFileSystemProvider.ENV_FILESYSTEMS, fileSystems);
+        env.put(GatheredFileSystemProvider.ENV_NAME_MAP, nameMap);
 
         FileSystem fs = FileSystems.newFileSystem(uri, env, Thread.currentThread().getContextClassLoader());
 
@@ -68,7 +71,7 @@ System.err.println("ADD: " + id);
         options.put("fsname", "gathered_fs" + "@" + System.currentTimeMillis());
         options.put("noappledouble", null);
 
-        JavaFS.mount(fs, Paths.get(args[0]), true, false, options);
+        JavaFS.mount(fs, Paths.get(args[0]), true, false, options); // TODO not work well ???
     }
 
     /** */
@@ -118,6 +121,7 @@ System.err.println("ADD: " + id);
     @Test
     void test() throws IOException {
         Map<String, FileSystem> fileSystems = new HashMap<>();
+        Map<String, String> nameMap = new HashMap<>();
         Arrays.asList(
             "googledrive:umjammer@gmail.com",
             "onedrive:snaohide@hotmail.com",
@@ -125,7 +129,8 @@ System.err.println("ADD: " + id);
         ).forEach(id -> {
             try {
                 fileSystems.put(id, getFileSystem(id));
-System.err.println("ADD: " + id);
+                nameMap.put(id, id.replaceAll("[:_@]", "_"));
+System.err.println("ADD: " + id + ", " + nameMap.get(id));
             } catch (IOException e) {
                 System.err.println(e);
             }
@@ -134,11 +139,20 @@ System.err.println("ADD: " + id);
         URI uri = URI.create("gatheredfs:///");
         Map<String, Object> env = new HashMap<>();
         env.put(GatheredFileSystemProvider.ENV_FILESYSTEMS, fileSystems);
+        env.put(GatheredFileSystemProvider.ENV_NAME_MAP, nameMap);
         FileSystem fs = FileSystems.newFileSystem(uri, env, Thread.currentThread().getContextClassLoader());
 
         Files.list(fs.getPath("/")).forEach(p -> {
             try {
-                Files.list(p).forEach(System.out::println);
+//                Files.list(p).forEach(System.out::println);
+                System.err.println(p.getFileName() + " " + Files.getLastModifiedTime(p));
+                Files.list(p).forEach(f -> {
+                    try {
+                        System.err.println(f.getFileName() + " " + Files.getLastModifiedTime(f));
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                });
             } catch (IOException e) {
                 throw new IllegalStateException(e);
             }

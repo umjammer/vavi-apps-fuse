@@ -49,5 +49,4 @@ public final class GatheredFileSystemRepository extends FileSystemRepositoryBase
         GatheredFileStore fileStore = new GatheredFileStore(factoryProvider.getAttributesFactory());
         return new GatheredFileSystemDriver(fileStore, factoryProvider, fileSystems, env);
     }
-
 }

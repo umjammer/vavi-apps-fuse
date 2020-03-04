@@ -20,7 +20,7 @@ fuse for java and many file systems.
 | hfs+ (dmg)         | ✅    |        |          |      |      |    |       |       |       | [hfsexplorer](https://github.com/umjammer/hfsexplorer) |
 | gathered           | ✅    |        |          |      |      |    |       |       |       | |
 | cyberduck          | ✅    |        |          |      |      |    |       |       |       | [vavi-nio-file-cyberduck](https://github.com/umjammer/vavi-nio-file-cyberduck), [cyberduck](https://github.com/iterate-ch/cyberduck) |
-| discutils (vhd/ntfs) | ✅    |        |          |      |      |    |       |       |       | [vavi-nio-file-discutils](https://github.com/umjammer/vavi-nio-file-discutils) |
+| discutils (vdi/ntfs) | ✅    |        |          |      |      |    |       |       |       | [vavi-nio-file-discutils](https://github.com/umjammer/vavi-nio-file-discutils) |
 
 
 # TODO

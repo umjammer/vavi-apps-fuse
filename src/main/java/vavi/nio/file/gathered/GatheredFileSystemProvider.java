@@ -19,6 +19,8 @@ public final class GatheredFileSystemProvider extends FileSystemProviderBase {
 
     public static final String ENV_FILESYSTEMS = "fileSystems";
 
+    public static final String ENV_NAME_MAP = "nameMap";
+
     public GatheredFileSystemProvider() {
         super(new GatheredFileSystemRepository());
     }

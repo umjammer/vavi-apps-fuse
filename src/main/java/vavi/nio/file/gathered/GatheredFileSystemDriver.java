@@ -34,6 +34,8 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 
 import vavi.nio.file.Util;
 import vavi.util.Debug;
@@ -53,15 +55,21 @@ public final class GatheredFileSystemDriver extends UnixLikeFileSystemDriverBase
     /** should be unaccessible from outer */
     private final Map<String, FileSystem> fileSystems;
 
+    private BiMap<String, String> nameMap;
+
     /**
      * @param env 
      */
+    @SuppressWarnings("unchecked")
     public GatheredFileSystemDriver(final FileStore fileStore,
             final FileSystemFactoryProvider provider,
             final Map<String, FileSystem> fileSystems,
             final Map<String, ?> env) throws IOException {
         super(fileStore, provider);
         this.fileSystems = fileSystems;
+        if (env.containsKey(GatheredFileSystemProvider.ENV_NAME_MAP)) {
+            this.nameMap = HashBiMap.create(Map.class.cast(env.get(GatheredFileSystemProvider.ENV_NAME_MAP)));
+        }
     }
 
     @Nonnull
@@ -144,13 +152,31 @@ Debug.println("path: " + path);
         }
     }
 
+    /** id -> display name */
+    private String encodeFsName(String id) throws IOException {
+        if (nameMap != null) {
+            return nameMap.get(id);
+        } else {
+            return URLEncoder.encode(id, "utf-8");
+        }
+    }
+
+    /** display name -> id */
+    private String decodeFsName(String path) throws IOException {
+        if (nameMap != null) {
+            return nameMap.inverse().get(path);
+        } else {
+            return URLDecoder.decode(path, "utf-8");
+        }
+    }
+
     /** */
     private List<Path> getDirectoryEntries(final Path dir) throws IOException {
         if (dir.getNameCount() == 0) {
             List<Path> list = new ArrayList<>(fileSystems.size());
 
             for (String id : fileSystems.keySet()) {
-                Path childPath = dir.resolve(URLEncoder.encode(id, "utf-8"));
+                Path childPath = dir.resolve(encodeFsName(id));
                 list.add(childPath);
             }
 
@@ -161,12 +187,12 @@ Debug.println("path: " + path);
     }
 
     /** */
-    private FileSystem getFileSystemOf(Path path) throws IOException {
+    FileSystem getFileSystemOf(Path path) throws IOException {
 Debug.println("path: " + path);
         if (path.getNameCount() == 0) {
             return path.getFileSystem();
         } else {
-            String first = URLDecoder.decode(path.getName(0).toString(), "utf-8");
+            String first = decodeFsName(path.getName(0).toString());
 Debug.println("first: " + first);
             if (!fileSystems.containsKey(first)) {
                 throw new NoSuchFileException(path.toString());

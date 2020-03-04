@@ -6,24 +6,25 @@
 
 package vavi.nio.file.googledrive;
 
-import java.nio.file.CopyOption;
+import java.nio.file.OpenOption;
 
 
 /**
- * GoogleDriveCopyOption.
+ * GoogleDriveOpenOption.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2017/03/01 umjammer initial version <br>
  */
-public enum GoogleDriveCopyOption implements CopyOption {
+public enum GoogleDriveOpenOption implements OpenOption {
 
-    EXPORT_AS_GDOCS("application/vnd.google-apps.document");
+    EXPORT_WITH_GDOCS_DOCX("application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+    EXPORT_WITH_GDOCS_XLSX("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
     /** */
     private String value;
 
     /** */
-    private GoogleDriveCopyOption(String value) {
+    private GoogleDriveOpenOption(String value) {
         this.value = value;
     }
 

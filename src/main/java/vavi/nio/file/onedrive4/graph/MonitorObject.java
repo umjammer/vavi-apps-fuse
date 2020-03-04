@@ -37,7 +37,7 @@ public class MonitorObject implements IJsonBackedObject  {
 
     @Override
     public void setRawObject(ISerializer serializer, JsonObject json) {
-        Debug.println(json);
+Debug.println(json);
     }
 
     private transient AdditionalDataManager additionalDataManager = new AdditionalDataManager(this);

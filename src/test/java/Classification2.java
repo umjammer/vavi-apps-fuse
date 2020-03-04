@@ -63,7 +63,7 @@ public final class Classification2 {
                 for (String s : table) {
                     Path dir = root.resolve(s.substring(0, 1));
                     if (!Files.exists(dir)) {
-                        //System.err.println("mkdir " + dir);
+//System.err.println("mkdir " + dir);
                         if (!dryRun) {
                             Files.createDirectory(dir);
                         }
@@ -130,8 +130,8 @@ public final class Classification2 {
 
         Path root;
 
-       Pattern patternF = Pattern.compile("\\[(.+?)\\]");
-       Pattern patternD = Pattern.compile("[あかさたなはまやらわ]");
+        Pattern patternF = Pattern.compile("\\[(.+?)\\]");
+        Pattern patternD = Pattern.compile("[あかさたなはまやらわ]");
 
         FileSearcher(Path root) {
             this.root = root;

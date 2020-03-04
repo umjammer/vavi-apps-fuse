@@ -4,12 +4,18 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.0.6-SNAPSHOT</version>
+  <version>0.0.6</version>
   <packaging>jar</packaging>
 
   <name>vavi-apps-fuse</name>
   <url>https://github.com/umjammer/vavi-apps-fuse</url>
-  <description>0.0.5
+  <description>0.0.6
+
+    improve google drive
+    add google drive ocr capability
+    gatheredfs alias
+
+0.0.5
 
     relive fuse-jna as generic
     make onedrive (cyberduck engine) work
@@ -43,8 +49,7 @@ TODO
 
     apple photos.app
 
-    google automatic authentication (how to click button)
-</description>
+    google automatic authentication (how to click button)</description>
   <scm>
     <url>https://github.com/umjammer/vavi-apps-fuse</url>
   </scm>
