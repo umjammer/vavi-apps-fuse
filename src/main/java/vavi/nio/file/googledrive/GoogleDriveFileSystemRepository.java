@@ -19,6 +19,8 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.services.drive.Drive;
 
 import vavi.net.auth.oauth2.google.GoogleAuthenticator;
@@ -74,8 +76,16 @@ Debug.println(Level.WARNING, "no onedrive.properties in classpath, use defaut");
         GoogleAuthenticator<Credential> authenticator = getAuthenticator();
         Credential credential = authenticator.authorize(email);
         Drive drive = new Drive.Builder(authenticator.getHttpTransport(), authenticator.getJsonFactory(), credential)
-                    .setApplicationName(APPLICATION_NAME)
-                    .build();
+                .setHttpRequestInitializer(new HttpRequestInitializer() {
+                    @Override
+                    public void initialize(HttpRequest httpRequest) throws IOException {
+                        credential.initialize(httpRequest);
+                        httpRequest.setConnectTimeout(30 * 1000);
+                        httpRequest.setReadTimeout(30 * 1000);
+                    }
+                })
+                .setApplicationName(APPLICATION_NAME)
+                .build();
 
         GoogleDriveFileStore fileStore = new GoogleDriveFileStore(drive, factoryProvider.getAttributesFactory());
         return new GoogleDriveFileSystemDriver(fileStore, factoryProvider, drive, env);
