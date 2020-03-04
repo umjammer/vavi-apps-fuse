@@ -6,7 +6,6 @@
 
 package vavi.nio.file.onedrive4.graph;
 
-
 import java.io.IOException;
 import java.security.InvalidParameterException;
 
@@ -15,6 +14,7 @@ import com.microsoft.graph.models.extensions.IGraphServiceClient;
 
 import vavi.util.Debug;
 import vavi.util.StringUtil;
+
 
 /**
  * CopyMonitorProvider service provider
@@ -53,13 +53,13 @@ public class CopyMonitorProvider<MonitorType> {
     /**
      * Creates the CopyMonitorProvider
      *
-     * @param copySession   the initial copy session
-     * @param client          the Graph client
+     * @param copySession the initial copy session
+     * @param client the Graph client
      * @param uploadTypeClass the upload type class
      */
     public CopyMonitorProvider(final CopySession copySession,
-                                 final IGraphServiceClient client,
-                                 final Class<MonitorType> uploadTypeClass) {
+            final IGraphServiceClient client,
+            final Class<MonitorType> uploadTypeClass) {
         if (copySession == null) {
             throw new InvalidParameterException("Copy session is null.");
         }
@@ -78,12 +78,12 @@ public class CopyMonitorProvider<MonitorType> {
      * Copy content to remote session based on the input stream
      *
      * @param callback the progress callback invoked during uploading
-     * @param configs  the optional configurations for the upload options. [0] should be the customized chunk
-     *                 size and [1] should be the maxRetry for upload retry.
+     * @param configs the optional configurations for the upload options. [0]
+     *            should be the customized chunk size and [1] should be the
+     *            maxRetry for upload retry.
      * @throws IOException the IO exception that occurred during upload
      */
-    public void monitor(final IProgressCallback<MonitorType> callback,
-            final int...configs) throws IOException {
+    public void monitor(final IProgressCallback<MonitorType> callback, final int... configs) throws IOException {
 
         int timeout = DEFAULT_TIMEOUT;
 
@@ -101,8 +101,7 @@ public class CopyMonitorProvider<MonitorType> {
             } catch (InterruptedException e) {
             }
 
-            CopyMonitorRequest request =
-                    new CopyMonitorRequest(this.monitorUrl, this.client);
+            CopyMonitorRequest request = new CopyMonitorRequest(this.monitorUrl, this.client);
             CopyMonitorResult result = request.monitor(this.responseHandler);
 
             if (result.monitorDone()) {
@@ -115,7 +114,7 @@ Debug.println(StringUtil.paramString(result));
                     MonitorType driveItem = (MonitorType) client.drive().items(monitor.resourceId).buildRequest().get();
                     callback.success(driveItem);
                     break;
-               } else {
+                } else {
                     callback.progress(this.percentageComplete, 100);
                 }
             } else if (result.urlHasChanged()) {

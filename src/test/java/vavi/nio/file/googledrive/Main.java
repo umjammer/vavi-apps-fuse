@@ -61,7 +61,7 @@ public class Main {
 
         URI uri = URI.create("googledrive:///?id=" + email);
 
-       testAll(new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
+        testAll(new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
     }
 
 //    @Test
