@@ -90,11 +90,10 @@ public final class GoogleDriveFileSystemDriver extends UnixLikeFileSystemDriverB
         {
             // TODO datetime
 //          File root = drive.files().get("fileId=root").execute();
-            entryCache.put("/", new File().setName("/").setId("root").setMimeType(MIME_TYPE_DIR).setModifiedTime(new DateTime(0)).setSize(0L));
+            entryCache.put("/", new File().setName("/").setId("root").setMimeType(MIME_TYPE_DIR).setModifiedTime(new DateTime(System.currentTimeMillis())).setSize(0L));
         }
 
         /**
-         * TODO when the parent is not cached
          * @see #ignoreAppleDouble
          */
         public File getEntry(Path path) throws IOException {
@@ -107,14 +106,30 @@ public final class GoogleDriveFileSystemDriver extends UnixLikeFileSystemDriverB
                         throw new NoSuchFileException("ignore apple double file: " + path);
                     }
 
-                    File entry = drive.files().get(toPathString(path)).execute(); // TODO
-//System.err.println("GOT: path: " + path + ", id: " + entry.getId());
+                    File entry;
+                    if (path.getNameCount() == 0) {
+                        entry = drive.files().get(toPathString(path)).execute();
                     cache.putFile(path, entry);
                     return entry;
+                    } else {
+                        List<Path> siblings;
+                        if (!cache.containsFolder(path.getParent())) {
+                            siblings = getDirectoryEntries(path.getParent());
+                        } else {
+                            siblings = cache.getFolder(path.getParent());
+                        }
+                        for (int i = 0; i < siblings.size(); i++) { // avoid ConcurrentModificationException
+                            Path p = siblings.get(i);
+                            if (p.getFileName().equals(path.getFileName())) {
+                                return cache.getEntry(p);
+                            }
+                        }
+                        throw new NoSuchFileException(path.toString());
+                    }
+//System.err.println("GOT: path: " + path + ", id: " + entry.getId());
                 }
             } catch (GoogleJsonResponseException e) {
                 if (e.getMessage().startsWith("404")) {
-                    // TODO when a deep directory is specified at first, like '/Books/Novels'
                     // cache
                     if (cache.containsFile(path)) {
                         cache.removeEntry(path);
