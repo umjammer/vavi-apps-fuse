@@ -112,7 +112,7 @@ TODO
       <!-- fuse jnr -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>javafs</artifactId>
-      <version>0.1.1v</version>
+      <version>0.1.2v</version>
     </dependency>
 
     <dependency>
@@ -128,9 +128,9 @@ TODO
     </dependency>
 
     <dependency>
-      <groupId>vavi</groupId>
+      <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-net-auth</artifactId>
-      <version>0.0.4-SNAPSHOT</version>
+      <version>0.0.5</version>
     </dependency>
 
     <dependency>
@@ -247,9 +247,9 @@ TODO
       <version>1.0.6</version>
     </dependency>
     <dependency>
-      <groupId>vavi</groupId>
+      <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-util-archive-sandbox</artifactId>
-      <version>1.0.1-SNAPSHOT</version>
+      <version>1.0.1</version>
     </dependency>
 
     <dependency>
