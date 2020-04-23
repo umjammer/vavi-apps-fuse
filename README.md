@@ -41,7 +41,7 @@ don't forget to run jvm with the jvm argument `-Dwebdriver.chrome.driver=/usr/lo
 
 ## How To
 
- * [[how to replace authenticator]]
+ * [how to replace authenticator](https://github.com/umjammer/vavi-apps-fuse/wiki/HowToReplaceAuthenticator)
 
 ## References
 
