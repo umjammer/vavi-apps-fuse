@@ -151,7 +151,7 @@ System.out.println("file: " + newEntry.getTitle() + ", " + newEntry.getDateAdded
     public DirectoryStream<Path> newDirectoryStream(final Path dir,
                                                     final DirectoryStream.Filter<? super Path> filter) throws IOException {
         try {
-            return Util.newDirectoryStream(getDirectoryEntries(dir));
+            return Util.newDirectoryStream(getDirectoryEntries(dir), filter);
         } catch (FlickrException e) {
             throw new IOException(e);
         }

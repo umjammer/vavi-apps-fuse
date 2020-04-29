@@ -247,7 +247,7 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
     @Override
     public DirectoryStream<Path> newDirectoryStream(final Path dir,
                                                     final DirectoryStream.Filter<? super Path> filter) throws IOException {
-        return Util.newDirectoryStream(getDirectoryEntries(dir));
+        return Util.newDirectoryStream(getDirectoryEntries(dir), filter);
     }
 
     Object lock;

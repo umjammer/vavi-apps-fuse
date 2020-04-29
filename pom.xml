@@ -136,14 +136,14 @@ TODO
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-nio-file</artifactId>
-      <version>0.0.2</version>
+      <version>0.0.3</version>
     </dependency>
 
     <dependency>
       <!-- java-fs base -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>java7-fs-base</artifactId>
-      <version>0.0.4v</version>
+      <version>0.0.5v</version>
     </dependency>
 
     <dependency>
