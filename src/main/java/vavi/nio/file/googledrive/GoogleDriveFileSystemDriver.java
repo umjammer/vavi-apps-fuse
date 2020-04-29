@@ -46,7 +46,6 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.googleapis.media.MediaHttpUploader;
 import com.google.api.client.googleapis.media.MediaHttpUploader.UploadState;
 import com.google.api.client.http.InputStreamContent;
-import com.google.api.client.util.DateTime;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.Drive.Files;
 import com.google.api.services.drive.model.File;
@@ -87,12 +86,6 @@ public final class GoogleDriveFileSystemDriver extends UnixLikeFileSystemDriverB
 
     /** */
     private Cache<File> cache = new Cache<File>() {
-        {
-            // TODO datetime
-//          File root = drive.files().get("fileId=root").execute();
-            entryCache.put("/", new File().setName("/").setId("root").setMimeType(MIME_TYPE_DIR).setModifiedTime(new DateTime(System.currentTimeMillis())).setSize(0L));
-        }
-
         /**
          * @see #ignoreAppleDouble
          */
@@ -108,7 +101,8 @@ public final class GoogleDriveFileSystemDriver extends UnixLikeFileSystemDriverB
 
                     File entry;
                     if (path.getNameCount() == 0) {
-                        entry = drive.files().get(toPathString(path)).execute();
+                        entry = drive.files().get("root").setFields("id, parents, size, mimeType, createdTime, modifiedTime").execute().set("name", "/");
+//System.err.println(path + ", " + entry);
                         cache.putFile(path, entry);
                         return entry;
                     } else {
@@ -252,7 +246,8 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
         return Util.newDirectoryStream(getDirectoryEntries(dir), filter);
     }
 
-    Object lock;
+    /** */
+    private Object lock;
 
     @Override
     public AsynchronousFileChannel newAsynchronousFileChannel(Path path,
