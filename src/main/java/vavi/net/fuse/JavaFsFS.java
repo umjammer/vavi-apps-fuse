@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.util.concurrent.TimeUnit;
 
 import vavi.util.Debug;
 
@@ -69,10 +70,10 @@ Debug.println("path: " + path);
         try {
             if (Files.isDirectory(fileSystem.getPath(path))) {
                 stat.setMode(NodeType.DIRECTORY, true, true, true, true, false, true, true, false, true)
-                    .setAllTimesSec(Files.getLastModifiedTime(fileSystem.getPath(path)).toMillis());
+                    .setAllTimesSec(Files.getLastModifiedTime(fileSystem.getPath(path)).to(TimeUnit.SECONDS));
             } else {
                 stat.setMode(NodeType.FILE, true, true, false, true, false, false, true, false, false)
-                    .setAllTimesSec(Files.getLastModifiedTime(fileSystem.getPath(path)).toMillis())
+                    .setAllTimesSec(Files.getLastModifiedTime(fileSystem.getPath(path)).to(TimeUnit.SECONDS))
                     .size(Files.size(fileSystem.getPath(path)));
             }
             return 0;
@@ -111,12 +112,12 @@ Debug.println("path: " + path);
 
     @Override
     public int read(final String path, final ByteBuffer buffer, final long size, final long offset, final FileInfoWrapper info) {
-Debug.println("path: " + path);
+Debug.println("path: " + path + ", " + offset);
         try {
             Files.newByteChannel(fileSystem.getPath(path)).read(buffer);
             return 0;
         } catch (IOException e) {
-        e.printStackTrace();
+e.printStackTrace();
             return -ErrorCodes.EIO();
         }
     }
@@ -127,7 +128,7 @@ Debug.println("path: " + path);
             Files.list(fileSystem.getPath(path)).forEach(p -> filler.add(p.getFileName().toString()));
             return 0;
         } catch (IOException e) {
-e.printStackTrace(System.err);
+e.printStackTrace();
             return -ErrorCodes.EIO();
         }
     }
@@ -181,7 +182,7 @@ e.printStackTrace();
                      final long bufSize,
                      final long writeOffset,
                      final FileInfoWrapper wrapper) {
-Debug.println("path: " + path);
+Debug.println("path: " + path + ", " + writeOffset);
         try {
             Files.newByteChannel(fileSystem.getPath(path)).write(buf);
             return 0;
