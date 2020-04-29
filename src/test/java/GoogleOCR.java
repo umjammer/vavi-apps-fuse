@@ -12,9 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -26,6 +24,8 @@ import vavi.util.archive.zip.ZipArchive;
 
 /**
  * google drive ocr
+ *
+ * TODO Google Vision API
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2020/03/03 umjammer initial version <br>
@@ -41,8 +41,8 @@ public final class GoogleOCR {
             GoogleOCR app = new GoogleOCR();
             FileSystem fs = app.prepare(args);
 System.err.println("fs: " + fs);
-//            app.extract(fs, args);
-//            app.ocr(fs, args);
+            app.extract(fs, args);
+            app.ocr(fs, args);
             app.gather(fs, args);
         } catch (Exception e) {
             e.printStackTrace();
@@ -84,8 +84,6 @@ System.err.println("fs: " + fs);
 System.err.println("copy: " + file + " to " + tmp);
         }
         ZipArchive archive = new ZipArchive(tmp.toFile());
-//int c = 0;
-        Set<Path> paths = new HashSet<>();
         for (Entry entry : archive.entries()) {
             Path path = dir.resolve(entry.getName());
             if (!Files.exists(path.getParent())) {
@@ -96,14 +94,12 @@ System.err.println("copy: " + file + " to " + tmp);
                     Files.createDirectory(path);
                 } else {
                     Files.copy(archive.getInputStream(entry), path);
-                    paths.add(path);
                 }
 System.err.println("extract: " + path);
                 try { Thread.sleep(300); } catch (InterruptedException e) {} 
             } else {
 System.err.println("skip: " + path);
             }
-//if (c++ > 5) break;
         }
         Files.delete(tmp);
 System.err.println("rm: " + tmp);
@@ -117,7 +113,6 @@ System.err.println("rm: " + tmp);
         // specify other directory avoid ConcurrentModificationException Files#list().forEach()
         String ocrDirname = args[4];
         Files.list(fs.getPath(extractedDirname)).forEach(p -> {
-//System.err.println(p);
             try {
                 String fn = p.getFileName().toString();
                 if (fn.indexOf(".jpg") > 0) {
@@ -138,14 +133,12 @@ System.err.println("skip ocr: " + fn);
         });
     }
 
-//int c = 0;
     /**
      * @param args 4: output ocr dir
      */
     void gather(FileSystem fs, final String... args) throws IOException {
         String ocrDirname = args[4];
         Files.list(fs.getPath(ocrDirname)).sorted().forEach(p -> {
-//System.err.println(p);
             try {
                 ZipInputStream zis = new ZipInputStream(Files.newInputStream(p, GoogleDriveOpenOption.EXPORT_WITH_GDOCS_DOCX));
                 ZipEntry entry;
@@ -166,7 +159,6 @@ System.err.println("skip ocr: " + fn);
             } catch (IOException e) {
                 throw new IllegalStateException(e);
             }
-//if (c++ > 1) System.exit(0);
         });
     }
 }
