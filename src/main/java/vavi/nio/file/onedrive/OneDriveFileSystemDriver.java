@@ -205,7 +205,7 @@ e.printStackTrace();
     public SeekableByteChannel newByteChannel(Path path,
                                               Set<? extends OpenOption> options,
                                               FileAttribute<?>... attrs) throws IOException {
-        if (options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND)) {
+        if (options != null && (options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND))) {
             return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
                 @Override
                 protected long getLeftOver() throws IOException {
@@ -275,7 +275,7 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
     public void copy(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
         try {
             if (cache.existsEntry(target)) {
-                if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
+                if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
                     removeEntry(target);
                 } else {
                     throw new FileAlreadyExistsException(target.toString());
@@ -293,7 +293,7 @@ e.printStackTrace();
         try {
             if (cache.existsEntry(target)) {
                 if (cache.getEntry(target).isFolder()) {
-                    if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
+                    if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
                         // replace the target
                         if (cache.getChildCount(target) > 0) {
                             throw new DirectoryNotEmptyException(target.toString());
@@ -306,7 +306,7 @@ e.printStackTrace();
                         moveEntry(source, target, true);
                     }
                 } else {
-                    if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
+                    if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
                         removeEntry(target);
                         moveEntry(source, target, false);
                     } else {

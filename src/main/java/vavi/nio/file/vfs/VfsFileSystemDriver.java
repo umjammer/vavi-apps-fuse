@@ -154,7 +154,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
     public SeekableByteChannel newByteChannel(Path path,
                                               Set<? extends OpenOption> options,
                                               FileAttribute<?>... attrs) throws IOException {
-        if (options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND)) {
+        if (options != null && (options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND))) {
             return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
                 @Override
                 protected long getLeftOver() throws IOException {
@@ -201,7 +201,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
     public void copy(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
         FileObject targetEntry = getEntry(target, false);
         if (targetEntry.exists()) {
-            if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
+            if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
                 removeEntry(target);
             } else {
                 throw new FileAlreadyExistsException(target.toString());
@@ -215,7 +215,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
         FileObject targetEntry = getEntry(target, false);
         if (targetEntry.exists()) {
             if (targetEntry.isFolder()) {
-                if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
+                if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
                     // replace the target
                     if (targetEntry.getChildren().length > 0) {
                         throw new DirectoryNotEmptyException(target.toString());
@@ -228,7 +228,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
                     moveEntry(source, target, true);
                 }
             } else {
-                if (options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
+                if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
                     removeEntry(target);
                     moveEntry(source, target, false);
                 } else {
