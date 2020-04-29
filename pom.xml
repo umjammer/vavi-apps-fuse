@@ -118,7 +118,7 @@ TODO
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
-      <version>1.0.12</version>
+      <version>1.0.15</version>
     </dependency>
 
     <dependency>
@@ -130,7 +130,7 @@ TODO
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-net-auth</artifactId>
-      <version>0.0.5</version>
+      <version>0.0.6</version>
     </dependency>
 
     <dependency>
@@ -290,12 +290,18 @@ TODO
       <version>5.3.0</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-commons</artifactId>
+      <version>1.5.2</version>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <!-- java-fs dropbox -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>java7-fs-dropbox</artifactId>
-      <version>0.0.7v</version>
+      <version>0.0.8v</version>
       <scope>test</scope>
     </dependency>
 
@@ -303,7 +309,7 @@ TODO
       <!-- java-fs box -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>java7-fs-box</artifactId>
-      <version>0.1.2v</version>
+      <version>0.1.3v</version>
       <scope>test</scope>
     </dependency>
 
