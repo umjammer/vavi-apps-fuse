@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.logging.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -23,43 +22,24 @@ import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 
 import vavi.net.auth.oauth2.BasicAppCredential;
-import vavi.net.auth.oauth2.LocalOAuth2;
-import vavi.util.Debug;
-import vavi.util.properties.annotation.Property;
-import vavi.util.properties.annotation.PropsEntity;
+import vavi.net.auth.oauth2.WithTotpUserCredential;
+import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
+import vavi.net.auth.oauth2.microsoft.MicrosoftGraphOAuth2;
+import vavi.net.auth.oauth2.microsoft.MicrosoftLocalUserCredential;
 
 
 /**
  * OneDriveFileSystemRepository.
- * <p>
- * set "authenticatorClassName" in "classpath:onedrive.properties"
- * </p>
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-@PropsEntity(url = "classpath:onedrive.properties")
 public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase {
 
     /** */
     public OneDriveFileSystemRepository() {
         super("onedrive", new OneDriveFileSystemFactoryProvider());
-    }
-
-    /** should be {@link vavi.net.auth.oauth2.Authenticator} and have a constructor with args (String, String) */
-    @Property(value = "vavi.net.auth.oauth2.microsoft.OneDriveLocalAuthenticator")
-    private String authenticatorClassName;
-
-    /* */
-    {
-        try {
-            PropsEntity.Util.bind(this);
-Debug.println("authenticatorClassName: " + authenticatorClassName);
-        } catch (Exception e) {
-Debug.println(Level.WARNING, "no onedrive.properties in classpath, use defaut");
-            authenticatorClassName = "vavi.net.auth.oauth2.microsoft.OneDriveLocalAuthenticator";
-        }
     }
 
     /**
@@ -69,18 +49,37 @@ Debug.println(Level.WARNING, "no onedrive.properties in classpath, use defaut");
     @Nonnull
     @Override
     public FileSystemDriver createDriver(final URI uri, final Map<String, ?> env) throws IOException {
+        // 1. user credential
+        WithTotpUserCredential userCredential = null;
+
         Map<String, String> params = getParamsMap(uri);
-        if (!params.containsKey(OneDriveFileSystemProvider.PARAM_ID)) {
-            throw new NoSuchElementException("uri not contains a param " + OneDriveFileSystemProvider.PARAM_ID);
+        if (params.containsKey(OneDriveFileSystemProvider.PARAM_ID)) {
+            String email = params.get(OneDriveFileSystemProvider.PARAM_ID);
+            userCredential = new MicrosoftLocalUserCredential(email);
         }
-        final String email = params.get(OneDriveFileSystemProvider.PARAM_ID);
 
-        if (!env.containsKey(OneDriveFileSystemProvider.ENV_CREDENTIAL)) {
-            throw new NoSuchElementException("app credential not contains a param " + OneDriveFileSystemProvider.ENV_CREDENTIAL);
+        if (env.containsKey(OneDriveFileSystemProvider.ENV_USER_CREDENTIAL)) {
+            userCredential = WithTotpUserCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_USER_CREDENTIAL));
         }
-        BasicAppCredential appCredential = BasicAppCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_CREDENTIAL));
 
-        String accessToken = new LocalOAuth2(appCredential, true, authenticatorClassName).authorize(email);
+        if (userCredential == null) {
+            throw new NoSuchElementException("uri not contains a param " + OneDriveFileSystemProvider.PARAM_ID + " nor " +
+                                             "env not contains a param " + OneDriveFileSystemProvider.ENV_USER_CREDENTIAL);
+        }
+
+        // 2. app credential
+        BasicAppCredential appCredential = null;
+
+        if (env.containsKey(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL)) {
+            appCredential = BasicAppCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL));
+        }
+
+        if (appCredential == null) {
+            appCredential = new MicrosoftGraphLocalAppCredential();
+        }
+
+        // 3. process
+        String accessToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
 //Debug.println("accessToken: " + accessToken);
 
         IAuthenticationProvider authenticationProvider = new IAuthenticationProvider() {

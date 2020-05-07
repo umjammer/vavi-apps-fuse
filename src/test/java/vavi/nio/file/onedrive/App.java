@@ -22,8 +22,10 @@ import java.util.concurrent.Future;
 import com.google.common.collect.Maps;
 
 import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.WithTotpUserCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
-import vavi.net.auth.oauth2.microsoft.OneDriveLocalAuthenticator;
+import vavi.net.auth.oauth2.microsoft.MicrosoftLocalUserCredential;
+import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAuthenticator;
 import vavi.util.properties.annotation.PropsEntity;
 
 import asg.cliche.Command;
@@ -38,6 +40,8 @@ import de.tuberlin.onedrivesdk.file.OneFile;
 import de.tuberlin.onedrivesdk.folder.OneFolder;
 import de.tuberlin.onedrivesdk.networking.OneDriveAuthenticationException;
 import de.tuberlin.onedrivesdk.uploadFile.OneUploadFile;
+
+import static vavi.net.auth.oauth2.BasicAppCredential.wrap;
 
 
 /**
@@ -67,7 +71,8 @@ public class App {
         String url = api.getAuthenticationURL();
 
         //
-        String resdirectUrl = new OneDriveLocalAuthenticator(url, appCredential.getRedirectUrl()).authorize(email);
+        WithTotpUserCredential userCredential = new MicrosoftLocalUserCredential(email);
+        String resdirectUrl = new MicrosoftLocalAuthenticator(wrap(appCredential, url, appCredential.getRedirectUrl())).authorize(userCredential);
         String code = resdirectUrl.substring(resdirectUrl.indexOf("?code=") + "?code=".length());
 System.err.println("authenticate: " + code);
         api.authenticate(code);

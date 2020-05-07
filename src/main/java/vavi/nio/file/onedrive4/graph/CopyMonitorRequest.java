@@ -50,7 +50,7 @@ public class CopyMonitorRequest {
      * @param responseHandler The handler to handle the HTTP response.
      * @return The monitor result.
      */
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({ "rawtypes", "unchecked" }) // TODO
     public CopyMonitorResult monitor(final CopyMonitorResponseHandler responseHandler) {
         return this.baseRequest.getClient()
                 .getHttpProvider()

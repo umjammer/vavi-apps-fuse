@@ -46,7 +46,7 @@ public final class Main3 {
         PropsEntity.Util.bind(appCredential);
 
         Map<String, Object> env = new HashMap<>();
-        env.put(OneDriveFileSystemProvider.ENV_CREDENTIAL, appCredential);
+        env.put(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL, appCredential);
 
         // Create the filesystem...
         try (FileSystem onedrivefs = new OneDriveFileSystemProvider().newFileSystem(uri, env)) {

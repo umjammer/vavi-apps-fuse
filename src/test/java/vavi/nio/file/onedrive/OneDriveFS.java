@@ -43,7 +43,7 @@ public class OneDriveFS {
         PropsEntity.Util.bind(appCredential);
 
         Map<String, Object> env = new HashMap<>();
-        env.put(OneDriveFileSystemProvider.ENV_CREDENTIAL, appCredential);
+        env.put(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL, appCredential);
         env.put("ignoreAppleDouble", true);
 
         FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, env);

@@ -32,13 +32,14 @@ import com.microsoft.graph.requests.extensions.GraphServiceClient;
 import com.microsoft.graph.requests.extensions.IDriveItemCopyRequest;
 
 import vavi.net.auth.oauth2.BasicAppCredential;
-import vavi.net.auth.oauth2.LocalOAuth2;
+import vavi.net.auth.oauth2.WithTotpUserCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
+import vavi.net.auth.oauth2.microsoft.MicrosoftGraphOAuth2;
+import vavi.net.auth.oauth2.microsoft.MicrosoftLocalUserCredential;
 import vavi.nio.file.onedrive4.graph.CopyMonitorProvider;
 import vavi.nio.file.onedrive4.graph.CopyMonitorResponseHandler;
 import vavi.nio.file.onedrive4.graph.CopyMonitorResult;
 import vavi.nio.file.onedrive4.graph.CopySession;
-import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
 
@@ -48,11 +49,7 @@ import vavi.util.properties.annotation.PropsEntity;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2019/07/04 umjammer initial version <br>
  */
-@PropsEntity(url = "classpath:onedrive.properties")
 public class TestGraph {
-
-    @Property
-    private String authenticatorClassName;
 
     /**
      * @param args 0: email
@@ -68,12 +65,13 @@ public class TestGraph {
     /** */
     void auth(String email) throws IOException {
 
-        BasicAppCredential credential = new MicrosoftGraphLocalAppCredential();
-        PropsEntity.Util.bind(credential);
+        BasicAppCredential appCredential = new MicrosoftGraphLocalAppCredential();
+        PropsEntity.Util.bind(appCredential);
 
         PropsEntity.Util.bind(this);
 
-        String accesssToken = new LocalOAuth2(credential, true, authenticatorClassName).authorize(email);
+        WithTotpUserCredential userCredential = new MicrosoftLocalUserCredential(email);
+        String accesssToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
 
         client = GraphServiceClient.builder()
                 .authenticationProvider(new IAuthenticationProvider() {
@@ -151,7 +149,7 @@ public class TestGraph {
         body.name = "コピー.wav";
         body.parentReference = ir;
         CopyMonitorResponseHandler<DriveItem> handler = new CopyMonitorResponseHandler<>();
-        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @SuppressWarnings({ "unchecked", "rawtypes" }) // TODO
         CopySession copySession = client.getHttpProvider().<CopyMonitorResult, DriveItemCopyBody, CopyMonitorResult>send((IHttpRequest) request, CopyMonitorResult.class, body, (IStatefulResponseHandler) handler).getSession();
         CopyMonitorProvider<DriveItem> copyMonitorProvider = new CopyMonitorProvider<>(copySession, client, DriveItem.class);
         copyMonitorProvider.monitor(new IProgressCallback<DriveItem>() {

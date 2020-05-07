@@ -44,7 +44,7 @@ public class DropBoxFS {
         PropsEntity.Util.bind(appCredential);
 
         Map<String, Object> env = new HashMap<>();
-        env.put(DropBoxFileSystemProvider.ENV_CREDENTIAL, appCredential);
+        env.put(DropBoxFileSystemProvider.ENV_APP_CREDENTIAL, appCredential);
         env.put("ignoreAppleDouble", true);
 
         FileSystem fs = new DropBoxFileSystemProvider().newFileSystem(uri, env);

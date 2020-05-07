@@ -43,7 +43,7 @@ public final class Main3 {
         final URI uri = URI.create("box:///?id=" + email);
 
         final Map<String, Object> env = new HashMap<>();
-        env.put(BoxFileSystemProvider.ENV_CREDENTIAL, appCredential);
+        env.put(BoxFileSystemProvider.ENV_APP_CREDENTIAL, appCredential);
 
         // Create the filesystem...
         try (final FileSystem boxfs = new BoxFileSystemProvider().newFileSystem(uri, env)) {

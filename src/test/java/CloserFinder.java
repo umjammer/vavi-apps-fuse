@@ -49,7 +49,7 @@ public final class CloserFinder {
         PropsEntity.Util.bind(appCredential);
 
         Map<String, Object> env = new HashMap<>();
-        env.put(OneDriveFileSystemProvider.ENV_CREDENTIAL, appCredential);
+        env.put(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL, appCredential);
 
         FileSystem onedrivefs = FileSystems.newFileSystem(uri, env);
 

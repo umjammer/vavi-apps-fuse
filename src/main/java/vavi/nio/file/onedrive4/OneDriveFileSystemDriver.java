@@ -446,7 +446,7 @@ System.out.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(
             body.name = toFilenameString(target); // ditto
             body.parentReference = ir; // ditto
             CopyMonitorResponseHandler<DriveItem> handler = new CopyMonitorResponseHandler<>();
-            @SuppressWarnings({ "unchecked", "rawtypes" })
+            @SuppressWarnings({ "unchecked", "rawtypes" }) // TODO
             CopySession copySession = client.getHttpProvider().<CopyMonitorResult, DriveItemCopyBody, CopyMonitorResult>send((IHttpRequest) request, CopyMonitorResult.class, body, (IStatefulResponseHandler) handler).getSession();
             CopyMonitorProvider<DriveItem> copyMonitorProvider = new CopyMonitorProvider<>(copySession, client, DriveItem.class);
             copyMonitorProvider.monitor(new IProgressCallback<DriveItem>() {

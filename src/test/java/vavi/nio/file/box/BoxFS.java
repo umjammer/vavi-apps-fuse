@@ -44,7 +44,7 @@ public class BoxFS {
         PropsEntity.Util.bind(appCredential);
 
         Map<String, Object> env = new HashMap<>();
-        env.put(BoxFileSystemProvider.ENV_CREDENTIAL, appCredential);
+        env.put(BoxFileSystemProvider.ENV_APP_CREDENTIAL, appCredential);
         env.put("ignoreAppleDouble", true);
 
         FileSystem fs = new BoxFileSystemProvider().newFileSystem(uri, env);
