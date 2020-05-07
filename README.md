@@ -1,4 +1,4 @@
-[![Release](https://jitpack.io/v/umjammer/vavi-apps-fuse.svg)](https://jitpack.io/#umjammer/vavi-apps-fuse)
+[![Release](https://jitpack.io/v/umjammer/vavi-apps-fuse.svg)](https://jitpack.io/#umjammer/vavi-apps-fuse) [![Java CI with Maven](https://github.com/umjammer/vavi-apps-fuse/workflows/Java%20CI%20with%20Maven/badge.svg)](https://github.com/umjammer/vavi-apps-fuse/actions)
 
 # vavi-apps-fuse
 
