@@ -27,9 +27,6 @@ import java.io.IOException;
  * thrown. We therefore capture all {@link RuntimeException}s thrown by either a
  * downloader or an uploader, and wrap it into such an exception.
  * </p>
- *
- * @see GoogleDriveInputStream
- * @see GoogleDriveOutputStream
  */
 public final class GoogleDriveIOException extends IOException {
 

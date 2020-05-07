@@ -18,6 +18,7 @@ import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 import com.google.api.services.drive.Drive;
 
+import vavi.net.auth.oauth2.WithTotpUserCredential;
 import vavi.net.auth.oauth2.google.GoogleAppCredential;
 import vavi.net.auth.oauth2.google.GoogleLocalAppCredential;
 import vavi.net.auth.oauth2.google.GoogleLocalUserCredential;
@@ -45,16 +46,16 @@ public final class GoogleDriveFileSystemRepository extends FileSystemRepositoryB
     @Override
     public FileSystemDriver createDriver(final URI uri, final Map<String, ?> env) throws IOException {
         // 1. user credential
-        GoogleLocalUserCredential userCredential = null;
-
-        Map<String, String> params = getParamsMap(uri);
-        if (params.containsKey(GoogleDriveFileSystemProvider.PARAM_ID)) {
-            String email = params.get(GoogleDriveFileSystemProvider.PARAM_ID);
-            userCredential = new GoogleLocalUserCredential(email);
-        }
+        WithTotpUserCredential userCredential = null;
 
         if (env.containsKey(GoogleDriveFileSystemProvider.ENV_USER_CREDENTIAL)) {
-            userCredential = GoogleLocalUserCredential.class.cast(env.get(GoogleDriveFileSystemProvider.ENV_USER_CREDENTIAL));
+            userCredential = WithTotpUserCredential.class.cast(env.get(GoogleDriveFileSystemProvider.ENV_USER_CREDENTIAL));
+        }
+
+        Map<String, String> params = getParamsMap(uri);
+        if (userCredential == null && params.containsKey(GoogleDriveFileSystemProvider.PARAM_ID)) {
+            String email = params.get(GoogleDriveFileSystemProvider.PARAM_ID);
+            userCredential = new GoogleLocalUserCredential(email);
         }
 
         if (userCredential == null) {

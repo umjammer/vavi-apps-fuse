@@ -52,14 +52,14 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         // 1. user credential
         WithTotpUserCredential userCredential = null;
 
-        Map<String, String> params = getParamsMap(uri);
-        if (params.containsKey(OneDriveFileSystemProvider.PARAM_ID)) {
-            String email = params.get(OneDriveFileSystemProvider.PARAM_ID);
-            userCredential = new MicrosoftLocalUserCredential(email);
-        }
-
         if (env.containsKey(OneDriveFileSystemProvider.ENV_USER_CREDENTIAL)) {
             userCredential = WithTotpUserCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_USER_CREDENTIAL));
+        }
+
+        Map<String, String> params = getParamsMap(uri);
+        if (userCredential == null && params.containsKey(OneDriveFileSystemProvider.PARAM_ID)) {
+            String email = params.get(OneDriveFileSystemProvider.PARAM_ID);
+            userCredential = new MicrosoftLocalUserCredential(email);
         }
 
         if (userCredential == null) {
