@@ -9,6 +9,7 @@ package vavi.nio.file.gathered;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
@@ -22,6 +23,8 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 
 import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider;
+
+import vavi.util.Debug;
 
 
 /**
@@ -50,13 +53,24 @@ public final class GatheredBasicFileAttributesProvider extends BasicFileAttribut
     public FileTime lastModifiedTime() {
         try {
             if (FileSystem.class.isInstance(entry)) {
-                return FileTime.fromMillis(0);
+                FileSystem fs = FileSystem.class.cast(entry);
+                if (GatheredFileSystemProvider.class.isInstance(fs.provider())) {
+                    return FileTime.fromMillis(System.currentTimeMillis());
+                } else {
+                    return Files.getLastModifiedTime(fs.getRootDirectories().iterator().next());
+                }
             } else if (Path.class.isInstance(entry)) {
-System.err.println("@@@: " + entry + ", " + Path.class.cast(entry).getFileSystem().provider());
-                return Files.getLastModifiedTime(Path.class.cast(entry));
+                Path path = Path.class.cast(entry);
+//System.err.println("@@@: " + entry + ", " + path.getFileSystem().provider());
+                return Files.getLastModifiedTime(path);
             } else {
                 throw new IllegalStateException("unsupported type: " + entry.getClass().getName());
             }
+        } catch (NoSuchFileException e) {
+if (!e.getMessage().contains("ignore apple double file")) {
+ Debug.println(e);
+}
+            return FileTime.fromMillis(0);
         } catch (IOException e) {
 e.printStackTrace();
             return FileTime.fromMillis(0);
@@ -71,7 +85,8 @@ e.printStackTrace();
         if (FileSystem.class.isInstance(entry)) {
             return false;
         } else if (Path.class.isInstance(entry)) {
-            return Files.isRegularFile(Path.class.cast(entry));
+            Path path = Path.class.cast(entry);
+            return Files.isRegularFile(path);
         } else {
             throw new IllegalStateException("unsupported type: " + entry.getClass().getName());
         }
@@ -85,7 +100,8 @@ e.printStackTrace();
         if (FileSystem.class.isInstance(entry)) {
             return true;
         } else if (Path.class.isInstance(entry)) {
-            return Files.isRegularFile(Path.class.cast(entry));
+            Path path = Path.class.cast(entry);
+            return Files.isDirectory(path);
         } else {
             throw new IllegalStateException("unsupported type: " + entry.getClass().getName());
         }
@@ -110,6 +126,11 @@ e.printStackTrace();
             } else {
                 throw new IllegalStateException("unsupported type: " + entry.getClass().getName());
             }
+        } catch (NoSuchFileException e) {
+if (!e.getMessage().contains("ignore apple double file")) {
+ Debug.println(e);
+}
+            return 0;
         } catch (IOException e) {
 e.printStackTrace();
             return 0;

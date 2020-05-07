@@ -54,7 +54,7 @@ class GatheredFileSystemProviderTest {
         ).forEach(id -> {
             try {
                 fileSystems.put(id, app.getFileSystem(id));
-                nameMap.put(id, id.replaceAll("[:_@]", "_"));
+                nameMap.put(id, id.replaceAll("[:@\\.]", "_"));
 System.err.println("ADD: " + id + ", " + nameMap.get(id));
             } catch (IOException e) {
                 System.err.println(e);
@@ -71,7 +71,7 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
         options.put("fsname", "gathered_fs" + "@" + System.currentTimeMillis());
         options.put("noappledouble", null);
 
-        JavaFS.mount(fs, Paths.get(args[0]), true, false, options); // TODO not work well ???
+        JavaFS.mount(fs, Paths.get(args[0]), true, false, options);
     }
 
     /** */
@@ -98,7 +98,7 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
         Map<String, Object> env = new HashMap<>();
         switch (scheme) {
         case "onedrive":
-            env.put(OneDriveFileSystemProvider.ENV_CREDENTIAL, onedriveAppCredential);
+            env.put(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL, onedriveAppCredential);
             env.put("ignoreAppleDouble", true);
             break;
         case "googledrive":
@@ -129,7 +129,7 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
         ).forEach(id -> {
             try {
                 fileSystems.put(id, getFileSystem(id));
-                nameMap.put(id, id.replaceAll("[:_@]", "_"));
+                nameMap.put(id, id.replaceAll("[:@\\.]", "_"));
 System.err.println("ADD: " + id + ", " + nameMap.get(id));
             } catch (IOException e) {
                 System.err.println(e);

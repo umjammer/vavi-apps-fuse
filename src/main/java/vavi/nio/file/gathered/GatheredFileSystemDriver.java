@@ -1,16 +1,18 @@
 /*
- * Copyright (c) 2016 by Naohide Sano, All rights reserved.
+ * Copyright (c) 2019 by Naohide Sano, All rights reserved.
  *
  * Programmed by Naohide Sano
  */
 
 package vavi.nio.file.gathered;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -21,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
@@ -33,6 +36,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
+import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -47,7 +51,7 @@ import static vavi.nio.file.Util.toPathString;
  * GatheredFsFileSystemDriver.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
- * @version 0.00 2016/03/30 umjammer initial version <br>
+ * @version 0.00 2019/03/30 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
 public final class GatheredFileSystemDriver extends UnixLikeFileSystemDriverBase {
@@ -75,12 +79,20 @@ public final class GatheredFileSystemDriver extends UnixLikeFileSystemDriverBase
     @Nonnull
     @Override
     public InputStream newInputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
-        throw new UnsupportedOperationException("newInputStream is not supported by the file system");
+        final Object entry = getPathMetadata(path);
+
+        // TODO: metadata driver
+        if (!Path.class.isInstance(entry) || Files.isDirectory(Path.class.cast(entry))) {
+            throw new IsDirectoryException("path: " + path);
+        }
+
+        return Files.newInputStream(Path.class.cast(entry));
     }
 
     @Nonnull
     @Override
     public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
+        // TODO we can implement using Files
         throw new UnsupportedOperationException("newOutputStream is not supported by the file system");
     }
 
@@ -95,26 +107,70 @@ public final class GatheredFileSystemDriver extends UnixLikeFileSystemDriverBase
     public SeekableByteChannel newByteChannel(Path path,
                                               Set<? extends OpenOption> options,
                                               FileAttribute<?>... attrs) throws IOException {
-        throw new UnsupportedOperationException("newByteChannel is not supported by the file system");
+        if (options != null && (options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND))) {
+            return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
+                @Override
+                protected long getLeftOver() throws IOException {
+                    long leftover = 0;
+                    if (options.contains(StandardOpenOption.APPEND)) {
+                        Object entry = getPathMetadata(path);
+                        if (entry != null && Path.class.isInstance(entry) && Files.isRegularFile(Path.class.cast(entry))) {
+                            leftover = Files.size(Path.class.cast(entry));
+                        }
+                    }
+                    return leftover;
+                }
+
+                @Override
+                public void close() throws IOException {
+Debug.println("SeekableByteChannelForWriting::close");
+                    if (written == 0) {
+                        // TODO no mean
+Debug.println("SeekableByteChannelForWriting::close: scpecial: " + path);
+                        java.io.File file = new java.io.File(toPathString(path));
+                        FileInputStream fis = new FileInputStream(file);
+                        FileChannel fc = fis.getChannel();
+                        fc.transferTo(0, file.length(), this);
+                        fis.close();
+                    }
+                    super.close();
+                }
+            };
+        } else {
+            Object entry = getPathMetadata(path);
+            if (!Path.class.isInstance(entry) || Files.isDirectory(Path.class.cast(entry))) {
+                throw new IsDirectoryException(path.toString());
+            }
+            return new Util.SeekableByteChannelForReading(newInputStream(path, null)) {
+                @Override
+                protected long getSize() throws IOException {
+                    return Files.size(Path.class.cast(entry));
+                }
+            };
+        }
     }
 
     @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
+        // TODO we can implement using Files
         throw new UnsupportedOperationException("createDirectory is not supported by the file system");
     }
 
     @Override
     public void delete(final Path path) throws IOException {
+        // TODO we can implement using Files
         throw new UnsupportedOperationException("delete is not supported by the file system");
     }
 
     @Override
     public void copy(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
+        // TODO we can implement using Files
         throw new UnsupportedOperationException("copy is not supported by the file system");
     }
 
     @Override
     public void move(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
+        // TODO we can implement using Files
         throw new UnsupportedOperationException("move is not supported by the file system");
     }
 
@@ -131,6 +187,7 @@ public final class GatheredFileSystemDriver extends UnixLikeFileSystemDriverBase
      */
     @Override
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
+        // TODO currently check read only?
     }
 
     @Override
@@ -144,7 +201,7 @@ public final class GatheredFileSystemDriver extends UnixLikeFileSystemDriverBase
     @Nonnull
     @Override
     public Object getPathMetadata(final Path path) throws IOException {
-Debug.println("path: " + path);
+//Debug.println("path: " + path);
         if (path.getNameCount() < 2) {
             return getFileSystemOf(path);
         } else {
@@ -188,15 +245,16 @@ Debug.println("path: " + path);
 
     /** */
     FileSystem getFileSystemOf(Path path) throws IOException {
-Debug.println("path: " + path);
+//Debug.println("path: " + path);
         if (path.getNameCount() == 0) {
+//Debug.println("fs: " + path.getFileSystem());
             return path.getFileSystem();
         } else {
             String first = decodeFsName(path.getName(0).toString());
-Debug.println("first: " + first);
             if (!fileSystems.containsKey(first)) {
                 throw new NoSuchFileException(path.toString());
             }
+//Debug.println("first: " + fileSystems.get(first));
             return fileSystems.get(first);
         }
     }
@@ -204,7 +262,7 @@ Debug.println("first: " + first);
     /** */
     private Path toLocalPathForDir(Path path) throws IOException {
         String subParhString = toPathString(path.subpath(1, path.getNameCount()));
-Debug.println("subParhString:" + subParhString);
+//Debug.println("subParhString:" + subParhString);
         FileSystem fileSystem = getFileSystemOf(path);
         return fileSystem.getPath(subParhString);
     }
