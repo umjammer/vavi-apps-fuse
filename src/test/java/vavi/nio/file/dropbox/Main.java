@@ -10,16 +10,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
 import com.github.fge.fs.dropbox.provider.DropBoxFileSystemProvider;
-
-import vavi.net.auth.oauth2.BasicAppCredential;
-import vavi.net.auth.oauth2.dropbox.DropBoxLocalAppCredential;
-import vavi.util.properties.annotation.PropsEntity;
 
 import static vavi.nio.file.Base.testAll;
 
@@ -40,16 +37,10 @@ public class Main {
     public static void main(final String... args) throws IOException {
         String email = args[1];
 
-        // Create the necessary elements to create a filesystem.
-        // Note: the URI _must_ have a scheme of "dropbox", and
-        // _must_ be hierarchical.
-        URI uri = URI.create("dropbox:///?id=" + email);
-
-        BasicAppCredential appCredential = new DropBoxLocalAppCredential();
-        PropsEntity.Util.bind(appCredential);
-
         Map<String, Object> env = new HashMap<>();
-        env.put(DropBoxFileSystemProvider.ENV_CREDENTIAL, appCredential);
+        env.put("ignoreAppleDouble", true);
+
+        URI uri = URI.create("dropbox:///?id=" + email);
 
         FileSystem fs = new DropBoxFileSystemProvider().newFileSystem(uri, env);
 
@@ -61,16 +52,10 @@ public class Main {
 
     @Test
     void test01() throws Exception {
-        String email = "umjammer@gmail.com";
+        String email = System.getenv("DROPBOX_TEST_ACCOUNT");
 
         URI uri = URI.create("dropbox:///?id=" + email);
 
-        BasicAppCredential appCredential = new DropBoxLocalAppCredential();
-        PropsEntity.Util.bind(appCredential);
-
-        Map<String, Object> env = new HashMap<>();
-        env.put(DropBoxFileSystemProvider.ENV_CREDENTIAL, appCredential);
-
-        testAll(new DropBoxFileSystemProvider().newFileSystem(uri, env));
+        testAll(new DropBoxFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
     }
 }

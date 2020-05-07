@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static vavi.nio.file.Base.testAll;
@@ -24,7 +25,11 @@ import co.paralleluniverse.javafs.JavaFS;
 
 /**
  * Main. (java fs, google drive)
- *
+ * <p>
+ * When you got "invalid_grant" during authoring,
+ * remove "~/.vavifuse/googledrive/StoredCredential".
+ * It's because of expiring of access token.
+ * </p>
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/04/03 umjammer initial version <br>
  */
@@ -33,17 +38,10 @@ public class Main {
     public static void main(final String... args) throws IOException {
         String email = args[1];
 
-        // Create the necessary elements to create a filesystem.
-        // Note: the URI _must_ have a scheme of "googledrive", and
-        // _must_ be hierarchical.
-        //
-        // When you got "invalid_grant" during authoring,
-        // remove "~/.vavifuse/googledrive/StoredCredential".
-        // It's because of expiring of access token.
-        URI uri = URI.create("googledrive:///?id=" + email);
-
         Map<String, Object> env = new HashMap<>();
         env.put("ignoreAppleDouble", true);
+
+        URI uri = URI.create("googledrive:///?id=" + email);
 
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, env);
 
@@ -57,16 +55,17 @@ public class Main {
 
     @Test
     void test01() throws Exception {
-        String email = "umjammer@gmail.com";
+        String email = System.getenv("GOOGLE_TEST_ACCOUNT");
 
         URI uri = URI.create("googledrive:///?id=" + email);
 
         testAll(new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
     }
 
-//    @Test
+    @Test
+    @Disabled
     void test02() throws Exception {
-        String email = "uniquro2004@gmail.com";
+        String email = System.getenv("GOOGLE_TEST_ACCOUNT2");
 
         URI uri = URI.create("googledrive:///?id=" + email);
 

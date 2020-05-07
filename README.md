@@ -12,7 +12,7 @@ fuse for java and many file systems.
 | one drive (v1)     | ✅    | ✅   | ✅       | ✅  | ✅  | ✅ | ✅    | ✅   |       | this | [OneDriveJavaSDK](https://github.com/umjammer/OneDriveJavaSDK) |
 | one drive (graph)  | ✅    | ✅   | ✅       | ✅  | ✅  | ✅ | ✅    | ✅   |       | this | [msgraph-sdk-java](https://github.com/microsoftgraph/msgraph-sdk-java) |
 | one drive (graph)  | ✅    | ✅   | ✅       | ✅  | ✅  | ✅ | ✅    | ✅   |       | this | [onedrive-java-client](https://github.com/iterate-ch/onedrive-java-client) |
-| dropbox (v3)       | ✅    | ✅   | ✅       | ✅  | ✅  | ✅ | ✅    | ✅   |       | [java7-fs-dropbox](https://github.com/umjammer/java7-fs-dropbox) | |
+| dropbox (v2)       | ✅    | ✅   | ✅       | ✅  | ✅  | ✅ | ✅    | ✅   |       | [java7-fs-dropbox](https://github.com/umjammer/java7-fs-dropbox) | |
 | box (v2)           | ✅    | ✅   | ✅       | ✅  | ✅  | ✅ | ✅    | ✅   |       | [java7-fs-box](https://github.com/umjammer/java7-fs-box) | |
 | vfs ssh            | ✅    | ✅   | ✅       | ✅  | ✅  | ✅ | ✅    | ✅   |       | this | [commons-vfs2](), [jcifs](), [jsch]() |
 | vfs webdav         | ✅    |      |           |     |      |     |       |      |        | this | [commons-vfs2-sandbox](), [jackrabbit-webdav 1.6.0]() |
@@ -27,17 +27,16 @@ fuse for java and many file systems.
 
 ### jars
 
-https://jitpack.io/#umjammer/vavi-apps-fuse
+ * https://jitpack.io/#umjammer/vavi-apps-fuse
 
 ### selenium chrome driver
 
-download the [chromedriver executable](https://chromedriver.chromium.org/downloads) and locate it into some directory.
-
-don't forget to run jvm with the jvm argument `-Dwebdriver.chrome.driver=/usr/local/bin/chromedriver`.
+ * download the [chromedriver executable](https://chromedriver.chromium.org/downloads) and locate it into some directory.
+   * don't forget to run jvm with the jvm argument `-Dwebdriver.chrome.driver=/usr/local/bin/chromedriver`.
 
 ### each fs installation
 
-[instruction wiki](https://github.com/umjammer/vavi-apps-fuse/wiki/Home#installation)
+ * [instruction wiki](https://github.com/umjammer/vavi-apps-fuse/wiki/Home#installation)
 
 ## How To
 

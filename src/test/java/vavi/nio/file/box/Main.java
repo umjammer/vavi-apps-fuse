@@ -4,16 +4,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
 import com.github.fge.filesystem.box.provider.BoxFileSystemProvider;
-
-import vavi.net.auth.oauth2.BasicAppCredential;
-import vavi.net.auth.oauth2.box.BoxLocalAppCredential;
-import vavi.util.properties.annotation.PropsEntity;
 
 import static vavi.nio.file.Base.testAll;
 
@@ -34,17 +31,10 @@ public class Main {
     public static void main(final String... args) throws IOException {
         String email = args[1];
 
-        BasicAppCredential appCredential = new BoxLocalAppCredential();
-        PropsEntity.Util.bind(appCredential);
-
-        // Create the necessary elements to create a filesystem.
-        // Note: the URI _must_ have a scheme of "box", and
-        // _must_ be hierarchical.
-        URI uri = URI.create("box:///?id=" + email);
-
         final Map<String, Object> env = new HashMap<>();
-        env.put(BoxFileSystemProvider.ENV_CREDENTIAL, appCredential);
         env.put("ignoreAppleDouble", true);
+
+        URI uri = URI.create("box:///?id=" + email);
 
         final FileSystem fs = new BoxFileSystemProvider().newFileSystem(uri, env);
 
@@ -56,16 +46,10 @@ public class Main {
 
     @Test
     void test01() throws Exception {
-        String email = "umjammer@gmail.com";
+        String email = System.getenv("BOX_TEST_ACCOUNT");
 
         URI uri = URI.create("box:///?id=" + email);
 
-        BasicAppCredential appCredential = new BoxLocalAppCredential();
-        PropsEntity.Util.bind(appCredential);
-
-        Map<String, Object> env = new HashMap<>();
-        env.put(BoxFileSystemProvider.ENV_CREDENTIAL, appCredential);
-
-        testAll(new BoxFileSystemProvider().newFileSystem(uri, env));
+        testAll(new BoxFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
     }
 }

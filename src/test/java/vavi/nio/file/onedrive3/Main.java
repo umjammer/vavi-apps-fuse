@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,7 +18,6 @@ import org.junit.jupiter.api.Test;
 
 import vavi.net.auth.oauth2.BasicAppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
-import vavi.util.properties.annotation.PropsEntity;
 
 import static vavi.nio.file.Base.testAll;
 
@@ -41,10 +41,9 @@ public class Main {
         URI uri = URI.create("onedrive:///?id=" + email);
 
         BasicAppCredential appCredential = new MicrosoftGraphLocalAppCredential();
-        PropsEntity.Util.bind(appCredential);
 
         Map<String, Object> env = new HashMap<>();
-        env.put(OneDriveFileSystemProvider.ENV_CREDENTIAL, appCredential);
+        env.put(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL, appCredential);
         env.put("ignoreAppleDouble", true);
 
         FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, env);
@@ -58,16 +57,10 @@ public class Main {
 
     @Test
     void test01() throws Exception {
-        String email = "vavivavi@live.jp";
+        String email = System.getenv("MICROSOFT3_TEST_ACCOUNT");
 
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        BasicAppCredential appCredential = new MicrosoftGraphLocalAppCredential();
-        PropsEntity.Util.bind(appCredential);
-
-        Map<String, Object> env = new HashMap<>();
-        env.put(OneDriveFileSystemProvider.ENV_CREDENTIAL, appCredential);
-
-        testAll(new OneDriveFileSystemProvider().newFileSystem(uri, env));
+        testAll(new OneDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
     }
 }
