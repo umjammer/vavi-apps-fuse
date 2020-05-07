@@ -62,7 +62,7 @@ public class Main {
         System.err.println(uri.getUserInfo());
 
         String uriString = uri.toString();
-        URI subUri = new URI(uriString.substring(uriString.indexOf(':') + 1));
+        URI subUri = URI.create(uriString.substring(uriString.indexOf(':') + 1));
         System.err.println(subUri.getScheme());
         System.err.println(subUri.getHost());
         System.err.println(subUri.getPath());

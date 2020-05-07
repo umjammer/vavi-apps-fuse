@@ -8,7 +8,6 @@ package vavi.nio.file.archive;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Objects;
@@ -44,22 +43,18 @@ public final class ArchiveFileSystemRepository extends FileSystemRepositoryBase 
     @Nonnull
     @Override
     public FileSystemDriver createDriver(final URI uri, final Map<String, ?> env) throws IOException {
-        try {
-            String[] rawSchemeSpecificParts = uri.getRawSchemeSpecificPart().split("!");
-            URI file = new URI(rawSchemeSpecificParts[0]);
-            if (!"file".equals(file.getScheme())) {
-                // currently only support "file"
-                throw new IllegalArgumentException(file.toString());
-            }
-            // TODO virtual relative directory from rawSchemeSpecificParts[1]
-
-            Archive archive = Archives.getArchive(Paths.get(file).toFile());
-
-            ArchiveFileStore fileStore = new ArchiveFileStore(factoryProvider.getAttributesFactory());
-            return new ArchiveFileSystemDriver(fileStore, factoryProvider, archive, env);
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e);
+        String[] rawSchemeSpecificParts = uri.getRawSchemeSpecificPart().split("!");
+        URI file = URI.create(rawSchemeSpecificParts[0]);
+        if (!"file".equals(file.getScheme())) {
+            // currently only support "file"
+            throw new IllegalArgumentException(file.toString());
         }
+        // TODO virtual relative directory from rawSchemeSpecificParts[1]
+
+        Archive archive = Archives.getArchive(Paths.get(file).toFile());
+
+        ArchiveFileStore fileStore = new ArchiveFileStore(factoryProvider.getAttributesFactory());
+        return new ArchiveFileSystemDriver(fileStore, factoryProvider, archive, env);
     }
 
     /* ad-hoc hack for ignoring checking opacity */

@@ -24,7 +24,7 @@ class HfsFileSystemProviderTest {
 
     @Test
     void test3() throws Exception {
-        URI uri = new URI("hfs:file:/Users/nsano/Downloads/Play-20170829.dmg");
+        URI uri = URI.create("hfs:file:/Users/nsano/Downloads/Play-20170829.dmg");
         FileSystem fs = new HfsFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
         Files.list(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
     }

@@ -8,7 +8,6 @@ package vavi.nio.file.hfs;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.util.Map;
@@ -68,24 +67,20 @@ public final class HfsFileSystemRepository extends FileSystemRepositoryBase {
     @Nonnull
     @Override
     public FileSystemDriver createDriver(final URI uri, final Map<String, ?> env) throws IOException {
-        try {
-            String[] rawSchemeSpecificParts = uri.getRawSchemeSpecificPart().split("!");
-            URI file = new URI(rawSchemeSpecificParts[0]);
-            if (!"file".equals(file.getScheme())) {
-                // currently only support "file"
-                throw new IllegalArgumentException(file.toString());
-            }
-            // TODO virtual relative directory from rawSchemeSpecificParts[1]
+        String[] rawSchemeSpecificParts = uri.getRawSchemeSpecificPart().split("!");
+        URI file = URI.create(rawSchemeSpecificParts[0]);
+        if (!"file".equals(file.getScheme())) {
+            // currently only support "file"
+            throw new IllegalArgumentException(file.toString());
+        }
+        // TODO virtual relative directory from rawSchemeSpecificParts[1]
 
 Debug.println("file: " + Paths.get(file).toAbsolutePath());
 
-            HFSCommonFileSystemHandler fsHandler = loadFSWithUDIFAutodetect(Paths.get(file).toAbsolutePath().toString());
+        HFSCommonFileSystemHandler fsHandler = loadFSWithUDIFAutodetect(Paths.get(file).toAbsolutePath().toString());
 
-            HfsFileStore fileStore = new HfsFileStore(fsHandler, factoryProvider.getAttributesFactory());
-            return new HfsFileSystemDriver(fileStore, factoryProvider, fsHandler, env);
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e);
-        }
+        HfsFileStore fileStore = new HfsFileStore(fsHandler, factoryProvider.getAttributesFactory());
+        return new HfsFileSystemDriver(fileStore, factoryProvider, fsHandler, env);
     }
 
     /* ad-hoc hack for ignoring checking opacity */

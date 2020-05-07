@@ -9,7 +9,6 @@ package vavi.nio.file.vfs;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -238,36 +237,32 @@ public final class VfsFileSystemRepository extends FileSystemRepositoryBase {
     @Nonnull
     @Override
     public FileSystemDriver createDriver(final URI uri, final Map<String, ?> env) throws IOException {
-        try {
-            String uriString = uri.toString();
-            URI subUri = new URI(uriString.substring(uriString.indexOf(':') + 1));
-            String protocol = subUri.getScheme();
+        String uriString = uri.toString();
+        URI subUri = URI.create(uriString.substring(uriString.indexOf(':') + 1));
+        String protocol = subUri.getScheme();
 Debug.println("protocol: " + protocol);
 
-            Map<String, String> params = getParamsMap(subUri);
-            if (!params.containsKey(OneDriveFileSystemProvider.PARAM_ID)) {
-                throw new NoSuchElementException("sub uri not contains a param " + OneDriveFileSystemProvider.PARAM_ID);
-            }
-            final String alias = params.get(OneDriveFileSystemProvider.PARAM_ID);
+        Map<String, String> params = getParamsMap(subUri);
+        if (!params.containsKey(OneDriveFileSystemProvider.PARAM_ID)) {
+            throw new NoSuchElementException("sub uri not contains a param " + OneDriveFileSystemProvider.PARAM_ID);
+        }
+        final String alias = params.get(OneDriveFileSystemProvider.PARAM_ID);
 
-            Factory factory = Factory.getFactory(subUri);
-            PropsEntity.Util.bind(factory, alias);
+        Factory factory = Factory.getFactory(subUri);
+        PropsEntity.Util.bind(factory, alias);
 Debug.println("baseUrl: " + factory.buildBaseUrl());
 
-            FileSystemManager manager = VFS.getManager();
+        FileSystemManager manager = VFS.getManager();
 //for (String scheme : manager.getSchemes()) {
 // System.err.println("scheme: " + scheme);
 //}
-            if (!manager.hasProvider(protocol)) {
-                throw new IllegalStateException("missing provider: " + protocol);
-            }
-
-            FileObject root = manager.resolveFile(factory.buildBaseUrl(), factory.getFileSystemOptions());
-            final VfsFileStore fileStore = new VfsFileStore(root, factoryProvider.getAttributesFactory());
-            return new VfsFileSystemDriver(fileStore, factoryProvider, manager, factory, env);
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e);
+        if (!manager.hasProvider(protocol)) {
+            throw new IllegalStateException("missing provider: " + protocol);
         }
+
+        FileObject root = manager.resolveFile(factory.buildBaseUrl(), factory.getFileSystemOptions());
+        final VfsFileStore fileStore = new VfsFileStore(root, factoryProvider.getAttributesFactory());
+        return new VfsFileSystemDriver(fileStore, factoryProvider, manager, factory, env);
     }
 
     /* ad-hoc hack for ignoring checking opacity */

@@ -27,7 +27,7 @@ class ArchiveFileSystemProviderTest {
 
     @Test
     void test() throws Exception {
-        URI uri = new URI("archive:file:/tmp/jar/exam.jar!/img/sample.png");
+        URI uri = URI.create("archive:file:/tmp/jar/exam.jar!/img/sample.png");
         assertEquals("archive", uri.getScheme());
 System.err.println("-- " + uri);
 System.err.println("host: " + uri.getHost());
@@ -44,7 +44,7 @@ System.err.println("rawSchemeSpecificPart: " + uri.getRawSchemeSpecificPart());
 
     @Test
     void test2() throws Exception {
-        URI uri = new URI("archive:///?id=umjammer@gmail.com&foo=bar#buz");
+        URI uri = URI.create("archive:///?id=umjammer@gmail.com&foo=bar#buz");
 System.err.println("-- " + uri);
 System.err.println("host: " + uri.getHost());
 System.err.println("path: " + uri.getPath());
@@ -58,7 +58,7 @@ System.err.println("rawFragment: " + uri.getRawFragment());
 
     @Test
     void test3() throws Exception {
-        URI uri = new URI("archive:file:/Users/nsano/src/vavi/vavi-util-archive/tmp/ugca010c.lzh");
+        URI uri = URI.create("archive:file:/Users/nsano/src/vavi/vavi-util-archive/tmp/ugca010c.lzh");
         FileSystem fs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP);
         Files.list(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
     }
@@ -68,7 +68,7 @@ System.err.println("rawFragment: " + uri.getRawFragment());
      */
     public static void main(String[] args) throws Exception {
         String file = "/Users/nsano/Documents/Games/PC98/bacumed/88/ALPHO.D88";
-        URI uri = new URI("archive:file:" + file);
+        URI uri = URI.create("archive:file:" + file);
         FileSystem fs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP);
         Files.list(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
     }
