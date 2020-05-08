@@ -4,14 +4,22 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.0.8</version>
+  <version>0.0.9</version>
 
   <packaging>jar</packaging>
   <name>vavi-apps-fuse</name>
   <url>https://github.com/umjammer/vavi-apps-fuse</url>
-  <description>0.0.7
+  <description>0.0.9
 
-    tbd
+    fix gatheredfs name map update
+
+0.0.8
+
+    update dependencies
+
+0.0.7
+
+    catch up with vavi-net-auth
 
 0.0.6
 

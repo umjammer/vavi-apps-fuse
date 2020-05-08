@@ -19,10 +19,16 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import com.github.fge.filesystem.box.provider.BoxFileSystemProvider;
+import com.github.fge.fs.dropbox.provider.DropBoxFileSystemProvider;
+
 import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.box.BoxLocalAppCredential;
+import vavi.net.auth.oauth2.dropbox.DropBoxLocalAppCredential;
+import vavi.net.auth.oauth2.google.GoogleLocalAppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
+import vavi.nio.file.googledrive.GoogleDriveFileSystemProvider;
 import vavi.nio.file.onedrive4.OneDriveFileSystemProvider;
-import vavi.util.properties.annotation.PropsEntity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -46,7 +52,7 @@ class GatheredFileSystemProviderTest {
         URI uri = URI.create("gatheredfs:///");
 
         Map<String, FileSystem> fileSystems = new HashMap<>();
-        Map<String, String> nameMap = new HashMap<>();
+        NameMap nameMap = new NameMap();
         Arrays.asList(
             "googledrive:umjammer@gmail.com",
             "onedrive:snaohide@hotmail.com",
@@ -75,16 +81,13 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
     }
 
     /** */
-    private BasicAppCredential onedriveAppCredential = new MicrosoftGraphLocalAppCredential();
-
-    /* */
-    {
-        try {
-            PropsEntity.Util.bind(onedriveAppCredential);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-    }
+    private BasicAppCredential microsoftAppCredential = new MicrosoftGraphLocalAppCredential();
+    /** */
+    private BasicAppCredential googleAppCredential = new GoogleLocalAppCredential();
+    /** */
+    private BasicAppCredential boxAppCredential = new BoxLocalAppCredential();
+    /** */
+    private BasicAppCredential dropboxAppCredential = new DropBoxLocalAppCredential();
 
     private FileSystem getFileSystem(String id) throws IOException {
         String[] part1s = id.split(":");
@@ -98,17 +101,20 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
         Map<String, Object> env = new HashMap<>();
         switch (scheme) {
         case "onedrive":
-            env.put(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL, onedriveAppCredential);
+            env.put(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL, microsoftAppCredential);
             env.put("ignoreAppleDouble", true);
             break;
         case "googledrive":
+            env.put(GoogleDriveFileSystemProvider.ENV_APP_CREDENTIAL, googleAppCredential);
             env.put("ignoreAppleDouble", true);
             break;
         case "vfs":
             break;
         case "box":
+            env.put(BoxFileSystemProvider.ENV_APP_CREDENTIAL, boxAppCredential);
             break;
         case "dropbox":
+            env.put(DropBoxFileSystemProvider.ENV_APP_CREDENTIAL, dropboxAppCredential);
             break;
         default:
             throw new IllegalArgumentException("unsupported scheme: " + scheme);
@@ -121,7 +127,7 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
     @Test
     void test() throws IOException {
         Map<String, FileSystem> fileSystems = new HashMap<>();
-        Map<String, String> nameMap = new HashMap<>();
+        NameMap nameMap = new NameMap();
         Arrays.asList(
             "googledrive:umjammer@gmail.com",
             "onedrive:snaohide@hotmail.com",
@@ -140,7 +146,7 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
         Map<String, Object> env = new HashMap<>();
         env.put(GatheredFileSystemProvider.ENV_FILESYSTEMS, fileSystems);
         env.put(GatheredFileSystemProvider.ENV_NAME_MAP, nameMap);
-        FileSystem fs = FileSystems.newFileSystem(uri, env, Thread.currentThread().getContextClassLoader());
+        FileSystem fs = FileSystems.newFileSystem(uri, env);
 
         Files.list(fs.getPath("/")).forEach(p -> {
             try {
