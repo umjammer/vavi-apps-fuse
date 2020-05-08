@@ -18,7 +18,7 @@ fuse for java and many file systems.
 | vfs webdav         | ✅    |      |           |     |      |     |       |      |        | this | [commons-vfs2-sandbox](), [jackrabbit-webdav 1.6.0]() |
 | archive            | ✅    | -    | ✅       | -   | -    | -   | -     | -    |        | this | [vavi-util-archive](https://github.com/umjammer/vavi-util-archive) |
 | hfs+ (dmg)         | ✅    |      |           |     |      |     |       |      |        | this | [hfsexplorer](https://github.com/umjammer/hfsexplorer) |
-| gathered           | ✅    | -    | ✅       | -    | -    | -   | -     | -    |       | this | - |
+| [gathered](https://github.com/umjammer/vavi-apps-fuse/wiki/GatheredFileSystem) | ✅    | -    | ✅       | -    | -    | -   | -     | -    |       | this | - |
 | cyberduck          | ✅    | ✅   | ✅       | ✅  | ✅   | ✅ | ✅   | ✅   |       | [vavi-nio-file-cyberduck](https://github.com/umjammer/vavi-nio-file-cyberduck) | [cyberduck](https://github.com/iterate-ch/cyberduck) |
 | discutils (vdi/ntfs) | ✅  |      | ✅       |      |      |     |       |      |       | [vavi-nio-file-discutils](https://github.com/umjammer/vavi-nio-file-discutils) | |
 | google play music  | ✅    | -    | ✅       | -    | -    | -   | -     | -    |       | [vavi-nio-file-googleplaymusic](https://github.com/umjammer/vavi-nio-file-googleplaymusic) | [gplaymusic](https://github.com/umjammer/gplaymusic) |
