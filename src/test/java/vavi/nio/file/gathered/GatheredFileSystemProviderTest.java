@@ -71,7 +71,7 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
         env.put(GatheredFileSystemProvider.ENV_FILESYSTEMS, fileSystems);
         env.put(GatheredFileSystemProvider.ENV_NAME_MAP, nameMap);
 
-        FileSystem fs = FileSystems.newFileSystem(uri, env, Thread.currentThread().getContextClassLoader());
+        FileSystem fs = FileSystems.newFileSystem(uri, env);
 
         Map<String, String> options = new HashMap<>();
         options.put("fsname", "gathered_fs" + "@" + System.currentTimeMillis());
