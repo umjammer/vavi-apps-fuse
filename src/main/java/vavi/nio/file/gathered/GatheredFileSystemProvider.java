@@ -17,8 +17,10 @@ import com.github.fge.filesystem.provider.FileSystemProviderBase;
  */
 public final class GatheredFileSystemProvider extends FileSystemProviderBase {
 
+    /** The key for the parameter 'env'. value class is {@link java.util.Map}<String, FileSystem> */
     public static final String ENV_FILESYSTEMS = "fileSystems";
 
+    /** The key for the parameter 'env'. value class is {@link NameMap} */
     public static final String ENV_NAME_MAP = "nameMap";
 
     public GatheredFileSystemProvider() {
