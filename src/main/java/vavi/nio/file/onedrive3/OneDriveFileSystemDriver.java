@@ -11,12 +11,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.channels.WritableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -52,10 +48,10 @@ import org.nuxeo.onedrive.client.OneDriveFile;
 import org.nuxeo.onedrive.client.OneDriveFolder;
 import org.nuxeo.onedrive.client.OneDriveItem;
 import org.nuxeo.onedrive.client.OneDriveItem.ItemIdentifierType;
-import org.nuxeo.onedrive.client.facets.FileSystemInfoFacet;
 import org.nuxeo.onedrive.client.OneDriveLongRunningAction;
 import org.nuxeo.onedrive.client.OneDrivePatchOperation;
 import org.nuxeo.onedrive.client.OneDriveUploadSession;
+import org.nuxeo.onedrive.client.facets.FileSystemInfoFacet;
 
 import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
@@ -98,7 +94,6 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
     /** */
     private Cache<OneDriveItem> cache = new Cache<OneDriveItem>() {
         /**
-         * TODO when the parent is not cached
          * @see #ignoreAppleDouble
          * @throws NoSuchFileException must be thrown when the path is not found in this cache
          */
@@ -179,16 +174,7 @@ Debug.println("newOutputStream: " + e.getMessage());
                         throw new IllegalStateException(e);
                     }
                 });
-                WritableByteChannel wbc = Channels.newChannel(os);
-                ReadableByteChannel rbc = Channels.newChannel(is);
-                ByteBuffer buffer = ByteBuffer.allocateDirect(32 * 1024);
-                while (rbc.read(buffer) != -1 || buffer.position() > 0) {
-                    buffer.flip();
-                    wbc.write(buffer);
-                    buffer.compact();
-                }
-                wbc.close();
-                rbc.close();
+                Util.transfer(is, os);
             }
         };
     }

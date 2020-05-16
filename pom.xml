@@ -4,12 +4,17 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.0.9</version>
+  <version>0.0.10</version>
 
   <packaging>jar</packaging>
   <name>vavi-apps-fuse</name>
   <url>https://github.com/umjammer/vavi-apps-fuse</url>
-  <description>0.0.9
+  <description>0.0.10
+
+    fix googledrive redundancy
+    use util transfer method
+
+0.0.9
 
     fix gatheredfs name map update
 
@@ -136,7 +141,7 @@ TODO
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons-sandbox</artifactId>
-      <version>0.3.4</version>
+      <version>0.3.5</version>
     </dependency>
 
     <dependency>
@@ -148,7 +153,7 @@ TODO
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-nio-file</artifactId>
-      <version>0.0.4</version>
+      <version>0.0.5</version>
     </dependency>
 
     <dependency>
@@ -356,7 +361,7 @@ TODO
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-nio-file</artifactId>
-      <version>0.0.4</version>
+      <version>0.0.5</version>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
