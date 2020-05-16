@@ -6,8 +6,6 @@
 
 package vavi.nio.file.googledrive;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -158,15 +156,13 @@ public final class GoogleDriveFileSystemDriver extends UnixLikeFileSystemDriverB
         }
 
         // TODO detect automatically?
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         if (options != null && options.stream().anyMatch(o -> GoogleDriveOpenOption.class.isInstance(o))) {
             GoogleDriveOpenOption option = GoogleDriveOpenOption.class
                     .cast(options.stream().filter(o -> GoogleDriveOpenOption.class.isInstance(o)).findFirst().get());
-            drive.files().export(entry.getId(), option.getValue()).executeMediaAndDownloadTo(baos);
+            return drive.files().export(entry.getId(), option.getValue()).executeMediaAsInputStream();
         } else {
-            drive.files().get(entry.getId()).executeMediaAndDownloadTo(baos);
+            return drive.files().get(entry.getId()).executeMediaAsInputStream();
         }
-        return new ByteArrayInputStream(baos.toByteArray());
     }
 
     @Nonnull
