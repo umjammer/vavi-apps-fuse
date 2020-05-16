@@ -225,6 +225,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
                     }
                 } else {
                     // move into the target
+                    // TODO SPEC is FileAlreadyExistsException ?
                     moveEntry(source, target, true);
                 }
             } else {

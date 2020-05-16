@@ -322,6 +322,7 @@ System.out.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(
                     }
                 } else {
                     // move into the target
+                    // TODO SPEC is FileAlreadyExistsException ?
                     moveEntry(source, target, true);
                 }
             } else {

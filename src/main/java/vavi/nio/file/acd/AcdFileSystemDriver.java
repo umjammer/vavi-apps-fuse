@@ -258,6 +258,7 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
                     }
                 } else {
                     // move into the target
+                    // TODO SPEC is FileAlreadyExistsException ?
                     moveEntry(source, target, true);
                 }
             } else {
