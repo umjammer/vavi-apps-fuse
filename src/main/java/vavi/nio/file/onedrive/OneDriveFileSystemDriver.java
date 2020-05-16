@@ -132,7 +132,7 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
             downloader.startDownload();
             return new FileInputStream(downloader.getDownloadedFile());
         } catch (OneDriveException e) {
-            throw new OneDriveIOException("path: " + path, e);
+            throw new IOException("path: " + path, e);
         }
     }
 
@@ -184,7 +184,7 @@ System.out.println("newOutputStream: " + e.getMessage());
                     uploadMonitor.finish(path);
                 } catch (OneDriveException e) {
 e.printStackTrace();
-                    throw new OneDriveIOException(e);
+                    throw new IOException(e);
                 }
             }
         };
@@ -197,7 +197,7 @@ e.printStackTrace();
         try {
             return Util.newDirectoryStream(getDirectoryEntries(dir), filter);
         } catch (OneDriveException e) {
-            throw new OneDriveIOException("dir: " + dir, e);
+            throw new IOException("dir: " + dir, e);
         }
     }
 
@@ -258,7 +258,7 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
 
             cache.addEntry(dir, OneItem.class.cast(dirEntry));
         } catch (OneDriveException e) {
-            throw new OneDriveIOException("dir: "+ dir, e);
+            throw new IOException("dir: "+ dir, e);
         }
     }
 
@@ -267,7 +267,7 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
         try {
             removeEntry(path);
         } catch (OneDriveException e) {
-            throw new OneDriveIOException("path: " + path, e);
+            throw new IOException("path: " + path, e);
         }
     }
 
@@ -284,7 +284,7 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
             copyEntry(source, target);
         } catch (OneDriveException e) {
 e.printStackTrace();
-            throw new OneDriveIOException("source: "+  source + ", target: " + target, e);
+            throw new IOException("source: "+  source + ", target: " + target, e);
         }
     }
 
@@ -323,7 +323,7 @@ e.printStackTrace();
             }
         } catch (OneDriveException e) {
 e.printStackTrace();
-            throw new OneDriveIOException("source: " + source + ", target: " + target, e);
+            throw new IOException("source: " + source + ", target: " + target, e);
         }
     }
     /**
@@ -453,7 +453,7 @@ System.out.println("uploading... (meta): " + toPathString(path));
                 throw new IsDirectoryException("source can not be a folder: " + source);
             }
         } catch (ParseException | InterruptedException e) {
-            throw new OneDriveIOException(e);
+            throw new IOException(e);
         }
     }
 
@@ -476,7 +476,7 @@ System.out.println("uploading... (meta): " + toPathString(path));
                 throw new IsDirectoryException("source can not be a folder: " + source);
             }
         } catch (ParseException | InterruptedException e) {
-            throw new OneDriveIOException(e);
+            throw new IOException(e);
         }
     }
 
@@ -491,7 +491,7 @@ System.out.println("uploading... (meta): " + toPathString(path));
             cache.removeEntry(source);
             cache.addEntry(target, newEntry);
         } catch (ParseException | InterruptedException e) {
-            throw new OneDriveIOException(e);
+            throw new IOException(e);
         }
     }
 }
