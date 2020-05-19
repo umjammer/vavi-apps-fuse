@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import com.github.fge.filesystem.box.provider.BoxFileSystemProvider;
 import com.github.fge.fs.dropbox.provider.DropBoxFileSystemProvider;
 
-import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.box.BoxLocalAppCredential;
 import vavi.net.auth.oauth2.dropbox.DropBoxLocalAppCredential;
 import vavi.net.auth.oauth2.google.GoogleLocalAppCredential;
@@ -81,13 +81,13 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
     }
 
     /** */
-    private BasicAppCredential microsoftAppCredential = new MicrosoftGraphLocalAppCredential();
+    private OAuth2AppCredential microsoftAppCredential = new MicrosoftGraphLocalAppCredential();
     /** */
-    private BasicAppCredential googleAppCredential = new GoogleLocalAppCredential();
+    private OAuth2AppCredential googleAppCredential = new GoogleLocalAppCredential();
     /** */
-    private BasicAppCredential boxAppCredential = new BoxLocalAppCredential();
+    private OAuth2AppCredential boxAppCredential = new BoxLocalAppCredential();
     /** */
-    private BasicAppCredential dropboxAppCredential = new DropBoxLocalAppCredential();
+    private OAuth2AppCredential dropboxAppCredential = new DropBoxLocalAppCredential();
 
     private FileSystem getFileSystem(String id) throws IOException {
         String[] part1s = id.split(":");

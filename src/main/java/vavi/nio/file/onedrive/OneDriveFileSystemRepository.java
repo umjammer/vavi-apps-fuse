@@ -18,14 +18,14 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 
-import vavi.net.auth.oauth2.BasicAppCredential;
-import vavi.net.auth.oauth2.WithTotpUserCredential;
+import vavi.net.auth.WithTotpUserCredential;
+import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
-import vavi.net.auth.oauth2.microsoft.MicrosoftLocalUserCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftOAuth2;
+import vavi.net.auth.web.microsoft.MicrosoftLocalUserCredential;
 import vavi.util.Debug;
 
-import static vavi.net.auth.oauth2.BasicAppCredential.wrap;
+import static vavi.net.auth.oauth2.OAuth2AppCredential.wrap;
 
 import de.tuberlin.onedrivesdk.OneDriveException;
 import de.tuberlin.onedrivesdk.OneDriveFactory;
@@ -73,10 +73,10 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         }
 
         // 2. app credential
-        BasicAppCredential appCredential = null;
+        OAuth2AppCredential appCredential = null;
 
         if (env.containsKey(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL)) {
-            appCredential = BasicAppCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL));
+            appCredential = OAuth2AppCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL));
         }
 
         if (appCredential == null) {

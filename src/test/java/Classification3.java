@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
 import vavi.nio.file.Util;
 import vavi.nio.file.onedrive.OneDriveFileSystemProvider;
@@ -47,7 +47,7 @@ public final class Classification3 {
 
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        BasicAppCredential appCredential = new MicrosoftLocalAppCredential();
+        OAuth2AppCredential appCredential = new MicrosoftLocalAppCredential();
         PropsEntity.Util.bind(appCredential);
 
         Map<String, Object> env = new HashMap<>();

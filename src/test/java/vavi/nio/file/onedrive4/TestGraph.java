@@ -31,11 +31,11 @@ import com.microsoft.graph.models.extensions.UploadSession;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 import com.microsoft.graph.requests.extensions.IDriveItemCopyRequest;
 
-import vavi.net.auth.oauth2.BasicAppCredential;
-import vavi.net.auth.oauth2.WithTotpUserCredential;
+import vavi.net.auth.WithTotpUserCredential;
+import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphOAuth2;
-import vavi.net.auth.oauth2.microsoft.MicrosoftLocalUserCredential;
+import vavi.net.auth.web.microsoft.MicrosoftLocalUserCredential;
 import vavi.nio.file.onedrive4.graph.CopyMonitorProvider;
 import vavi.nio.file.onedrive4.graph.CopyMonitorResponseHandler;
 import vavi.nio.file.onedrive4.graph.CopyMonitorResult;
@@ -65,7 +65,7 @@ public class TestGraph {
     /** */
     void auth(String email) throws IOException {
 
-        BasicAppCredential appCredential = new MicrosoftGraphLocalAppCredential();
+        OAuth2AppCredential appCredential = new MicrosoftGraphLocalAppCredential();
         PropsEntity.Util.bind(appCredential);
 
         PropsEntity.Util.bind(this);

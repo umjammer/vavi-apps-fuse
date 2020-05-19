@@ -18,11 +18,11 @@ import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 import com.google.api.services.drive.Drive;
 
-import vavi.net.auth.oauth2.WithTotpUserCredential;
+import vavi.net.auth.WithTotpUserCredential;
 import vavi.net.auth.oauth2.google.GoogleAppCredential;
 import vavi.net.auth.oauth2.google.GoogleLocalAppCredential;
-import vavi.net.auth.oauth2.google.GoogleLocalUserCredential;
 import vavi.net.auth.oauth2.google.GoogleOAuth2;
+import vavi.net.auth.web.google.GoogleLocalUserCredential;
 
 
 /**

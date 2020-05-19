@@ -14,7 +14,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.flickr.FlickrLocalAppCredential;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -37,7 +37,7 @@ public class Main {
         // _must_ be hierarchical.
         URI uri = URI.create("flickr://foo/");
 
-        BasicAppCredential credential = new FlickrLocalAppCredential();
+        OAuth2AppCredential credential = new FlickrLocalAppCredential();
         PropsEntity.Util.bind(credential, email);
 
         Map<String, Object> env = new HashMap<>();

@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
 import vavi.nio.file.Util;
 import vavi.nio.file.onedrive.OneDriveFileSystemProvider;
@@ -47,7 +47,7 @@ public final class Synchronizer {
 
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        BasicAppCredential appCredential = new MicrosoftLocalAppCredential();
+        OAuth2AppCredential appCredential = new MicrosoftLocalAppCredential();
         PropsEntity.Util.bind(appCredential);
 
         Map<String, Object> env = new HashMap<>();

@@ -21,12 +21,14 @@ import java.util.concurrent.Future;
 
 import com.google.common.collect.Maps;
 
-import vavi.net.auth.oauth2.BasicAppCredential;
-import vavi.net.auth.oauth2.WithTotpUserCredential;
+import vavi.net.auth.WithTotpUserCredential;
+import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
-import vavi.net.auth.oauth2.microsoft.MicrosoftLocalUserCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAuthenticator;
+import vavi.net.auth.web.microsoft.MicrosoftLocalUserCredential;
 import vavi.util.properties.annotation.PropsEntity;
+
+import static vavi.net.auth.oauth2.OAuth2AppCredential.wrap;
 
 import asg.cliche.Command;
 import asg.cliche.Param;
@@ -40,8 +42,6 @@ import de.tuberlin.onedrivesdk.file.OneFile;
 import de.tuberlin.onedrivesdk.folder.OneFolder;
 import de.tuberlin.onedrivesdk.networking.OneDriveAuthenticationException;
 import de.tuberlin.onedrivesdk.uploadFile.OneUploadFile;
-
-import static vavi.net.auth.oauth2.BasicAppCredential.wrap;
 
 
 /**
@@ -59,7 +59,7 @@ public class App {
 
     public App(String email) throws IOException, InterruptedException, OneDriveException {
 
-        BasicAppCredential appCredential = new MicrosoftLocalAppCredential();
+        OAuth2AppCredential appCredential = new MicrosoftLocalAppCredential();
         PropsEntity.Util.bind(this);
 
         //

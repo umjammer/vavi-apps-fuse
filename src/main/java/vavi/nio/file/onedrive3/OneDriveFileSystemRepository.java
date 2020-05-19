@@ -26,11 +26,11 @@ import org.nuxeo.onedrive.client.RequestHeader;
 import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 
-import vavi.net.auth.oauth2.BasicAppCredential;
-import vavi.net.auth.oauth2.WithTotpUserCredential;
+import vavi.net.auth.WithTotpUserCredential;
+import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphOAuth2;
-import vavi.net.auth.oauth2.microsoft.MicrosoftLocalUserCredential;
+import vavi.net.auth.web.microsoft.MicrosoftLocalUserCredential;
 
 
 /**
@@ -73,10 +73,10 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         }
 
         // 2. app credential
-        BasicAppCredential appCredential = null;
+        OAuth2AppCredential appCredential = null;
 
         if (env.containsKey(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL)) {
-            appCredential = BasicAppCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL));
+            appCredential = OAuth2AppCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL));
         }
 
         if (appCredential == null) {

@@ -19,7 +19,7 @@ import com.flickr4java.flickr.REST;
 import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 
-import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.OAuth2AppCredential;
 
 
 /**
@@ -35,12 +35,6 @@ public final class FlickrFileSystemRepository extends FileSystemRepositoryBase {
         super("flickr", new FlickrFileSystemFactoryProvider());
     }
 
-    /** */
-    private transient Flickr flickr;
-
-    /** */
-    private BasicAppCredential appCredential;
-
     @Nonnull
     @Override
     public FileSystemDriver createDriver(final URI uri, final Map<String, ?> env) throws IOException {
@@ -52,9 +46,9 @@ public final class FlickrFileSystemRepository extends FileSystemRepositoryBase {
         if (!env.containsKey(FlickrFileSystemProvider.ENV_CREDENTIAL)) {
             throw new NoSuchElementException(FlickrFileSystemProvider.ENV_CREDENTIAL);
         }
-        appCredential = BasicAppCredential.class.cast(env.get(FlickrFileSystemProvider.ENV_CREDENTIAL));
+        OAuth2AppCredential appCredential = OAuth2AppCredential.class.cast(env.get(FlickrFileSystemProvider.ENV_CREDENTIAL));
 
-        flickr = new Flickr(appCredential.getClientId(), appCredential.getClientSecret(), new REST());
+        Flickr flickr = new Flickr(appCredential.getClientId(), appCredential.getClientSecret(), new REST());
 
         FlickrFileStore fileStore = new FlickrFileStore(flickr, factoryProvider.getAttributesFactory());
         return new FlickrFileSystemDriver(fileStore, factoryProvider, flickr, env);

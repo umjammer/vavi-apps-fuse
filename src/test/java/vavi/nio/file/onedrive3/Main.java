@@ -16,7 +16,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
 
 import static vavi.nio.file.Base.testAll;
@@ -40,7 +40,7 @@ public class Main {
         // _must_ be hierarchical.
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        BasicAppCredential appCredential = new MicrosoftGraphLocalAppCredential();
+        OAuth2AppCredential appCredential = new MicrosoftGraphLocalAppCredential();
 
         Map<String, Object> env = new HashMap<>();
         env.put(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL, appCredential);

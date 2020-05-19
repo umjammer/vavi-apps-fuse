@@ -14,7 +14,7 @@ import java.util.Map;
 
 import com.github.fge.filesystem.box.provider.BoxFileSystemProvider;
 
-import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.box.BoxLocalAppCredential;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -32,7 +32,7 @@ public final class Main3 {
     public static void main(final String... args) throws IOException {
         String email = args[0];
 
-        BasicAppCredential appCredential = new BoxLocalAppCredential();
+        OAuth2AppCredential appCredential = new BoxLocalAppCredential();
         PropsEntity.Util.bind(appCredential);
 
         /*

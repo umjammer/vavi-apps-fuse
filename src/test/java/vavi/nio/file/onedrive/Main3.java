@@ -19,7 +19,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
 
-import vavi.net.auth.oauth2.BasicAppCredential;
+import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -42,7 +42,7 @@ public final class Main3 {
         // _must_ be hierarchical.
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        BasicAppCredential appCredential = new MicrosoftLocalAppCredential();
+        OAuth2AppCredential appCredential = new MicrosoftLocalAppCredential();
         PropsEntity.Util.bind(appCredential);
 
         Map<String, Object> env = new HashMap<>();
