@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>vavi</groupId>
+    <artifactId>vavi-apps-fuse</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>vavi-nio-file-googledrive</artifactId>
+
+  <name>vavi-nio-file-googledrive</name>
+  <url>https://github.com/umjammer/vavi-nio-file-googledrive</url>
+  <scm>
+    <url>https://github.com/umjammer/vavi-nio-file-googledrive</url>
+  </scm>
+  <issueManagement>
+    <url>https://github.com/umjammer/vavi-nio-file-googledrive/issues</url>
+  </issueManagement>
+
+  <profiles>
+    <profile>
+      <id>local (not on CI)</id>
+      <activation>
+        <file>
+          <exists>${basedir}/local.properties</exists>
+        </file>
+        <property>
+          <name>env.JITPACK</name>
+          <value>!true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>properties-maven-plugin</artifactId>
+            <version>1.0.0</version>
+            <executions>
+              <execution>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>read-project-properties</goal>
+                </goals>
+                <configuration>
+                  <files>
+                    <file>${basedir}/local.properties</file>
+                  </files>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <version>2.22.2</version>
+            <configuration>
+              <environmentVariables>
+                <TEST4_ACCOUNT>${test4.account}</TEST4_ACCOUNT>
+                <TEST4_MOUNT_POINT>${test4.mountpoint}</TEST4_MOUNT_POINT>
+              </environmentVariables>
+              <argLine>-Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties</argLine>
+              <trimStackTrace>false</trimStackTrace>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+  <dependencies>
+    <dependency>
+      <!-- java-fs base -->
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>java7-fs-base</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>vavi-nio-file</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.umjammer.vavi-net-auth</groupId>
+      <artifactId>vavi-net-auth-google</artifactId>
+      <version>${vavi-net-auth.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-commons</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>vavi-nio-file</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.rainerhahnekamp</groupId>
+      <artifactId>sneakythrow</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>vavi</groupId>
+      <artifactId>vavi-net-fuse</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

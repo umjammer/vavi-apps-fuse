@@ -53,9 +53,7 @@ import vavi.nio.file.Cache;
 import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
 
-import static com.rainerhahnekamp.sneakythrow.Sneaky.sneaked;
 import static vavi.nio.file.Util.toFilenameString;
-import static vavi.nio.file.Util.toPathString;
 
 
 /**
@@ -191,14 +189,18 @@ if (options != null) {
                     .cast(options.stream().filter(o -> GoogleDriveOpenOption.class.isInstance(o)).findFirst().get());
         }
 
+        uploadMonitor.start(path);
+
+        // TODO output directly
         return new Util.OutputStreamForUploading() {
 
             @Override
-            protected void upload(InputStream is) throws IOException {
+            protected void onClosed() throws IOException {
                 File fileMetadata = new File();
                 fileMetadata.setName(toFilenameString(path));
                 fileMetadata.setParents(Arrays.asList(cache.getEntry(path.getParent()).getId()));
 
+                InputStream is = getInputStream();
                 InputStreamContent mediaContent = new InputStreamContent(null, is);
                 mediaContent.setLength(is.available());
 
@@ -206,31 +208,40 @@ if (options != null) {
                 MediaHttpUploader uploader = creator.getMediaHttpUploader();
                 uploader.setDirectUploadEnabled(true);
                 uploader.setProgressListener(u -> { System.err.println("upload progress: " + u.getProgress()); });
-                uploadMonitor.start(path);
                 final File newEntry = creator.setFields("id, name, size, parents, mimeType, createdTime").execute(); // TODO file is not finished status!
 
                 ExecutorService executorService = Executors.newSingleThreadExecutor();
-                executorService.submit(sneaked(() -> {
-                    long timeout = 0;
-                    long delay = 100;
+                executorService.submit(() -> {
                     try {
+                        long timeout = 0;
+                        long delay = 100;
+                        try {
 System.err.println("executorService: " + uploader.getProgress() + ", " + uploader.getUploadState());
-                        while ((uploader.getUploadState() != UploadState.MEDIA_COMPLETE || uploader.getProgress() < 1) && timeout < 10 * 1000) {
+                            while (uploader.getUploadState() != UploadState.MEDIA_COMPLETE && uploader.getProgress() < 1 && timeout < 10 * 1000) {
 System.err.println("executorService: " + uploader.getProgress() + ", " + uploader.getUploadState() + ", " + timeout);
-                            Thread.sleep(delay);
-                            timeout += delay;
-                            delay *= 2;
+                                Thread.sleep(delay);
+                                timeout += delay;
+                                delay *= 2;
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
 
-                    uploadMonitor.finish(path);
-                    lock = null;
 System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.size());
 
-                    cache.addEntry(path, newEntry);
-                }));
+                        cache.addEntry(path, newEntry);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } finally {
+                        try {
+                            uploadMonitor.finish(path);
+                        } catch(IOException e2) {
+                            e2.printStackTrace();
+                        } finally {
+                            lock = null;
+                        }
+                    }
+                });
             }
         };
     }
@@ -385,11 +396,15 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
      * @param path the path to check
      * @param modes the modes to check for, if any
      * @throws IOException filesystem level error, or a plain I/O error
-     *                     if you use this with javafs (jnr-fuse), you should throw {@link NoSuchFileException} when the file not found.
+     *                     if you use this with fuse, you should throw {@link NoSuchFileException} when the file not found.
      * @see FileSystemProvider#checkAccess(Path, AccessMode...)
      */
     @Override
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
+if (uploadMonitor.isUploading(path)) {
+ System.out.println("checkAccess: uploading...");
+ throw new NoSuchFileException(path.toString());
+}
         final File entry = cache.getEntry(path);
 
         if (isFolder(entry)) {
@@ -410,15 +425,15 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
     }
 
     /**
-     * @throws IOException if you use this with javafs (jnr-fuse), you should throw {@link NoSuchFileException} when the file not found.
+     * @throws IOException if you use this with fuse, you should throw {@link NoSuchFileException} when the file not found.
      */
     @Nonnull
     @Override
     public Object getPathMetadata(final Path path) throws IOException {
-//if (uploadMonitor.isUploading(path)) {
-//System.out.println("getPathMetadata: uploading...");
-//    return new File().setName(toFilenameString(path)).setMimeType("");
-//}
+if (uploadMonitor.isUploading(path)) {
+ System.out.println("getPathMetadata: uploading...");
+ throw new NoSuchFileException(path.toString());
+}
 
         return cache.getEntry(path);
     }
@@ -471,7 +486,7 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
                     .setFields("nextPageToken").execute().getFiles();
 
             if (list != null && list.size() > 0) {
-                throw new DirectoryNotEmptyException(toPathString(path));
+                throw new DirectoryNotEmptyException(path.toString());
             }
         }
 

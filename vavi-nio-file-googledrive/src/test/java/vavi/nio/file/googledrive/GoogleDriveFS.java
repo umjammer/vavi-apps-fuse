@@ -8,10 +8,11 @@ package vavi.nio.file.googledrive;
 
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import vavi.net.fuse.JavaFsFS;
+import vavi.net.fuse.Fuse;
 
 
 /**
@@ -41,6 +42,6 @@ public class GoogleDriveFS {
 
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, env);
 
-        new JavaFsFS(fs).mount(args[0]);
+        Fuse.Factory.getFuse().mount(fs, args[0], Collections.EMPTY_MAP);
     }
 }
