@@ -8,13 +8,13 @@ package vavi.nio.file.onedrive;
 
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
-import vavi.net.fuse.JavaFsFS;
-import vavi.nio.file.onedrive.OneDriveFileSystemProvider;
+import vavi.net.fuse.Fuse;
 import vavi.util.properties.annotation.PropsEntity;
 
 
@@ -29,7 +29,7 @@ public class OneDriveFS {
     /**
      * @param args 0: mount point, 1: email
      */
-    public static void main(final String... args) throws Exception {
+    public static void main(String[] args) throws Exception {
         if (args.length != 2) {
             System.err.println("Usage: OneDrive <mountpoint> <email>");
             System.exit(1);
@@ -48,7 +48,7 @@ public class OneDriveFS {
 
         FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, env);
 
-        new JavaFsFS(fs).mount(args[0]);
+        Fuse.Factory.getFuse().mount(fs, args[0], Collections.EMPTY_MAP);
     }
 }
 

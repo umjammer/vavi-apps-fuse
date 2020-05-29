@@ -128,6 +128,7 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
                 throw new IsDirectoryException("path: " + path);
             }
 
+            // TODO don't use temporary file
             final OneDownloadFile downloader = OneFile.class.cast(entry).download(File.createTempFile("vavi-apps-fuse-", ".download"));
             downloader.startDownload();
             return new FileInputStream(downloader.getDownloadedFile());
@@ -170,12 +171,14 @@ System.out.println("newOutputStream: " + e.getMessage());
 //new Exception("*** DUMMY ***").printStackTrace();
         }
 
+        // TODO don't use temporary file
         OneFolder dirEntry = (OneFolder) cache.getEntry(path.getParent());
         uploadMonitor.start(path);
         return new Util.OutputStreamForUploading() {
             @Override
-            protected void upload(InputStream is) throws IOException {
+            protected void onClosed() throws IOException {
                 try {
+                    InputStream is = getInputStream();
                     Path tmp = Files.createTempFile("vavi-apps-fuse-", ".upload");
                     Files.copy(is, tmp, StandardCopyOption.REPLACE_EXISTING);
                     final OneUploadFile uploader = dirEntry.uploadFile(tmp.toFile(), toFilenameString(path));
