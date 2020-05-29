@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>vavi</groupId>
+    <artifactId>vavi-apps-fuse</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>vavi-nio-file-amazondrive</artifactId>
+
+  <name>vavi-nio-file-amazondrive</name>
+  <url>https://github.com/umjammer/vavi-nio-file-amazondrive</url>
+  <scm>
+    <url>https://github.com/umjammer/vavi-nio-file-amazondrive</url>
+  </scm>
+  <issueManagement>
+    <url>https://github.com/umjammer/vavi-nio-file-amazondrive/issues</url>
+  </issueManagement>
+
+  <dependencies>
+    <dependency>
+      <!-- java-fs base -->
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>java7-fs-base</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>vavi-nio-file</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.umjammer.vavi-net-auth</groupId>
+      <artifactId>vavi-net-auth-amazon</artifactId>
+      <version>${vavi-net-auth.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-commons</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <!-- fuse jnr (co.paralleluniverse) -->
+      <groupId>co.paralleluniverse</groupId>
+      <artifactId>javafs</artifactId>
+      <version>0.1.3v-SNAPSHOT</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

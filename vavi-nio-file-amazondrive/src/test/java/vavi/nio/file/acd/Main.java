@@ -28,13 +28,9 @@ public class Main {
     public static void main(final String... args) throws IOException {
         String email = args[1];
 
-        // Create the necessary elements to create a filesystem.
-        // Note: the URI _must_ have a scheme of "acd", and
-        // _must_ be hierarchical.
-        URI uri = URI.create("acd:///");
+        URI uri = URI.create("acd:///?id=" + email);
 
         Map<String, Object> env = new HashMap<>();
-        env.put(AcdFileSystemProvider.ENV_ID, email);
         env.put("ignoreAppleDouble", true);
 
         FileSystem fs = FileSystems.newFileSystem(uri, env);
