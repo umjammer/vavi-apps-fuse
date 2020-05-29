@@ -17,7 +17,7 @@ import com.github.fge.filesystem.provider.FileSystemProviderBase;
  */
 public final class VfsFileSystemProvider extends FileSystemProviderBase {
 
-    public static final String PARAM_ID = "id";
+    public static final String PARAM_ALIAS = "alias";
 
     public VfsFileSystemProvider() {
         super(new VfsFileSystemRepository());

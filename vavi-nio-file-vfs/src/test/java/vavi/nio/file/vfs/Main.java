@@ -8,12 +8,14 @@ package vavi.nio.file.vfs;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.nio.file.FileSystem;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static vavi.nio.file.Base.testAll;
@@ -36,7 +38,7 @@ public class Main {
         String alias = args[0];
         String mountPoint = String.format(args[1], alias);
 
-        final URI uri = URI.create("vfs:sftp:///Users/nsano/tmp/vfs?id=" + alias);
+        final URI uri = URI.create("vfs:sftp:///Users/nsano/tmp/vfs?alias=" + alias);
 
         final Map<String, Object> env = new HashMap<>();
         env.put("ignoreAppleDouble", true);
@@ -49,9 +51,10 @@ public class Main {
         JavaFS.mount(fs, Paths.get(mountPoint), false, true, options);
     }
 
-//    @Test
+    @Test
+    @Disabled
     void test00() throws Exception {
-        URI uri = URI.create("vfs:sftp://user:password@nsanomac4.local:10022/Users/nsano?id=alias");
+        URI uri = URI.create("vfs:sftp://user:password@nsanomac4.local:10022/Users/nsano?alias=alias");
         System.err.println(uri.getScheme());
         System.err.println(uri.getHost());
         System.err.println(uri.getPath());
@@ -73,11 +76,25 @@ public class Main {
         System.err.println(subUri.getUserInfo());
     }
 
+    /**
+     * environment variable
+     * <ul>
+     * <li> TEST_SFTP_ACCOUNT
+     * <li> TEST_SFTP_PASSPHRASE
+     * <li> TEST_SFTP_HOST
+     * <li> TEST_SFTP_KEYPATH
+     * <li> TEST_SFTP_PATH
+     * </ul>
+     */
     @Test
     void test01() throws Exception {
-        String alias = "nsanomac4";
+        String username = URLEncoder.encode(System.getenv("TEST_SFTP_ACCOUNT"), "utf-8");
+        String passPhrase = URLEncoder.encode(System.getenv("TEST_SFTP_PASSPHRASE"), "utf-8");
+        String host = System.getenv("TEST_SFTP_HOST");
+        String keyPath = URLEncoder.encode(System.getenv("TEST_SFTP_KEYPATH"), "utf-8");
+        String path = System.getenv("TEST_SFTP_PATH");
 
-        URI uri = URI.create("vfs:sftp:///Users/nsano/tmp/vfs?id=" + alias);
+        URI uri = URI.create(String.format("vfs:sftp://%s@%s%s?keyPath=%s&passphrase=%s", username, host, path, keyPath, passPhrase));
 
         testAll(new VfsFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
     }

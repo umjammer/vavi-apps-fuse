@@ -74,14 +74,15 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
     public VfsFileSystemDriver(final FileStore fileStore,
             final FileSystemFactoryProvider provider,
             final FileSystemManager manager,
-            final VfsFileSystemRepository.Factory options,
+            final FileSystemOptions options,
+            String baseUrl,
             final Map<String, ?> env) throws IOException {
         super(fileStore, provider);
         this.manager = manager;
-        this.opts = options.getFileSystemOptions();
+        this.opts = options;
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
-        this.baseUrl = options.buildBaseUrl();
+        this.baseUrl = baseUrl;
     }
 
     /**
