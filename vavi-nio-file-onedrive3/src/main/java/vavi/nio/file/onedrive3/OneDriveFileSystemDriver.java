@@ -161,9 +161,10 @@ Debug.println("newOutputStream: " + e.getMessage());
 //new Exception("*** DUMMY ***").printStackTrace();
         }
 
-        return new Util.OutputStreamForUploading() {
+        return new Util.OutputStreamForUploading() { // TODO used for only to get file length
             @Override
-            protected void upload(InputStream is) throws IOException {
+            protected void onClosed() throws IOException {
+                InputStream is = getInputStream();
                 OneDriveFolder dirEntry = OneDriveFolder.class.cast(cache.getEntry(path.getParent()));
                 OneDriveFile entry = new OneDriveFile(client, dirEntry, toFilenameString(path), ItemIdentifierType.Path);
                 final OneDriveUploadSession uploadSession = entry.createUploadSession();
@@ -416,10 +417,10 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
             operation.copy(OneDriveFolder.class.cast(targetParentEntry));
             OneDriveLongRunningAction action = OneDriveFile.class.cast(sourceEntry).copy(operation);
             action.await(statusObject -> {
-                Debug.printf("Copy Progress Operation %s progress %f status %s",
-                    statusObject.getOperation(),
-                    statusObject.getPercentage(),
-                    statusObject.getStatus());
+Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",
+ statusObject.getOperation(),
+ statusObject.getPercentage(),
+ statusObject.getStatus());
             });
             cache.addEntry(target, getEntry(target));
         } else if (sourceEntry.getMetadata().isFolder()) {

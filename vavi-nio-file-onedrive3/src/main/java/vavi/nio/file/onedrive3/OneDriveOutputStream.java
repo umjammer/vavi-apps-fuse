@@ -70,7 +70,13 @@ public final class OneDriveOutputStream extends OutputStream {
     @Override
     public void write(final byte[] b, final int off, final int len) throws IOException {
         final byte[] content = Arrays.copyOfRange(b, off, len);
-        final String header = String.format("%d-%d/%d", offset, offset + content.length - 1, length);
+        final String header;
+        if (length == -1) {
+            header = String.format("%d-%d/*", offset, offset + content.length - 1); // TODO got error response, not in spec.?
+        } else {
+            header = String.format("%d-%d/%d", offset, offset + content.length - 1, length);
+        }
+try {
 Debug.printf("header %s", header);
         OneDriveJsonObject object = upload.uploadFragment(header, content);
         if (OneDriveFile.Metadata.class.isInstance(object)) {
@@ -80,6 +86,10 @@ Debug.printf("Completed upload for %s", file);
 Debug.printf(Level.FINE, "Uploaded fragment %s for file %s", header, file);
         }
         offset += content.length;
+Debug.printf("offset: %d", offset);
+} catch (Exception e) {
+ e.printStackTrace();
+}
     }
 
     @Override
