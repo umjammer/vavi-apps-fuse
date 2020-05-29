@@ -25,7 +25,7 @@ import co.paralleluniverse.javafs.JavaFS;
 
 
 /**
- * OneDrive JavaFS. (v2.0 api, ms graph api engine)
+ * OneDrive JavaFS. (v2.0 graph api, ms graph api engine)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/xx umjammer initial version <br>

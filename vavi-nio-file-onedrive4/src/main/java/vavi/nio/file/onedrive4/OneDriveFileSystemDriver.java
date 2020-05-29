@@ -192,7 +192,8 @@ Debug.println("newOutputStream: " + e.getMessage());
 
         return new OutputStreamForUploading() {
             @Override
-            protected void upload(InputStream is) throws IOException {
+            protected void onClosed() throws IOException {
+                InputStream is = getInputStream();
                 if (is.available() > 4 * 1024 * 1024) {
                     UploadSession uploadSession = client.drive().root().itemWithPath(URLEncoder.encode(toPathString(path), "utf-8")).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
                     ChunkedUploadProvider<DriveItem> chunkedUploadProvider = new ChunkedUploadProvider<>(uploadSession,
