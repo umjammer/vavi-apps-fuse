@@ -55,9 +55,9 @@
 
     <dependency>
       <!-- fuse jnr (co.paralleluniverse) -->
-      <groupId>co.paralleluniverse</groupId>
+      <groupId>com.github.umjammer</groupId>
       <artifactId>javafs</artifactId>
-      <version>0.1.3v-SNAPSHOT</version>
+      <version>0.1.2v</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
