@@ -38,7 +38,6 @@ public final class ArchiveFileSystemRepository extends FileSystemRepositoryBase 
 
     /**
      * @param uri "archive:file:/tmp/jar/exam.jar!/img/sample.png"
-     * @param env { "fileSystems":  }
      */
     @Nonnull
     @Override

@@ -120,7 +120,7 @@ public final class ArchiveFileSystemDriver extends UnixLikeFileSystemDriverBase 
 
     @Override
     public void close() throws IOException {
-        // TODO: what to do here? gathered fs does not implement Closeable :(
+        archive.close();
     }
 
     /**
