@@ -4,7 +4,7 @@
   <parent>
     <artifactId>vavi-apps-fuse</artifactId>
     <groupId>vavi</groupId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
   </parent>
 
   <artifactId>vavi-nio-file-vfs</artifactId>
