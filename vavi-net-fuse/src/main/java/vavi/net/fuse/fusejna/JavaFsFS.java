@@ -4,13 +4,15 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.net.fuse;
+package vavi.net.fuse.fusejna;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.util.concurrent.TimeUnit;
 
 import vavi.util.Debug;
@@ -31,7 +33,7 @@ import net.fusejna.util.FuseFilesystemAdapterAssumeImplemented;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/02/29 umjammer initial version <br>
  */
-public class JavaFsFS extends FuseFilesystemAdapterAssumeImplemented {
+class JavaFsFS extends FuseFilesystemAdapterAssumeImplemented {
 
     /** */
     private transient FileSystem fileSystem;
@@ -50,6 +52,10 @@ public class JavaFsFS extends FuseFilesystemAdapterAssumeImplemented {
             // TODO access
             fileSystem.provider().checkAccess(fileSystem.getPath(path));
             return 0;
+        } catch (NoSuchFileException e) {
+            return -ErrorCodes.ENOENT();
+        } catch (AccessDeniedException e) {
+            return -ErrorCodes.EACCES();
         } catch (IOException e) {
             return -ErrorCodes.EACCES();
         }
@@ -77,6 +83,8 @@ Debug.println("path: " + path);
                     .size(Files.size(fileSystem.getPath(path)));
             }
             return 0;
+        } catch (NoSuchFileException e) {
+            return -ErrorCodes.ENOENT();
         } catch (IOException e) {
             return -ErrorCodes.EIO();
         }

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>vavi</groupId>
+    <artifactId>vavi-apps-fuse</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>vavi-net-fuse</artifactId>
+
+  <name>vavi-net-fuse</name>
+  <url>https://github.com/umjammer/vavi-net-fuse</url>
+  <scm>
+    <url>https://github.com/umjammer/vavi-net-fuse</url>
+  </scm>
+  <issueManagement>
+    <url>https://github.com/umjammer/vavi-net-fuse/issues</url>
+  </issueManagement>
+
+  <dependencies>
+    <dependency>
+      <!-- fuse jnr -->
+      <groupId>co.paralleluniverse</groupId>
+      <artifactId>javafs</artifactId>
+      <version>0.1.3v-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <!-- fuse jna -->
+      <groupId>com.github.EtiennePerot</groupId>
+      <artifactId>fuse-jna</artifactId>
+      <version>eced84f81a</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.serceman</groupId>
+      <artifactId>jnr-fuse</artifactId>
+      <version>0.5.4</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>vavi-commons</artifactId>
+      <version>1.1.0</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-commons</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>
