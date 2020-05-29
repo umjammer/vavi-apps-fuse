@@ -8,6 +8,7 @@ package vavi.nio.file.dropbox;
 
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,7 +16,7 @@ import com.github.fge.fs.dropbox.provider.DropBoxFileSystemProvider;
 
 import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.dropbox.DropBoxLocalAppCredential;
-import vavi.net.fuse.JavaFsFS;
+import vavi.net.fuse.Fuse;
 import vavi.util.properties.annotation.PropsEntity;
 
 
@@ -49,6 +50,6 @@ public class DropBoxFS {
 
         FileSystem fs = new DropBoxFileSystemProvider().newFileSystem(uri, env);
 
-        new JavaFsFS(fs).mount(args[0]);
+        Fuse.Factory.getFuse().mount(fs, args[0], Collections.EMPTY_MAP);
     }
 }
