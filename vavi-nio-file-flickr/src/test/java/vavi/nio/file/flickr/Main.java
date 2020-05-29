@@ -14,10 +14,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import vavi.net.auth.oauth2.OAuth2AppCredential;
-import vavi.net.auth.oauth2.flickr.FlickrLocalAppCredential;
-import vavi.util.properties.annotation.PropsEntity;
-
 import co.paralleluniverse.javafs.JavaFS;
 
 
@@ -29,20 +25,12 @@ import co.paralleluniverse.javafs.JavaFS;
  */
 public class Main {
 
-    public static void main(final String... args) throws IOException {
+    public static void main(String[] args) throws IOException {
         String email = args[1];
 
-        // Create the necessary elements to create a filesystem.
-        // Note: the URI _must_ have a scheme of "flickr", and
-        // _must_ be hierarchical.
-        URI uri = URI.create("flickr://foo/");
-
-        OAuth2AppCredential credential = new FlickrLocalAppCredential();
-        PropsEntity.Util.bind(credential, email);
+        URI uri = URI.create("flickr://foo?id=" + email);
 
         Map<String, Object> env = new HashMap<>();
-        env.put(FlickrFileSystemProvider.ENV_ID, email);
-        env.put(FlickrFileSystemProvider.ENV_CREDENTIAL, credential);
         env.put("ignoreAppleDouble", true);
 
         final FileSystem fs = FileSystems.newFileSystem(uri, env);

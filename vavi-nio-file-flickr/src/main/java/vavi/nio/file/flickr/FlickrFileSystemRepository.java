@@ -15,11 +15,14 @@ import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.flickr4java.flickr.Flickr;
-import com.flickr4java.flickr.REST;
 import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 
+import vavi.net.auth.UserCredential;
 import vavi.net.auth.oauth2.OAuth2AppCredential;
+import vavi.net.auth.oauth2.flickr.FlickrLocalAppCredential;
+import vavi.net.auth.oauth2.flickr.FlickrOAuth2;
+import vavi.net.auth.web.flickr.FlickrLocalUserCredential;
 
 
 /**
@@ -38,18 +41,37 @@ public final class FlickrFileSystemRepository extends FileSystemRepositoryBase {
     @Nonnull
     @Override
     public FileSystemDriver createDriver(final URI uri, final Map<String, ?> env) throws IOException {
-        if (!env.containsKey(FlickrFileSystemProvider.ENV_ID)) {
-            throw new NoSuchElementException(FlickrFileSystemProvider.ENV_ID);
+        // 1. user credential
+        UserCredential userCredential = null;
+
+        if (env.containsKey(FlickrFileSystemProvider.ENV_USER_CREDENTIAL)) {
+            userCredential = UserCredential.class.cast(env.get(FlickrFileSystemProvider.ENV_USER_CREDENTIAL));
         }
-        String email = (String) env.get(FlickrFileSystemProvider.ENV_ID);
 
-        if (!env.containsKey(FlickrFileSystemProvider.ENV_CREDENTIAL)) {
-            throw new NoSuchElementException(FlickrFileSystemProvider.ENV_CREDENTIAL);
+        Map<String, String> params = getParamsMap(uri);
+        if (userCredential == null && params.containsKey(FlickrFileSystemProvider.PARAM_ID)) {
+            String email = params.get(FlickrFileSystemProvider.PARAM_ID);
+            userCredential = new FlickrLocalUserCredential(email);
         }
-        OAuth2AppCredential appCredential = OAuth2AppCredential.class.cast(env.get(FlickrFileSystemProvider.ENV_CREDENTIAL));
 
-        Flickr flickr = new Flickr(appCredential.getClientId(), appCredential.getClientSecret(), new REST());
+        if (userCredential == null) {
+            throw new NoSuchElementException("uri not contains a param " + FlickrFileSystemProvider.PARAM_ID + " nor " +
+                                             "env not contains a param " + FlickrFileSystemProvider.ENV_USER_CREDENTIAL);
+        }
 
+        // 2. app credential
+        OAuth2AppCredential appCredential = null;
+
+        if (env.containsKey(FlickrFileSystemProvider.ENV_APP_CREDENTIAL)) {
+            appCredential = OAuth2AppCredential.class.cast(env.get(FlickrFileSystemProvider.ENV_APP_CREDENTIAL));
+        }
+
+        if (appCredential == null) {
+            appCredential = new FlickrLocalAppCredential(); // TODO use props
+        }
+
+        // 3. process
+        Flickr flickr = new FlickrOAuth2(appCredential).authorize(userCredential);
         FlickrFileStore fileStore = new FlickrFileStore(flickr, factoryProvider.getAttributesFactory());
         return new FlickrFileSystemDriver(fileStore, factoryProvider, flickr, env);
     }

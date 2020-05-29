@@ -14,7 +14,6 @@ import com.flickr4java.flickr.FlickrException;
 import com.flickr4java.flickr.people.User;
 import com.github.fge.filesystem.attributes.FileAttributesFactory;
 import com.github.fge.filesystem.filestore.FileStoreBase;
-import com.google.api.services.drive.model.About.StorageQuota;
 
 
 /**
@@ -48,7 +47,12 @@ public final class FlickrFileStore extends FileStoreBase {
      */
     @Override
     public long getTotalSpace() throws IOException {
+try {
         return getQuota().getBandwidthMax();
+} catch (Exception e) {
+ e.printStackTrace();
+ return 0;
+}
     }
 
     /**
@@ -69,8 +73,13 @@ public final class FlickrFileStore extends FileStoreBase {
      */
     @Override
     public long getUsableSpace() throws IOException {
+try {
         final User quota = getQuota();
         return quota.getBandwidthMax() - quota.getBandwidthUsed();
+} catch (Exception e) {
+ e.printStackTrace();
+ return 0;
+}
     }
 
     /**
@@ -89,8 +98,13 @@ public final class FlickrFileStore extends FileStoreBase {
      */
     @Override
     public long getUnallocatedSpace() throws IOException {
+try {
         final User quota = getQuota();
         return quota.getBandwidthMax() - quota.getBandwidthUsed();
+} catch (Exception e) {
+ e.printStackTrace();
+ return 0;
+}
     }
 
     /** */

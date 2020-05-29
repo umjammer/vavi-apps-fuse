@@ -85,7 +85,12 @@ public final class FlickrBasicFileAttributesProvider extends BasicFileAttributes
     @Override
     public long size() {
         // TODO image size
+try {
         return entry.getOriginalSize().getWidth() * entry.getOriginalSize().getHeight() * 4;
+} catch (Exception e) {
+ e.printStackTrace();
+ return 0;
+}
     }
 
     /* @see java.nio.file.attribute.PosixFileAttributes#owner() */
