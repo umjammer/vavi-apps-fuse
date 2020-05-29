@@ -4,12 +4,36 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.0.10</version>
+  <version>0.1.0-SNAPSHOT</version>
 
-  <packaging>jar</packaging>
+  <properties>
+    <vavi-net-auth.version>0.1.1</vavi-net-auth.version>
+    <vavi-nio-file.version>0.0.7</vavi-nio-file.version>
+  </properties>
+
+  <modules>
+    <module>vavi-nio-file-googledrive</module>
+    <module>vavi-nio-file-amazondrive</module>
+    <module>vavi-nio-file-flickr</module>
+    <module>vavi-nio-file-archive</module>
+    <module>vavi-nio-file-gathered</module>
+    <module>vavi-nio-file-hfs</module>
+    <module>vavi-nio-file-onedrive</module>
+    <module>vavi-nio-file-onedrive3</module>
+    <module>vavi-nio-file-onedrive4</module>
+    <module>vavi-nio-file-vfs</module>
+    <module>vavi-nio-file-sandbox</module>
+    <module>vavi-net-fuse</module>
+  </modules>
+
+  <packaging>pom</packaging>
   <name>vavi-apps-fuse</name>
   <url>https://github.com/umjammer/vavi-apps-fuse</url>
-  <description>0.0.10
+  <description>0.1.0
+
+    separate into sub modules
+
+0.0.10
 
     fix googledrive redundancy
     use util transfer method
@@ -74,297 +98,103 @@ TODO
     <url>https://github.com/umjammer/vavi-apps-fuse/issues</url>
   </issueManagement>
 
-  <properties>
-    <jackrabbit.version>1.6.0</jackrabbit.version>
-  </properties>
-
   <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-          <encoding>utf-8</encoding>
-        </configuration>
-        <version>3.3</version>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.22.0</version>
-      </plugin>
-    </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <source>1.8</source>
+            <target>1.8</target>
+            <encoding>utf-8</encoding>
+          </configuration>
+          <version>3.3</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.22.0</version>
+          <configuration>
+            <argLine>-Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties</argLine>
+            <trimStackTrace>false</trimStackTrace>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
   </build>
 
   <repositories>
     <repository>
-      <id>umjammer-mvn-repo</id>
-      <url>https://raw.github.com/umjammer/umjammer/mvn-repo/</url>
-      <snapshots>
-        <enabled>true</enabled>
-        <updatePolicy>always</updatePolicy>
-      </snapshots>
-    </repository>
-    <repository>
       <id>jitpack.io</id>
       <url>https://jitpack.io</url>
     </repository>
-    <repository>
-      <id>maven.cyberduck.io-release</id>
-      <url>http://repo.maven.cyberduck.io.s3.amazonaws.com/releases</url>
-    </repository>
-    <repository>
-      <id>wso2</id>
-      <url>https://dist.wso2.org/maven2/</url>
-    </repository>
-    <repository>
-      <id>seasar</id>
-      <url>https://www.seasar.org/maven/maven2/</url>
-    </repository>
   </repositories>
 
-  <dependencies>
-    <dependency>
-      <!-- fuse jnr -->
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>javafs</artifactId>
-      <version>0.1.2v</version>
-    </dependency>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <!-- java-fs base -->
+        <groupId>com.github.umjammer</groupId>
+        <artifactId>java7-fs-base</artifactId>
+        <version>0.0.7v</version>
+      </dependency>
+      <dependency>
+        <groupId>com.github.umjammer</groupId>
+        <artifactId>vavi-nio-file</artifactId>
+        <version>${vavi-nio-file.version}</version>
+      </dependency>
 
-    <dependency>
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>vavi-commons</artifactId>
-      <version>1.0.16</version>
-    </dependency>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <version>1.3.9</version>
+      </dependency>
 
-    <dependency>
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>vavi-commons-sandbox</artifactId>
-      <version>0.3.5</version>
-    </dependency>
+      <dependency>
+        <groupId>vavi</groupId>
+        <artifactId>vavi-net-fuse</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+      </dependency>
 
-    <dependency>
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>vavi-net-auth</artifactId>
-      <version>0.0.9</version>
-    </dependency>
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-api</artifactId>
+        <version>5.3.0</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-engine</artifactId>
+        <version>5.3.0</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.junit.platform</groupId>
+        <artifactId>junit-platform-commons</artifactId>
+        <version>1.5.2</version>
+        <scope>test</scope>
+      </dependency>
 
-    <dependency>
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>vavi-nio-file</artifactId>
-      <version>0.0.5</version>
-    </dependency>
+      <dependency>
+        <groupId>com.github.umjammer</groupId>
+        <artifactId>vavi-nio-file</artifactId>
+        <version>${vavi-nio-file.version}</version>
+        <type>test-jar</type>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.rainerhahnekamp</groupId>
+        <artifactId>sneakythrow</artifactId>
+        <version>1.2.0</version>
+        <scope>test</scope>
+      </dependency>
 
-    <dependency>
-      <!-- java-fs base -->
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>java7-fs-base</artifactId>
-      <version>0.0.6v</version>
-    </dependency>
-
-    <dependency>
-      <!-- java-fs onedrive (cyberduck) -->
-      <groupId>ch.iterate.onedrive</groupId>
-      <artifactId>onedrive-java-client</artifactId>
-      <version>2.0.16</version>
-    </dependency>
-
-    <dependency>
-      <!-- java-fs onedrive (OneDriveJavaSDK) -->
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>OneDriveJavaSDK</artifactId>
-      <version>0.0.5v</version>
-    </dependency>
-
-    <dependency>
-      <!-- java-fs onedrive (microsoft graph) -->
-      <groupId>com.microsoft.graph</groupId>
-      <artifactId>microsoft-graph</artifactId>
-      <version>1.4.0</version>
-    </dependency>
-
-    <dependency>
-      <!-- java-fs googledrive -->
-      <groupId>com.google.apis</groupId>
-      <artifactId>google-api-services-drive</artifactId>
-      <version>v3-rev12-1.21.0</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava-jdk5</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <!-- java-fs flickr -->
-      <groupId>com.flickr4java</groupId>
-      <artifactId>flickr4java</artifactId>
-      <version>2.16</version>
-    </dependency>
-
-    <dependency>
-      <!-- java-fs vfs2 -->
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-vfs2</artifactId>
-      <version>2.3</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-vfs2-sandbox</artifactId>
-      <version>2.0-wso2v8</version>
-    </dependency>
-    <dependency>
-      <!-- java-fs vfs2 ssh -->
-      <groupId>jcifs</groupId>
-      <artifactId>jcifs</artifactId>
-      <version>0.8.3</version>
-    </dependency>
-    <dependency>
-      <groupId>com.jcraft</groupId>
-      <artifactId>jsch</artifactId>
-      <version>0.1.51</version>
-    </dependency>
-    <dependency>
-      <!-- java-fs vfs2 webdav -->
-      <groupId>org.apache.jackrabbit</groupId>
-      <artifactId>jackrabbit-webdav</artifactId>
-      <version>${jackrabbit.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>commons-httpclient</groupId>
-      <artifactId>commons-httpclient</artifactId>
-      <version>3.1</version>
-    </dependency>
-
-    <dependency>
-      <!-- java-fs acd -->
-      <groupId>org.yetiz.lib</groupId>
-      <artifactId>ACD-JAPI</artifactId>
-      <version>1.1.2</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <!-- java-fs archive -->
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>vavi-util-archive</artifactId>
-      <version>1.0.6</version>
-    </dependency>
-    <dependency>
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>vavi-util-archive-sandbox</artifactId>
-      <version>1.0.1</version>
-    </dependency>
-
-    <dependency>
-      <!-- java-fs hfs -->
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>hfsexplorer</artifactId>
-      <version>0.23.0</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.netbeans.external</groupId>
-          <artifactId>swing-layout-1.0.4</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <!-- fuse jna -->
-      <groupId>com.github.EtiennePerot</groupId>
-      <artifactId>fuse-jna</artifactId>
-      <version>eced84f81a</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.rainerhahnekamp</groupId>
-      <artifactId>sneakythrow</artifactId>
-      <version>1.2.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <version>5.3.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <version>5.3.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.platform</groupId>
-      <artifactId>junit-platform-commons</artifactId>
-      <version>1.5.2</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <!-- java-fs dropbox -->
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>java7-fs-dropbox</artifactId>
-      <version>0.0.11v</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <!-- java-fs box -->
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>java7-fs-box</artifactId>
-      <version>0.1.5v</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.sun.mail</groupId>
-      <artifactId>javax.mail</artifactId>
-      <version>1.6.2</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>sen</groupId>
-      <artifactId>sen</artifactId>
-      <version>1.1</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>klab-commons-csv</artifactId>
-      <version>2.0.2</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.github.Querz</groupId>
-      <artifactId>NBT</artifactId>
-      <version>4.0</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>vavi-nio-file</artifactId>
-      <version>0.0.5</version>
-      <type>test-jar</type>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
-
+      <dependency>
+        <groupId>vavi</groupId>
+        <artifactId>vavi-net-fuse</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 </project>

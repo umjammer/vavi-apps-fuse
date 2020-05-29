@@ -14,12 +14,13 @@ fuse for java and many file systems.
 | one drive (graph)  | ✅    | ✅   | ✅       | ✅  | ✅  | ✅ | ✅    | ✅   |       | this | [onedrive-java-client](https://github.com/iterate-ch/onedrive-java-client) |
 | dropbox (v2)       | ✅    | ✅   | ✅       | ✅  | ✅  | ✅ | ✅    | ✅   |       | [java7-fs-dropbox](https://github.com/umjammer/java7-fs-dropbox) | |
 | box (v2)           | ✅    | ✅   | ✅       | ✅  | ✅  | ✅ | ✅    | ✅   |       | [java7-fs-box](https://github.com/umjammer/java7-fs-box) | |
-| vfs ssh            | ✅    | ✅   | ✅       | ✅  | ✅  | ✅ | ✅    | ✅   |       | this | [commons-vfs2](), [jcifs](), [jsch]() |
-| vfs webdav         | ✅    |      |           |     |      |     |       |      |        | this | [commons-vfs2-sandbox](), [jackrabbit-webdav 1.6.0]() |
+| vfs (sftp)         | ✅    | ✅   | ✅       | ✅  | ✅  | ✅ | ✅    | ✅   |       | this | [commons-vfs2](https://commons.apache.org/proper/commons-vfs/), [jcifs](https://www.jcifs.org/), [jsch](http://www.jcraft.com/jsch/) |
+| vfs (webdav)       | ✅    |      |           |     |      |     |       |      |        | this | [commons-vfs2-sandbox](http://people.apache.org/~ecki/commons-vfs/commons-vfs2-sandbox/), [jackrabbit-webdav 1.6.0](http://archive.apache.org/dist/jackrabbit/1.6.0/) |
 | archive            | ✅    | -    | ✅       | -   | -    | -   | -     | -    |        | this | [vavi-util-archive](https://github.com/umjammer/vavi-util-archive) |
 | hfs+ (dmg)         | ✅    |      |           |     |      |     |       |      |        | this | [hfsexplorer](https://github.com/umjammer/hfsexplorer) |
 | [gathered](https://github.com/umjammer/vavi-apps-fuse/wiki/GatheredFileSystem) | ✅    | -    | ✅       | -    | -    | -   | -     | -    |       | this | - |
-| cyberduck          | ✅    | ✅   | ✅       | ✅  | ✅   | ✅ | ✅   | ✅   |       | [vavi-nio-file-cyberduck](https://github.com/umjammer/vavi-nio-file-cyberduck) | [cyberduck](https://github.com/iterate-ch/cyberduck) |
+| cyberduck (webdav ssh) | ✅ | ✅  | ✅       | ✅  | ✅   | ✅ | ✅   | ✅   |       | [vavi-nio-file-cyberduck](https://github.com/umjammer/vavi-nio-file-cyberduck) | [cyberduck.webdav](https://github.com/iterate-ch/cyberduck/) |
+| cyberduck (sftp)   | ✅    | ✅   | ✅       | ✅  | ✅   | ✅ | ✅   | ✅   |       | [vavi-nio-file-cyberduck](https://github.com/umjammer/vavi-nio-file-cyberduck) | [cyberduck.ssh](https://github.com/iterate-ch/cyberduck/) |
 | discutils (vdi/ntfs) | ✅  |      | ✅       |      |      |     |       |      |       | [vavi-nio-file-discutils](https://github.com/umjammer/vavi-nio-file-discutils) | |
 | google play music  | ✅    | -    | ✅       | -    | -    | -   | -     | -    |       | [vavi-nio-file-googleplaymusic](https://github.com/umjammer/vavi-nio-file-googleplaymusic) | [gplaymusic](https://github.com/umjammer/gplaymusic) |
 
@@ -57,4 +58,6 @@ https://github.com/umjammer/vavi-apps-fuse/wiki/Libraries
  * ~~https://github.com/unsound/hfsexplorer~~ (wip)
  * ~~virtualbox vdi~~ ([wip](https://github.com/umjammer/vavi-nio-file-discutils))
  * mincraft nbt
+ * ~~credential from uri~~
+ * https://github.com/cryptomator/fuse-nio-adapter
 
