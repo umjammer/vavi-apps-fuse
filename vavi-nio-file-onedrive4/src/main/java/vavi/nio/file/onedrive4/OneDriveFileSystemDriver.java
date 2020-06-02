@@ -20,6 +20,7 @@ import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
@@ -157,23 +158,6 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
         return client.drive().items(entry.id).content().buildRequest().get();
     }
 
-    /**
-     * fuse からだと
-     * <ol>
-     *  <li>create -> newByteChannel
-     *  <li>flush -> n/a
-     *  <li>lock -> n/a
-     *  <li>release -> byteChannel.close
-     * </ol>
-     * と呼ばれる <br/>
-     * 元のファイルが取れない... <br/>
-     * 書き込みの指示もない...
-     * <p>
-     * nio.file からだと
-     * <pre>
-     *  newOutputStream -> write(2)
-     * </pre>
-     */
     @Nonnull
     @Override
     public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
@@ -190,39 +174,61 @@ Debug.println("newOutputStream: " + e.getMessage());
 //new Exception("*** DUMMY ***").printStackTrace();
         }
 
-        return new OutputStreamForUploading() {
-            @Override
-            protected void onClosed() throws IOException {
-                InputStream is = getInputStream();
-                if (is.available() > 4 * 1024 * 1024) {
-                    UploadSession uploadSession = client.drive().root().itemWithPath(URLEncoder.encode(toPathString(path), "utf-8")).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
-                    ChunkedUploadProvider<DriveItem> chunkedUploadProvider = new ChunkedUploadProvider<>(uploadSession,
-                            client, is, is.available(), DriveItem.class);
-                    chunkedUploadProvider.upload(new IProgressCallback<DriveItem>() {
-                            @Override
-                            public void progress(final long current, final long max) {
-Debug.println(current + "/" + max);
-                            }
-                            @Override
-                            public void success(final DriveItem result) {
-                                try {
-                                    cache.addEntry(path, result);
-                                } catch (IOException e) {
-                                    throw new IllegalStateException(e);
-                                }
-Debug.println("done");
-                            }
-                            @Override
-                            public void failure(final ClientException ex) {
-                                throw new IllegalStateException(ex);
-                            }
-                        });
-                } else {
-                    DriveItem newEntry = client.drive().root().itemWithPath(URLEncoder.encode(toPathString(path), "utf-8")).content().buildRequest().put(ByteStreams.toByteArray(is)); // TODO depends on guava
-                    cache.addEntry(path, newEntry);
+        OneDriveUploadOption uploadOption = Util.getOneOfOptions(OneDriveUploadOption.class, options);
+        if (uploadOption != null) {
+            // java.nio.file is highly abstracted, so here source information is lost.
+            // but onedrive graph api requires content length for upload.
+            // so reluctantly we provide {@link OneDriveUploadOpenOption} for {@link java.nio.file.Files#copy} options.
+            Path source = uploadOption.getSource();
+Debug.println("upload w/ option: " + source);
+            uploadEntry(path, Files.newInputStream(source), (int) Files.size(source));
+
+            return new OutputStream() { // TODO redundant
+                @Override
+                public void write(int b) throws IOException {
                 }
-            }
-        };
+            };
+        } else {
+Debug.println("upload w/o option");
+            return new OutputStreamForUploading() { // TODO used for getting file length
+                @Override
+                protected void onClosed() throws IOException {
+                    InputStream is = getInputStream();
+                    uploadEntry(path, is, is.available());
+                }
+            };
+        }
+    }
+
+    /** */
+    private void uploadEntry(Path path, InputStream is, int size) throws IOException {
+        if (size > 4 * 1024 * 1024) {
+            UploadSession uploadSession = client.drive().root().itemWithPath(URLEncoder.encode(toPathString(path), "utf-8")).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
+            ChunkedUploadProvider<DriveItem> chunkedUploadProvider = new ChunkedUploadProvider<>(uploadSession,
+                    client, is, size, DriveItem.class);
+            chunkedUploadProvider.upload(new IProgressCallback<DriveItem>() {
+                    @Override
+                    public void progress(final long current, final long max) {
+Debug.println(current + "/" + max);
+                    }
+                    @Override
+                    public void success(final DriveItem result) {
+                        try {
+                            cache.addEntry(path, result);
+                        } catch (IOException e) {
+                            throw new IllegalStateException(e);
+                        }
+Debug.println("done");
+                    }
+                    @Override
+                    public void failure(final ClientException ex) {
+                        throw new IllegalStateException(ex);
+                    }
+                });
+        } else {
+            DriveItem newEntry = client.drive().root().itemWithPath(URLEncoder.encode(toPathString(path), "utf-8")).content().buildRequest().put(ByteStreams.toByteArray(is)); // TODO depends on guava
+            cache.addEntry(path, newEntry);
+        }
     }
 
     @Nonnull
@@ -236,7 +242,7 @@ Debug.println("done");
     public SeekableByteChannel newByteChannel(Path path,
                                               Set<? extends OpenOption> options,
                                               FileAttribute<?>... attrs) throws IOException {
-        if (options != null && (options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND))) {
+        if (options != null && Util.isWriting(options)) {
             return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
                 @Override
                 protected long getLeftOver() throws IOException {
