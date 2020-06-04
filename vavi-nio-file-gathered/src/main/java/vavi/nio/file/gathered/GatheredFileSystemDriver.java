@@ -6,11 +6,9 @@
 
 package vavi.nio.file.gathered;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -38,7 +36,6 @@ import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import vavi.nio.file.Util;
-import vavi.util.Debug;
 
 import static vavi.nio.file.Util.toPathString;
 
@@ -114,21 +111,6 @@ public final class GatheredFileSystemDriver extends UnixLikeFileSystemDriverBase
                         }
                     }
                     return leftover;
-                }
-
-                @Override
-                public void close() throws IOException {
-Debug.println("SeekableByteChannelForWriting::close");
-                    if (written == 0) {
-                        // TODO no mean
-Debug.println("SeekableByteChannelForWriting::close: scpecial: " + path);
-                        java.io.File file = new java.io.File(toPathString(path));
-                        FileInputStream fis = new FileInputStream(file);
-                        FileChannel fc = fis.getChannel();
-                        fc.transferTo(0, file.length(), this);
-                        fis.close();
-                    }
-                    super.close();
                 }
             };
         } else {
