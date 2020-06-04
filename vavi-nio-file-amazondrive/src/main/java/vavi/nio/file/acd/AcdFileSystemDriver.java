@@ -6,12 +6,9 @@
 
 package vavi.nio.file.acd;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
@@ -29,7 +26,6 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +45,7 @@ import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import vavi.nio.file.Cache;
+import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
 import vavi.util.Debug;
 
@@ -82,6 +79,12 @@ public final class AcdFileSystemDriver extends UnixLikeFileSystemDriverBase {
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
     }
+
+    /** */
+    private UploadMonitor uploadMonitor = new UploadMonitor();
+
+    /** entry for uploading (for attributes) */
+    private static final FileInfo dummy = new FileInfo();
 
     /** */
     private Cache<NodeInfo> cache = new Cache<NodeInfo>() {
@@ -129,9 +132,6 @@ public final class AcdFileSystemDriver extends UnixLikeFileSystemDriverBase {
         return drive.getFile(entry.getId());
     }
 
-    /** NFC normalized {@link String} */
-    private Set<String> uploadFlags = new HashSet<>();
-
     @Nonnull
     @Override
     public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
@@ -150,10 +150,8 @@ Debug.println("newOutputStream: " + e.getMessage());
 
         java.io.File temp = java.io.File.createTempFile("vavi-apps-fuse-", ".upload");
 
-        uploadFlags.add(toPathString(path));
         return new AcdOutputStream(drive, temp, toFilenameString(path), FolderInfo.class.cast(cache.getEntry(path.getParent())), file -> {
             try {
-                uploadFlags.remove(toPathString(path));
 System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + ", " + file.getContentProperties().getSize());
                 cache.addEntry(path, file);
             } catch (IOException e) {
@@ -174,6 +172,7 @@ System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + "
                                               Set<? extends OpenOption> options,
                                               FileAttribute<?>... attrs) throws IOException {
         if (options != null  && Util.isWriting(options)) {
+            uploadMonitor.start(path);
             return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
                 @Override
                 protected long getLeftOver() throws IOException {
@@ -189,16 +188,7 @@ System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + "
 
                 @Override
                 public void close() throws IOException {
-System.out.println("SeekableByteChannelForWriting::close");
-                    if (written == 0) {
-                        // TODO no mean
-System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
-                        File file = new File(toPathString(path));
-                        FileInputStream fis = new FileInputStream(file);
-                        FileChannel fc = fis.getChannel();
-                        fc.transferTo(0, file.length(), this);
-                        fis.close();
-                    }
+                    uploadMonitor.finish(path);
                     super.close();
                 }
             };
@@ -294,6 +284,11 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
      */
     @Override
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
+        if (uploadMonitor.isUploading(path)) {
+Debug.println("uploading... : " + path);
+            return;
+        }
+
         final NodeInfo entry = cache.getEntry(path);
 
         if (!entry.isFile()) {
@@ -319,12 +314,11 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
     @Nonnull
     @Override
     public Object getPathMetadata(final Path path) throws IOException {
-if (uploadFlags.contains(toPathString(path))) {
-System.out.println("uploading...");
-    FileInfo entry = new FileInfo();
-    entry.setName(toFilenameString(path));
-    return entry;
-}
+        if (uploadMonitor.isUploading(path)) {
+Debug.println("uploading... : " + path);
+            return dummy;
+        }
+
         return cache.getEntry(path);
     }
 
