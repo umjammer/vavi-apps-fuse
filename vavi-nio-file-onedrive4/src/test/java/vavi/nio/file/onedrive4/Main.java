@@ -19,9 +19,9 @@ import java.util.Map;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import static vavi.nio.file.Base.testAll;
+import vavi.net.fuse.Fuse;
 
-import co.paralleluniverse.javafs.JavaFS;
+import static vavi.nio.file.Base.testAll;
 
 
 /**
@@ -42,11 +42,13 @@ public class Main {
 
         FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, env);
 
-        Map<String, String> options = new HashMap<>();
+        Map<String, Object> options = new HashMap<>();
         options.put("fsname", "onedrive_fs" + "@" + System.currentTimeMillis());
         options.put("noappledouble", null);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, true);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
 
-        JavaFS.mount(fs, Paths.get(args[0]), false, false, options);
+        Fuse.getFuse().mount(fs, args[0], options);
     }
 
     @Test

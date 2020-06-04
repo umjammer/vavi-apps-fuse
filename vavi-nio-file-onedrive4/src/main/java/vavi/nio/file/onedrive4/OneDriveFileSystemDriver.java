@@ -6,12 +6,10 @@
 
 package vavi.nio.file.onedrive4;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
-import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
@@ -30,6 +28,7 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,6 +51,7 @@ import com.microsoft.graph.http.IStatefulResponseHandler;
 import com.microsoft.graph.models.extensions.DriveItem;
 import com.microsoft.graph.models.extensions.DriveItemCopyBody;
 import com.microsoft.graph.models.extensions.DriveItemUploadableProperties;
+import com.microsoft.graph.models.extensions.File;
 import com.microsoft.graph.models.extensions.Folder;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.models.extensions.ItemReference;
@@ -60,8 +60,8 @@ import com.microsoft.graph.requests.extensions.IDriveItemCollectionPage;
 import com.microsoft.graph.requests.extensions.IDriveItemCopyRequest;
 
 import vavi.nio.file.Cache;
+import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
-import vavi.nio.file.Util.OutputStreamForUploading;
 import vavi.nio.file.onedrive4.graph.CopyMonitorProvider;
 import vavi.nio.file.onedrive4.graph.CopyMonitorResponseHandler;
 import vavi.nio.file.onedrive4.graph.CopyMonitorResult;
@@ -94,6 +94,19 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
     }
+
+    /** */
+    private UploadMonitor uploadMonitor = new UploadMonitor();
+
+    /** entry for uploading (for attributes) */
+    private static final DriveItem dummy = new DriveItem() {
+        {
+            file = new File();
+            name = "vavi-nio-file-onedrive4.dummy";
+            lastModifiedDateTime = Calendar.getInstance();
+            size = 0L;
+        }
+    };
 
     /** ugly */
     private boolean isFile(DriveItem entry) {
@@ -242,7 +255,13 @@ Debug.println("done");
     public SeekableByteChannel newByteChannel(Path path,
                                               Set<? extends OpenOption> options,
                                               FileAttribute<?>... attrs) throws IOException {
+if (options != null) {
+ options.forEach(o -> { System.err.println("newByteChannel: " + o); });
+} else {
+ Debug.println("option: null");
+}
         if (options != null && Util.isWriting(options)) {
+            uploadMonitor.start(path);
             return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
                 @Override
                 protected long getLeftOver() throws IOException {
@@ -255,19 +274,9 @@ Debug.println("done");
                     }
                     return leftover;
                 }
-
                 @Override
                 public void close() throws IOException {
-System.out.println("SeekableByteChannelForWriting::close");
-                    if (written == 0) {
-                        // TODO no mean
-System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
-                        java.io.File file = new java.io.File(toPathString(path));
-                        FileInputStream fis = new FileInputStream(file);
-                        FileChannel fc = fis.getChannel();
-                        fc.transferTo(0, file.length(), this);
-                        fis.close();
-                    }
+                    uploadMonitor.finish(path);
                     super.close();
                 }
             };
@@ -365,6 +374,11 @@ System.out.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(
      */
     @Override
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
+        if (uploadMonitor.isUploading(path)) {
+Debug.println("uploading... : " + path);
+            return;
+        }
+
         final DriveItem entry = cache.getEntry(path);
 
         if (!isFile(entry)) {
@@ -390,6 +404,11 @@ System.out.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(
     @Nonnull
     @Override
     public Object getPathMetadata(final Path path) throws IOException {
+        if (uploadMonitor.isUploading(path)) {
+Debug.println("uploading... : " + path);
+            return dummy;
+        }
+
         return cache.getEntry(path);
     }
 
