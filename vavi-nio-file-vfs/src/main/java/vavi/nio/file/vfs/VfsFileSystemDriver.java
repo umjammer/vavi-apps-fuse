@@ -43,7 +43,9 @@ import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
+import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
+import vavi.util.Debug;
 
 import static vavi.nio.file.Util.isAppleDouble;
 import static vavi.nio.file.Util.toFilenameString;
@@ -85,6 +87,9 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
         this.baseUrl = baseUrl;
     }
 
+    /** */
+    private UploadMonitor uploadMonitor = new UploadMonitor();
+
     /**
      * VFS might have cache?
      * @see #ignoreAppleDouble
@@ -94,7 +99,9 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
         return getEntry(path, true);
     }
 
-    /** */
+    /**
+     * @param check check existence of the path
+     */
     private FileObject getEntry(Path path, boolean check) throws IOException {
 //System.err.println("path: " + path);
         if (ignoreAppleDouble && path.getFileName() != null && isAppleDouble(path)) {
@@ -168,6 +175,11 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
                         }
                     }
                     return leftover;
+                }
+                @Override
+                public void close() throws IOException {
+                    uploadMonitor.finish(path);
+                    super.close();
                 }
             };
         } else {
@@ -263,6 +275,11 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
      */
     @Override
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
+        if (uploadMonitor.isUploading(path)) {
+Debug.println("uploading... : " + path);
+            return;
+        }
+
         final FileObject entry = getEntry(path);
 
         if (entry.isFolder()) {
@@ -288,6 +305,11 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
     @Nonnull
     @Override
     public Object getPathMetadata(final Path path) throws IOException {
+        if (uploadMonitor.isUploading(path)) {
+Debug.println("uploading... : " + path);
+            return getEntry(path);
+        }
+
         return getEntry(path);
     }
 
