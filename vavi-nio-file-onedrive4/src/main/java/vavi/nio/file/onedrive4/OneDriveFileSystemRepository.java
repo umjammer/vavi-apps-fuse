@@ -26,6 +26,7 @@ import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphOAuth2;
 import vavi.net.auth.web.microsoft.MicrosoftLocalUserCredential;
+import vavi.nio.file.onedrive4.graph.MyLogger;
 
 
 /**
@@ -90,6 +91,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         };
         IGraphServiceClient graphClient = GraphServiceClient.builder()
             .authenticationProvider(authenticationProvider)
+            .logger(new MyLogger())
             .buildClient();
 
         final OneDriveFileStore fileStore = new OneDriveFileStore(graphClient, factoryProvider.getAttributesFactory());
