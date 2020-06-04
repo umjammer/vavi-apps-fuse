@@ -27,12 +27,11 @@ import vavi.net.auth.oauth2.box.BoxLocalAppCredential;
 import vavi.net.auth.oauth2.dropbox.DropBoxLocalAppCredential;
 import vavi.net.auth.oauth2.google.GoogleLocalAppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
+import vavi.net.fuse.Fuse;
 import vavi.nio.file.googledrive.GoogleDriveFileSystemProvider;
 import vavi.nio.file.onedrive4.OneDriveFileSystemProvider;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import co.paralleluniverse.javafs.JavaFS;
 
 
 /**
@@ -73,11 +72,13 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
 
         FileSystem fs = FileSystems.newFileSystem(uri, env);
 
-        Map<String, String> options = new HashMap<>();
+        Map<String, Object> options = new HashMap<>();
         options.put("fsname", "gathered_fs" + "@" + System.currentTimeMillis());
         options.put("noappledouble", null);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, true);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
 
-        JavaFS.mount(fs, Paths.get(args[0]), true, false, options);
+        Fuse.getFuse().mount(fs, args[0], options);
     }
 
     /** */

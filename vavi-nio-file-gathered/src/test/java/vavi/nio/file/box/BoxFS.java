@@ -50,6 +50,6 @@ public class BoxFS {
 
         FileSystem fs = new BoxFileSystemProvider().newFileSystem(uri, env);
 
-        Fuse.Factory.getFuse().mount(fs, args[0], Collections.EMPTY_MAP);
+        Fuse.getFuse().mount(fs, args[0], Collections.EMPTY_MAP);
     }
 }
