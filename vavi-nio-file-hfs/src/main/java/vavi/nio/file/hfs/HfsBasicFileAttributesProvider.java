@@ -57,7 +57,7 @@ public final class HfsBasicFileAttributesProvider extends BasicFileAttributesPro
      */
     @Override
     public FileTime lastModifiedTime() {
-        return FileTime.fromMillis(entry.getAttributes().getModifyDate().getTime());
+        return FileTime.fromMillis(entry.getAttributes() == null ? 0 : entry.getAttributes().getModifyDate().getTime());
     }
 
     /**
@@ -87,7 +87,7 @@ public final class HfsBasicFileAttributesProvider extends BasicFileAttributesPro
      */
     @Override
     public long size() {
-        return entry.getForkByType(FSForkType.DATA).getLength();
+        return entry.getForkByType(FSForkType.DATA) == null ? 0 : entry.getForkByType(FSForkType.DATA).getLength();
     }
 
     @Override

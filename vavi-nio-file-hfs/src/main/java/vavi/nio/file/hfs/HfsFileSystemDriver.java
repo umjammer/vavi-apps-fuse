@@ -6,11 +6,9 @@
 
 package vavi.nio.file.hfs;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
@@ -32,8 +30,11 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import org.catacombae.storage.fs.FSAttributes;
 import org.catacombae.storage.fs.FSEntry;
+import org.catacombae.storage.fs.FSFile;
 import org.catacombae.storage.fs.FSFolder;
+import org.catacombae.storage.fs.FSFork;
 import org.catacombae.storage.fs.FSForkType;
 import org.catacombae.storage.fs.hfscommon.HFSCommonFileSystemHandler;
 
@@ -41,7 +42,9 @@ import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
+import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
+import vavi.util.Debug;
 
 import static vavi.nio.file.Util.isAppleDouble;
 import static vavi.nio.file.Util.toPathString;
@@ -72,6 +75,34 @@ public final class HfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
         this.handler = handler;
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
     }
+
+    /** */
+    private UploadMonitor uploadMonitor = new UploadMonitor();
+
+    /** entry for uploading (for attributes) */
+    private static final FSEntry dummy = new FSFile() {
+        public FSAttributes getAttributes() {
+            return null;
+        }
+        public String getName() {
+            return "vavi-nio-file-hfs.dummy";
+        }
+        public boolean isCompressed() {
+            return false;
+        }
+        public FSFork[] getAllForks() {
+            return null;
+        }
+        public FSFork getForkByType(FSForkType type) {
+            return null;
+        }
+        public long getCombinedLength() {
+            return 0;
+        }
+        public FSFork getMainFork() {
+            return null;
+        }
+    };
 
     /** */
     private boolean isFolder(FSEntry entry) {
@@ -131,6 +162,7 @@ public final class HfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
                                               Set<? extends OpenOption> options,
                                               FileAttribute<?>... attrs) throws IOException {
         if (options != null && Util.isWriting(options)) {
+            uploadMonitor.start(path);
             return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
                 @Override
                 protected long getLeftOver() throws IOException {
@@ -147,15 +179,7 @@ public final class HfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
                 @Override
                 public void close() throws IOException {
 System.out.println("SeekableByteChannelForWriting::close");
-                    if (written == 0) {
-                        // TODO no mean
-System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
-                        java.io.File file = new java.io.File(toPathString(path));
-                        FileInputStream fis = new FileInputStream(file);
-                        FileChannel fc = fis.getChannel();
-                        fc.transferTo(0, file.length(), this);
-                        fis.close();
-                    }
+                    uploadMonitor.finish(path);
                     super.close();
                 }
             };
@@ -206,6 +230,11 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
      */
     @Override
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
+        if (uploadMonitor.isUploading(path)) {
+Debug.println("uploading... : " + path);
+            return;
+        }
+
         final FSEntry entry = getEntry(path);
 
         if (isFolder(entry)) {
@@ -231,6 +260,11 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
     @Nonnull
     @Override
     public Object getPathMetadata(final Path path) throws IOException {
+        if (uploadMonitor.isUploading(path)) {
+Debug.println("uploading... : " + path);
+            return dummy;
+        }
+
         return getEntry(path);
     }
 
