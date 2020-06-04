@@ -6,12 +6,9 @@
 
 package vavi.nio.file.onedrive3;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
@@ -30,6 +27,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +42,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import org.nuxeo.onedrive.client.OneDriveAPI;
 import org.nuxeo.onedrive.client.OneDriveCopyOperation;
 import org.nuxeo.onedrive.client.OneDriveDrive;
+import org.nuxeo.onedrive.client.OneDriveExpand;
 import org.nuxeo.onedrive.client.OneDriveFile;
 import org.nuxeo.onedrive.client.OneDriveFolder;
 import org.nuxeo.onedrive.client.OneDriveItem;
@@ -53,16 +52,17 @@ import org.nuxeo.onedrive.client.OneDrivePatchOperation;
 import org.nuxeo.onedrive.client.OneDriveUploadSession;
 import org.nuxeo.onedrive.client.facets.FileSystemInfoFacet;
 
+import com.eclipsesource.json.JsonObject;
 import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import vavi.nio.file.Cache;
+import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
 import vavi.util.Debug;
 
 import static vavi.nio.file.Util.toFilenameString;
-import static vavi.nio.file.Util.toPathString;
 
 
 /**
@@ -89,7 +89,26 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
         this.drive = drive;
+
+        dummy = new OneDriveFile(client, drive, "dymmy", ItemIdentifierType.Path) {
+            public Metadata getMetadata(OneDriveExpand... expand) throws IOException {
+                return new Metadata(new JsonObject()) {
+                    public String getName() {
+                        return "vavi-nio-file-onedrive3.dummy";
+                    }
+                    public ZonedDateTime getLastModifiedDateTime() {
+                        return ZonedDateTime.now();
+                    }
+                };
+            }
+        };
     }
+
+    /** */
+    private UploadMonitor uploadMonitor = new UploadMonitor();
+
+    /** entry for uploading (for attributes) */
+    private final OneDriveItem dummy;
 
     /** */
     private Cache<OneDriveItem> cache = new Cache<OneDriveItem>() {
@@ -143,7 +162,6 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
         return OneDriveFile.class.cast(entry).download();
     }
 
-    /* */
     @Nonnull
     @Override
     public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
@@ -162,18 +180,18 @@ Debug.println("newOutputStream: " + e.getMessage());
         }
 
         return new Util.OutputStreamForUploading() { // TODO used for only to get file length
-            @Override
-            protected void onClosed() throws IOException {
-                InputStream is = getInputStream();
-                OneDriveFolder dirEntry = OneDriveFolder.class.cast(cache.getEntry(path.getParent()));
+                @Override
+                protected void onClosed() throws IOException {
+                    InputStream is = getInputStream();
+        OneDriveFolder dirEntry = OneDriveFolder.class.cast(cache.getEntry(path.getParent()));
                 OneDriveFile entry = new OneDriveFile(client, dirEntry, toFilenameString(path), ItemIdentifierType.Path);
-                final OneDriveUploadSession uploadSession = entry.createUploadSession();
+        final OneDriveUploadSession uploadSession = entry.createUploadSession();
                 OutputStream os = new OneDriveOutputStream(uploadSession, path, is.available(), newEntry -> {
-                    try {
-                        cache.addEntry(path, newEntry);
-                    } catch (IOException e) {
-                        throw new IllegalStateException(e);
-                    }
+            try {
+                cache.addEntry(path, newEntry);
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
                 });
                 Util.transfer(is, os);
             }
@@ -192,6 +210,7 @@ Debug.println("newOutputStream: " + e.getMessage());
                                               Set<? extends OpenOption> options,
                                               FileAttribute<?>... attrs) throws IOException {
         if (options != null && Util.isWriting(options)) {
+            uploadMonitor.start(path);
             return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
                 @Override
                 protected long getLeftOver() throws IOException {
@@ -204,19 +223,9 @@ Debug.println("newOutputStream: " + e.getMessage());
                     }
                     return leftover;
                 }
-
                 @Override
                 public void close() throws IOException {
-System.out.println("SeekableByteChannelForWriting::close");
-                    if (written == 0) {
-                        // TODO no mean
-System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
-                        File file = new File(toPathString(path));
-                        FileInputStream fis = new FileInputStream(file);
-                        FileChannel fc = fis.getChannel();
-                        fc.transferTo(0, file.length(), this);
-                        fis.close();
-                    }
+                    uploadMonitor.finish(path);
                     super.close();
                 }
             };
@@ -311,6 +320,11 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
      */
     @Override
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
+        if (uploadMonitor.isUploading(path)) {
+Debug.println("uploading... : " + path);
+            return;
+        }
+
         final OneDriveItem entry = cache.getEntry(path);
 
         if (!entry.getMetadata().isFile()) {
@@ -336,6 +350,11 @@ System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
     @Nonnull
     @Override
     public Object getPathMetadata(final Path path) throws IOException {
+        if (uploadMonitor.isUploading(path)) {
+Debug.println("uploading... : " + path);
+            return dummy;
+        }
+
         return cache.getEntry(path);
     }
 

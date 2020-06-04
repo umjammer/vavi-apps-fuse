@@ -9,7 +9,6 @@ package vavi.nio.file.onedrive3;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,10 +17,9 @@ import org.junit.jupiter.api.Test;
 
 import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
+import vavi.net.fuse.Fuse;
 
 import static vavi.nio.file.Base.testAll;
-
-import co.paralleluniverse.javafs.JavaFS;
 
 
 /**
@@ -48,11 +46,13 @@ public class Main {
 
         FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, env);
 
-        Map<String, String> options = new HashMap<>();
+        Map<String, Object> options = new HashMap<>();
         options.put("fsname", "onedrive_fs" + "@" + System.currentTimeMillis());
         options.put("noappledouble", null);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, true);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
 
-        JavaFS.mount(fs, Paths.get(args[0]), false, false, options);
+        Fuse.getFuse().mount(fs, args[0], options);
     }
 
     @Test
