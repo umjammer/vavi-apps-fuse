@@ -51,7 +51,7 @@ import static vavi.nio.file.Util.toPathString;
 import de.tuberlin.onedrivesdk.OneDriveException;
 import de.tuberlin.onedrivesdk.OneDriveSDK;
 import de.tuberlin.onedrivesdk.common.OneItem;
-import de.tuberlin.onedrivesdk.downloadFile.OneDownloadFile;
+import de.tuberlin.onedrivesdk.downloadFile.OneDownload;
 import de.tuberlin.onedrivesdk.file.OneFile;
 import de.tuberlin.onedrivesdk.folder.OneFolder;
 import de.tuberlin.onedrivesdk.uploadFile.OneUploadFile;
@@ -139,10 +139,8 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
                 throw new IsDirectoryException("path: " + path);
             }
 
-            // TODO don't use temporary file
-            final OneDownloadFile downloader = OneFile.class.cast(entry).download(File.createTempFile("vavi-apps-fuse-", ".download"));
-            downloader.startDownload();
-            return new FileInputStream(downloader.getDownloadedFile());
+            final OneDownload downloader = OneFile.class.cast(entry).download();
+            return downloader.getDownloadedInputStream();
         } catch (OneDriveException e) {
             throw new IOException("path: " + path, e);
         }
