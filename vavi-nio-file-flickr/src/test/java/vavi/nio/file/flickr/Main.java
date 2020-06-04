@@ -10,15 +10,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-import co.paralleluniverse.javafs.JavaFS;
+import vavi.net.fuse.Fuse;
 
 
 /**
- * Flickr JavaFS.
+ * Flickr (fuse).
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/08/08 umjammer initial version <br>
@@ -35,9 +34,11 @@ public class Main {
 
         final FileSystem fs = FileSystems.newFileSystem(uri, env);
 
-        Map<String, String> options = new HashMap<>();
+        Map<String, Object> options = new HashMap<>();
         options.put("fsname", "flickr_fs" + "@" + System.currentTimeMillis());
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, true);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
 
-        JavaFS.mount(fs, Paths.get(args[0]), false, true, options);
+        Fuse.getFuse().mount(fs, args[0], options);
     }
 }

@@ -42,6 +42,7 @@ import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import vavi.nio.file.Cache;
 import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
+import vavi.util.Debug;
 
 
 /**
@@ -67,6 +68,18 @@ public final class FlickrFileSystemDriver extends UnixLikeFileSystemDriverBase {
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
     }
+
+    /** */
+    private UploadMonitor uploadMonitor = new UploadMonitor();
+
+    /** entry for uploading (for attributes) */
+    private static final Photo dummy = new Photo() {
+        {
+            setLastUpdate(new Date());
+            setOriginalWidth(0);
+            setOriginalHeight(0);
+        }
+    };
 
     /** */
     private Cache<Photo> cache = new Cache<Photo>() {
@@ -118,9 +131,6 @@ public final class FlickrFileSystemDriver extends UnixLikeFileSystemDriverBase {
         return new FlickrInputStream(flickr, entry, downloadFile);
     }
 
-    /** */
-    private UploadMonitor uploadMonitor = new UploadMonitor();
-
     @Nonnull
     @Override
     public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
@@ -134,10 +144,8 @@ public final class FlickrFileSystemDriver extends UnixLikeFileSystemDriverBase {
 
         java.io.File temp = java.io.File.createTempFile("vavi-apps-fuse-", ".upload");
 
-        uploadMonitor.start(path);
         return new FlickrOutputStream(flickr, temp, Util.toFilenameString(path), newEntry -> {
             try {
-                uploadMonitor.finish(path);
 System.out.println("file: " + newEntry.getTitle() + ", " + newEntry.getDateAdded());
                 cache.addEntry(path, newEntry);
             } catch (Exception e) {
@@ -162,6 +170,7 @@ System.out.println("file: " + newEntry.getTitle() + ", " + newEntry.getDateAdded
                                               Set<? extends OpenOption> options,
                                               FileAttribute<?>... attrs) throws IOException {
         if (options != null && Util.isWriting(options)) {
+            uploadMonitor.start(path);
             return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
                 @Override
                 protected long getLeftOver() throws IOException {
@@ -174,6 +183,11 @@ System.out.println("file: " + newEntry.getTitle() + ", " + newEntry.getDateAdded
                         }
                     }
                     return leftover;
+                }
+                @Override
+                public void close() throws IOException {
+                    uploadMonitor.finish(path);
+                    super.close();
                 }
             };
         } else {
@@ -273,6 +287,11 @@ System.err.println(e);
      */
     @Override
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
+        if (uploadMonitor.isUploading(path)) {
+Debug.println("uploading... : " + path);
+            return;
+        }
+
         cache.getEntry(path);
 
         // TODO: assumed; not a file == directory
@@ -294,12 +313,10 @@ System.err.println(e);
     @Nonnull
     @Override
     public Object getPathMetadata(final Path path) throws IOException {
-if (uploadMonitor.isUploading(path)) {
-System.out.println("uploading...");
-    Photo photo = new Photo();
-    photo.setTitle(Util.toFilenameString(path));
-    return photo;
-}
+        if (uploadMonitor.isUploading(path)) {
+Debug.println("uploading... : " + path);
+            return dummy;
+        }
 
         return cache.getEntry(path);
     }
