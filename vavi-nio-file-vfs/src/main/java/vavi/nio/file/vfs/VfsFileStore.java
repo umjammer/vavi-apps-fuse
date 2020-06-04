@@ -26,16 +26,16 @@ import com.github.fge.filesystem.filestore.FileStoreBase;
  */
 public final class VfsFileStore extends FileStoreBase {
 
-    private final FileObject entry; // TODO
+    private final FileObject root; // TODO
 
     /**
      * Constructor
      *
-     * @param manager the (valid) Commons VFS drive to use
+     * @param root the (valid) Commons VFS drive to use
      */
-    public VfsFileStore(final FileObject manager, final FileAttributesFactory factory) {
+    public VfsFileStore(final FileObject root, final FileAttributesFactory factory) {
         super("vfs", factory, false);
-        this.entry = manager;
+        this.root = root;
     }
 
     /**

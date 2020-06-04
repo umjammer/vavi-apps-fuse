@@ -8,6 +8,7 @@ package vavi.net.auth.proprietary.vfs;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 
 import vavi.net.auth.AppCredential;
 import vavi.net.auth.UserCredential;
@@ -41,10 +42,14 @@ public class VfsCredential implements UserCredential, AppCredential {
     @Property(name = "vfs.port.{0}")
     protected int port = -1;
 
+    /** */
+    protected String scheme;
+
     /**
      * @param uri scheme://{username}:{password}@{host}:{port}
      */
     public VfsCredential(URI uri) {
+        this.scheme = uri.getScheme();
         String[] userInfo = uri.getUserInfo() != null ? uri.getUserInfo().split(":") : null;
         if (userInfo != null && !userInfo[0].isEmpty()) {
             this.username = userInfo[0];
@@ -73,7 +78,7 @@ public class VfsCredential implements UserCredential, AppCredential {
 
     @Override
     public String getClientId() {
-        return "webdav";
+        return scheme;
     }
 
     @Override
@@ -108,27 +113,31 @@ public class VfsCredential implements UserCredential, AppCredential {
 
     /** */
     public String buildBaseUrl() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getClientId());
-        sb.append("://");
-        if (username != null) {
-            sb.append(username);
-        }
-        if (password != null) {
-            sb.append(":");
-            sb.append(password);
-        }
-        if (host != null) {
-            if (username != null || password != null) {
-                sb.append("@");
+        try {
+            StringBuilder sb = new StringBuilder();
+            sb.append(getClientId());
+            sb.append("://");
+            if (username != null) {
+                sb.append(URLEncoder.encode(username, "utf-8"));
             }
-            sb.append(host);
+            if (password != null) {
+                sb.append(":");
+                sb.append(password);
+            }
+            if (host != null) {
+                if (username != null || password != null) {
+                    sb.append("@");
+                }
+                sb.append(host);
+            }
+            if (port != -1) {
+                sb.append(":");
+                sb.append(port);
+            }
+            return sb.toString();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
         }
-        if (port != -1) {
-            sb.append(":");
-            sb.append(port);
-        }
-        return sb.toString();
     }
 }
 

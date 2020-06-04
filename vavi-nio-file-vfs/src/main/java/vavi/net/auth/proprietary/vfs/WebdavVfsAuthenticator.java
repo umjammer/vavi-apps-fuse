@@ -19,6 +19,9 @@ import vavi.util.Debug;
 /**
  * WebdavVfsAuthenticator.
  *
+ * TODO commons-vfs2-jackrabbit2 cannot deal https? wait for 2.7.0
+ * https://github.com/apache/commons-vfs/pull/81
+ *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2020/05/02 umjammer initial version <br>
  */

@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.file.FileSystem;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,9 +17,9 @@ import java.util.Map;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import static vavi.nio.file.Base.testAll;
+import vavi.net.fuse.Fuse;
 
-import co.paralleluniverse.javafs.JavaFS;
+import static vavi.nio.file.Base.testAll;
 
 
 /**
@@ -45,10 +44,12 @@ public class Main {
 
         FileSystem fs = new VfsFileSystemProvider().newFileSystem(uri, env);
 
-        Map<String, String> options = new HashMap<>();
+        Map<String, Object> options = new HashMap<>();
         options.put("fsname", "vfs_fs" + "@" + System.currentTimeMillis());
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, true);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
 
-        JavaFS.mount(fs, Paths.get(mountPoint), false, true, options);
+        Fuse.getFuse().mount(fs, mountPoint, options);
     }
 
     @Test
@@ -87,6 +88,7 @@ public class Main {
      * </ul>
      */
     @Test
+    @Disabled
     void test01() throws Exception {
         String username = URLEncoder.encode(System.getenv("TEST_SFTP_ACCOUNT"), "utf-8");
         String passPhrase = URLEncoder.encode(System.getenv("TEST_SFTP_PASSPHRASE"), "utf-8");
@@ -95,6 +97,31 @@ public class Main {
         String path = System.getenv("TEST_SFTP_PATH");
 
         URI uri = URI.create(String.format("vfs:sftp://%s@%s%s?keyPath=%s&passphrase=%s", username, host, path, keyPath, passPhrase));
+
+        testAll(new VfsFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
+    }
+
+    /**
+     * TODO doesn't work
+     *
+     * environment variable
+     * <ul>
+     * <li> TEST_WEBDAV_ACCOUNT
+     * <li> TEST_WEBDAV_PASSWORD
+     * <li> TEST_WEBDAV_HOST
+     * <li> TEST_WEBDAV_PORT
+     * <li> TEST_WEBDAV_PATH
+     * </ul>
+     */
+    @Test
+    void test02() throws Exception {
+        String username = URLEncoder.encode(System.getenv("TEST_WEBDAV_ACCOUNT"), "utf-8");
+        String password = System.getenv("TEST_WEBDAV_PASSWORD");
+        String host = System.getenv("TEST_WEBDAV_HOST");
+        String port = System.getenv("TEST_WEBDAV_PORT");
+        String path = System.getenv("TEST_WEBDAV_PATH");
+
+        URI uri = URI.create(String.format("vfs:webdav4s://%s:%s@%s:%s%s", username, password, host, port, path));
 
         testAll(new VfsFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
     }

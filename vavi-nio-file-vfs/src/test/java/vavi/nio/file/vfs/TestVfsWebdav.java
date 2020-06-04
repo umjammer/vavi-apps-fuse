@@ -12,7 +12,7 @@ import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.VFS;
-import org.apache.commons.vfs2.provider.webdav.WebdavFileSystemConfigBuilder;
+import org.apache.commons.vfs2.provider.webdav4.Webdav4FileSystemConfigBuilder;
 
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
@@ -55,7 +55,7 @@ public class TestVfsWebdav {
 
     void proceed() throws IOException {
         FileSystemOptions options = new FileSystemOptions();
-        WebdavFileSystemConfigBuilder.getInstance().setUrlCharset(options, "utf-8");
+        Webdav4FileSystemConfigBuilder.getInstance().setUrlCharset(options, "utf-8");
         FileSystemManager fs = VFS.getManager();
         if (!fs.hasProvider("webdav"))
             throw new RuntimeException("Provider missing: webdav");

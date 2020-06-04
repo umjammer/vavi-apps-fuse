@@ -147,7 +147,7 @@ Debug.println("credential: by uri");
         SftpFileSystemConfigBuilder.getInstance().setSessionTimeoutMillis(options, 10000);
         SftpFileSystemConfigBuilder.getInstance().setUserInfo(options, new SftpUserInfo(pkc ? c.passphrase : c.password, pkc));
         if (pkc) {
-            SftpFileSystemConfigBuilder.getInstance().setIdentityInfo(options, new IdentityInfo(new File(c.keyPath)));
+            SftpFileSystemConfigBuilder.getInstance().setIdentityProvider(options, new IdentityInfo(new File(c.keyPath)));
         }
         return options;
     }

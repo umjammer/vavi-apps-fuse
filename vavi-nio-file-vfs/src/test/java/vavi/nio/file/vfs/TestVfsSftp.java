@@ -84,7 +84,7 @@ public class TestVfsSftp {
         SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(options, false);
         SftpFileSystemConfigBuilder.getInstance().setSessionTimeoutMillis(options, 10000);
         SftpFileSystemConfigBuilder.getInstance().setUserInfo(options, new SftpPassphraseUserInfo(passphrase));
-        SftpFileSystemConfigBuilder.getInstance().setIdentityInfo(options, new IdentityInfo(new File(keyPath)));
+        SftpFileSystemConfigBuilder.getInstance().setIdentityProvider(options, new IdentityInfo(new File(keyPath)));
         FileSystemManager fs = VFS.getManager();
         if (!fs.hasProvider("sftp"))
             throw new RuntimeException("Provider missing: sftp");
