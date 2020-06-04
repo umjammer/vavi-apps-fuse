@@ -274,15 +274,10 @@ System.err.println("newAsynchronousFileChannel: " + path);
     public SeekableByteChannel newByteChannel(Path path,
                                               Set<? extends OpenOption> options,
                                               FileAttribute<?>... attrs) throws IOException {
-new Exception("*** DUMMY ***").printStackTrace();
-if (options != null) {
- options.forEach(o -> { System.err.println("newByteChannel: " + o); });
-}
-if (lock != null) {
-    System.err.println("newByteChannel: locked: " + path);
-    return null;
-}
-        if (options != null && (options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND))) {
+//if (options != null) {
+// options.forEach(o -> { System.err.println("newByteChannel: " + o); });
+//}
+        if (options != null && Util.isWriting(options)) {
             return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
                 @Override
                 protected long getLeftOver() throws IOException {
