@@ -17,6 +17,7 @@ import java.nio.file.FileStore;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
@@ -80,7 +81,32 @@ public final class ArchiveFileSystemDriver extends UnixLikeFileSystemDriverBase 
     public SeekableByteChannel newByteChannel(Path path,
                                               Set<? extends OpenOption> options,
                                               FileAttribute<?>... attrs) throws IOException {
-        throw new UnsupportedOperationException("newByteChannel is not supported by the file system");
+        if (options != null && Util.isWriting(options)) {
+            return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
+                @Override
+                protected long getLeftOver() throws IOException {
+                    long leftover = 0;
+                    if (options.contains(StandardOpenOption.APPEND)) {
+                        Entry<?> entry = archive.getEntry(path.toAbsolutePath().toString());
+                        if (entry != null && entry.getSize() >= 0) {
+                            leftover = entry.getSize();
+                        }
+                    }
+                    return leftover;
+                }
+            };
+        } else {
+            Entry<?> entry = archive.getEntry(path.toAbsolutePath().toString());
+            if (entry.isDirectory()) {
+                throw new NoSuchFileException(path.toString());
+            }
+            return new Util.SeekableByteChannelForReading(newInputStream(path, null)) {
+                @Override
+                protected long getSize() throws IOException {
+                    return entry.getSize();
+                }
+            };
+        }
     }
 
     @Override
@@ -136,7 +162,7 @@ public final class ArchiveFileSystemDriver extends UnixLikeFileSystemDriverBase 
     private List<Path> getDirectoryEntries(final Path dir) throws IOException {
         List<Path> list = new ArrayList<>(archive.size());
 
-        for (Entry entry : archive.entries()) {
+        for (Entry<?> entry : archive.entries()) {
             Path childPath = dir.resolve(entry.getName());
             list.add(childPath);
         }
