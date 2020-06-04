@@ -42,6 +42,6 @@ public class GoogleDriveFS {
 
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, env);
 
-        Fuse.Factory.getFuse().mount(fs, args[0], Collections.EMPTY_MAP);
+        Fuse.getFuse().mount(fs, args[0], Collections.EMPTY_MAP);
     }
 }

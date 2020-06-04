@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,9 +17,9 @@ import java.util.Map;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import static vavi.nio.file.Base.testAll;
+import vavi.net.fuse.Fuse;
 
-import co.paralleluniverse.javafs.JavaFS;
+import static vavi.nio.file.Base.testAll;
 
 
 /**
@@ -45,12 +44,16 @@ public class Main {
 
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, env);
 
-        Map<String, String> options = new HashMap<>();
+        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
+
+        Map<String, Object> options = new HashMap<>();
         options.put("fsname", "googledrive_fs" + "@" + System.currentTimeMillis());
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, true);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
         options.put("noappledouble", null);
 //        options.put("noapplexattr", null);
 
-        JavaFS.mount(fs, Paths.get(args[0]), true, false, options);
+        Fuse.getFuse().mount(fs, args[0], Collections.EMPTY_MAP);
     }
 
     @Test
