@@ -6,14 +6,12 @@
 
 package vavi.net.fuse;
 
+import java.io.Closeable;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.FileSystem;
 import java.util.Map;
-
-import vavi.util.Debug;
-import vavi.util.properties.annotation.Property;
-import vavi.util.properties.annotation.PropsEntity;
+import java.util.NoSuchElementException;
+import java.util.ServiceLoader;
 
 
 /**
@@ -22,33 +20,23 @@ import vavi.util.properties.annotation.PropsEntity;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2020/05/29 umjammer initial version <br>
  */
-public interface Fuse {
+public interface Fuse extends Closeable {
 
     /** */
-    void mount(FileSystem fs, String mountPoint, Map<String, String> env) throws IOException;
+    void mount(FileSystem fs, String mountPoint, Map<String, Object> env) throws IOException;
 
     /** */
-    void unmount() throws IOException;
+    static final ServiceLoader<FuseProvider> serviceLoader = ServiceLoader.load(FuseProvider.class);
 
     /** */
-    @PropsEntity
-    class Factory {
-        private Factory() {}
-
-        @Property("vavi.net.fuse.fusejna.FuseJnaFuse")
-        private String fuseClassName;
-
-        public static Fuse getFuse() {
-            try {
-                Factory bean = new Factory();
-                PropsEntity.Util.bind(bean);
-Debug.println("fuseClassName: " + bean.fuseClassName);
-                return Fuse.class.cast(Class.forName(bean.fuseClassName).getDeclaredConstructor().newInstance());
-            } catch (InstantiationException | IllegalAccessException | IllegalArgumentException |
-                     InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException | IOException e) {
-                throw new IllegalStateException(e);
+    static Fuse getFuse() {
+        String className = System.getProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.fusejna.FuseJnaFuseProvider");
+        for (FuseProvider provider : serviceLoader) {
+            if (provider.getClass().getName().equals(className)) {
+                return provider.getFuse();
             }
         }
+        throw new NoSuchElementException(className);
     }
 }
 
