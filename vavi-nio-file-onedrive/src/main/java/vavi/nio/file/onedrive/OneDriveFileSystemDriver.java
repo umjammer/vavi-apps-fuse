@@ -6,12 +6,9 @@
 
 package vavi.nio.file.onedrive;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
@@ -46,6 +43,7 @@ import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import vavi.nio.file.Cache;
 import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
+import vavi.util.Debug;
 
 import static vavi.nio.file.Util.toFilenameString;
 import static vavi.nio.file.Util.toPathString;
@@ -84,6 +82,22 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
     }
 
     /** */
+    private UploadMonitor uploadMonitor = new UploadMonitor();
+
+    /** entry for uploading (for attributes) */
+    private static final OneItem dummy = new OneItem() {
+        public String getName() {
+            return "vavi-nio-file-onedrive.dummy";
+        }
+        public boolean isFile() {
+            return true;
+        }
+        public boolean isFolder() {
+            return false;
+        }
+    };
+
+    /** */
     private Cache<OneItem> cache = new Cache<OneItem>() {
         /**
          * TODO when the parent is not cached
@@ -115,9 +129,6 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
         }
     };
 
-    /** */
-    private UploadMonitor uploadMonitor = new UploadMonitor();
-
     @Nonnull
     @Override
     public InputStream newInputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
@@ -137,23 +148,6 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
         }
     }
 
-    /**
-     * fuse からだと
-     * <ol>
-     *  <li>create -> newByteChannel
-     *  <li>flush -> n/a
-     *  <li>lock -> n/a
-     *  <li>release -> byteChannel.close
-     * </ol>
-     * と呼ばれる <br/>
-     * 元のファイルが取れない... <br/>
-     * 書き込みの指示もない...
-     * <p>
-     * nio.file からだと
-     * <pre>
-     *  newOutputStream -> write(2)
-     * </pre>
-     */
     @Nonnull
     @Override
     public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
@@ -173,7 +167,6 @@ System.out.println("newOutputStream: " + e.getMessage());
 
         // TODO don't use temporary file
         OneFolder dirEntry = (OneFolder) cache.getEntry(path.getParent());
-        uploadMonitor.start(path);
         return new Util.OutputStreamForUploading() {
             @Override
             protected void onClosed() throws IOException {
@@ -184,7 +177,6 @@ System.out.println("newOutputStream: " + e.getMessage());
                     final OneUploadFile uploader = dirEntry.uploadFile(tmp.toFile(), toFilenameString(path));
                     OneFile newEntry = uploader.startUpload();
                     cache.addEntry(path, OneItem.class.cast(newEntry));
-                    uploadMonitor.finish(path);
                 } catch (OneDriveException e) {
 e.printStackTrace();
                     throw new IOException(e);
@@ -209,6 +201,7 @@ e.printStackTrace();
                                               Set<? extends OpenOption> options,
                                               FileAttribute<?>... attrs) throws IOException {
         if (options != null  && Util.isWriting(options)) {
+            uploadMonitor.start(path);
             return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
                 @Override
                 protected long getLeftOver() throws IOException {
@@ -221,19 +214,9 @@ e.printStackTrace();
                     }
                     return leftover;
                 }
-
                 @Override
                 public void close() throws IOException {
-System.out.println("SeekableByteChannelForWriting::close");
-                    if (written == 0) {
-                        // TODO no mean
-System.out.println("SeekableByteChannelForWriting::close: scpecial: " + path);
-                        File file = new File(toPathString(path));
-                        FileInputStream fis = new FileInputStream(file);
-                        FileChannel fc = fis.getChannel();
-                        fc.transferTo(0, file.length(), this);
-                        fis.close();
-                    }
+                    uploadMonitor.finish(path);
                     super.close();
                 }
             };
@@ -345,6 +328,11 @@ e.printStackTrace();
      */
     @Override
     public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
+        if (uploadMonitor.isUploading(path)) {
+Debug.println("uploading... : " + path);
+            return;
+        }
+
         final OneItem entry = cache.getEntry(path);
 
         if (!entry.isFile()) {
@@ -370,29 +358,11 @@ e.printStackTrace();
     @Nonnull
     @Override
     public Object getPathMetadata(final Path path) throws IOException {
-if (uploadMonitor.isUploading(path)) {
-System.out.println("uploading... (meta): " + toPathString(path));
-    return new OneItem() {
-        public String getId() {
-            return "-1";
+        if (uploadMonitor.isUploading(path)) {
+Debug.println("uploading... : " + path);
+            return dummy;
         }
-        public String getName() {
-            return path.getFileName().toString();
-        }
-        public long getSize() {
-            return 0;
-        }
-        public long getLastModifiedDateTime() {
-            return 0;
-        }
-        public boolean isFile() {
-            return true;
-        }
-        public boolean isFolder() {
-            return false;
-        }
-    };
-}
+
         return cache.getEntry(path);
     }
 
