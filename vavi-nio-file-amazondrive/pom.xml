@@ -5,7 +5,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
   </parent>
 
   <artifactId>vavi-nio-file-amazondrive</artifactId>
@@ -27,7 +27,7 @@
     </dependency>
 
     <dependency>
-      <groupId>com.github.umjammer</groupId>
+      <groupId>${vavi-nio-file.groupId}</groupId>
       <artifactId>vavi-nio-file</artifactId>
     </dependency>
 
@@ -54,10 +54,8 @@
     </dependency>
 
     <dependency>
-      <!-- fuse jnr (co.paralleluniverse) -->
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>javafs</artifactId>
-      <version>0.1.2v</version>
+      <groupId>vavi</groupId>
+      <artifactId>vavi-net-fuse</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

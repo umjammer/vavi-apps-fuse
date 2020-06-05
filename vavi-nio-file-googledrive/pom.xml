@@ -5,7 +5,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
   </parent>
 
   <artifactId>vavi-nio-file-googledrive</artifactId>
@@ -74,10 +74,14 @@
       <!-- java-fs base -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>java7-fs-base</artifactId>
+      <exclusions>
+        <exclusion>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
-      <groupId>com.github.umjammer</groupId>
+      <groupId>${vavi-nio-file.groupId}</groupId>
       <artifactId>vavi-nio-file</artifactId>
     </dependency>
 
@@ -102,9 +106,15 @@
       <artifactId>junit-platform-commons</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <version>5.3.0</version>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
-      <groupId>com.github.umjammer</groupId>
+      <groupId>${vavi-nio-file.groupId}</groupId>
       <artifactId>vavi-nio-file</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
@@ -117,6 +127,12 @@
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-net-fuse</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>vavi</groupId>
+      <artifactId>vavi-net-fuse</artifactId>
+      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
   </dependencies>

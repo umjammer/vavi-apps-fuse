@@ -4,7 +4,7 @@
   <parent>
     <artifactId>vavi-apps-fuse</artifactId>
     <groupId>vavi</groupId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
   </parent>
 
   <artifactId>vavi-nio-file-vfs</artifactId>
@@ -37,26 +37,26 @@
     </dependency>
 
     <dependency>
-      <groupId>com.github.umjammer</groupId>
+      <groupId>${vavi-nio-file.groupId}</groupId>
       <artifactId>vavi-nio-file</artifactId>
     </dependency>
 
     <dependency>
       <groupId>com.github.umjammer.vavi-net-auth</groupId>
       <artifactId>vavi-net-auth-common</artifactId>
-      <version>0.1.1</version>
+      <version>${vavi-net-auth.version}</version>
     </dependency>
 
     <dependency>
       <!-- java-fs vfs2 -->
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-vfs2</artifactId>
-      <version>2.3</version>
+      <version>2.6.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
-      <artifactId>commons-vfs2-sandbox</artifactId>
-      <version>2.0-wso2v8</version>
+      <artifactId>commons-vfs2-jackrabbit2</artifactId>
+      <version>2.6.0</version>
     </dependency>
     <dependency>
       <!-- java-fs vfs2 ssh -->
@@ -68,18 +68,6 @@
       <groupId>com.jcraft</groupId>
       <artifactId>jsch</artifactId>
       <version>0.1.51</version>
-    </dependency>
-    <dependency>
-      <!-- java-fs vfs2 webdav -->
-      <groupId>org.apache.jackrabbit</groupId>
-      <artifactId>jackrabbit-webdav</artifactId>
-      <version>${jackrabbit.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>commons-httpclient</groupId>
@@ -102,17 +90,27 @@
       <artifactId>junit-platform-commons</artifactId>
       <scope>test</scope>
     </dependency>
-
     <dependency>
-      <!-- fuse jnr (co.paralleluniverse) -->
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>javafs</artifactId>
-      <version>0.1.2v</version>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <version>5.3.0</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>com.github.umjammer</groupId>
+      <groupId>vavi</groupId>
+      <artifactId>vavi-net-fuse</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>vavi</groupId>
+      <artifactId>vavi-net-fuse</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>${vavi-nio-file.groupId}</groupId>
       <artifactId>vavi-nio-file</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
@@ -120,6 +118,13 @@
     <dependency>
       <groupId>com.rainerhahnekamp</groupId>
       <artifactId>sneakythrow</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-log4j12</artifactId>
+      <version>1.7.2</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

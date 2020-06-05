@@ -4,11 +4,12 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
 
   <properties>
     <vavi-net-auth.version>0.1.1</vavi-net-auth.version>
-    <vavi-nio-file.version>0.0.7</vavi-nio-file.version>
+    <vavi-nio-file.groupId>com.github.umjammer</vavi-nio-file.groupId>
+    <vavi-nio-file.version>0.0.9</vavi-nio-file.version>
   </properties>
 
   <modules>
@@ -137,9 +138,15 @@ TODO
         <groupId>com.github.umjammer</groupId>
         <artifactId>java7-fs-base</artifactId>
         <version>0.0.7v</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.github.umjammer</groupId>
+            <artifactId>vavi-commons</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
-        <groupId>com.github.umjammer</groupId>
+        <groupId>${vavi-nio-file.groupId}</groupId>
         <artifactId>vavi-nio-file</artifactId>
         <version>${vavi-nio-file.version}</version>
       </dependency>
@@ -153,7 +160,7 @@ TODO
       <dependency>
         <groupId>vavi</groupId>
         <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.0</version>
+        <version>0.1.1</version>
       </dependency>
 
       <dependency>
@@ -176,7 +183,7 @@ TODO
       </dependency>
 
       <dependency>
-        <groupId>com.github.umjammer</groupId>
+        <groupId>${vavi-nio-file.groupId}</groupId>
         <artifactId>vavi-nio-file</artifactId>
         <version>${vavi-nio-file.version}</version>
         <type>test-jar</type>
@@ -192,7 +199,14 @@ TODO
       <dependency>
         <groupId>vavi</groupId>
         <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.0</version>
+        <version>0.1.1</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>vavi</groupId>
+        <artifactId>vavi-net-fuse</artifactId>
+        <version>0.1.1</version>
+        <type>test-jar</type>
         <scope>test</scope>
       </dependency>
     </dependencies>

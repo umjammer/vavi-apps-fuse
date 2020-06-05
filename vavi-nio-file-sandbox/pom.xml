@@ -7,7 +7,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
   </parent>
 
   <artifactId>vavi-nio-file-sandbox</artifactId>
@@ -42,11 +42,12 @@
   </repositories>
 
   <dependencies>
+<!-- 
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-net-fuse</artifactId>
     </dependency>
-
+ -->
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
@@ -72,19 +73,19 @@
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-onedrive</artifactId>
-      <version>0.1.0</version>
+      <version>0.1.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-onedrive4</artifactId>
-      <version>0.1.0</version>
+      <version>0.1.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-googledrive</artifactId>
-      <version>0.1.0</version>
+      <version>0.1.1</version>
       <scope>test</scope>
     </dependency>
 
@@ -120,13 +121,6 @@
       <groupId>com.github.Querz</groupId>
       <artifactId>NBT</artifactId>
       <version>4.0</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.google.jimfs</groupId>
-      <artifactId>jimfs</artifactId>
-      <version>1.1</version>
       <scope>test</scope>
     </dependency>
 
