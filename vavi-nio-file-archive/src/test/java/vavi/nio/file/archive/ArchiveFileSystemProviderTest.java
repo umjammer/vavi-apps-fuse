@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -57,8 +58,9 @@ System.err.println("rawFragment: " + uri.getRawFragment());
     }
 
     @Test
+    @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void test3() throws Exception {
-        URI uri = URI.create("archive:file:/Users/nsano/src/vavi/vavi-util-archive/tmp/ugca010c.lzh");
+        URI uri = URI.create("archive:file:/Users/nsano/src/vavi/vavi-util-archive/src/test/resources/test.lzh");
         FileSystem fs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP);
         Files.list(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
     }

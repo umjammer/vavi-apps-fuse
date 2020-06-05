@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
 
 /**
@@ -23,8 +24,9 @@ import org.junit.jupiter.api.Test;
 class HfsFileSystemProviderTest {
 
     @Test
+    @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void test3() throws Exception {
-        URI uri = URI.create("hfs:file:/Users/nsano/Downloads/Play-20170829.dmg");
+        URI uri = URI.create("hfs:file:/Users/nsano/Downloads/googlechrome-80.dmg");
         FileSystem fs = new HfsFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
         Files.list(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
     }

@@ -4,7 +4,6 @@
  * Programmed by Naohide Sano
  */
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -12,6 +11,8 @@ import org.cryptomator.frontend.fuse.mount.EnvironmentVariables;
 import org.cryptomator.frontend.fuse.mount.FuseMountFactory;
 import org.cryptomator.frontend.fuse.mount.Mount;
 import org.cryptomator.frontend.fuse.mount.Mounter;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 
 /**
@@ -22,19 +23,28 @@ import org.cryptomator.frontend.fuse.mount.Mounter;
  */
 public class Test5 {
 
-    /**
-     * @param args
-     */
-    public static void main(String[] args) throws Exception {
-        Path mountPoint = Files.createTempDirectory("fuse-mount");
+    // TODO doesn't work
+    @Test
+    @Disabled
+    public void test01() throws Exception {
+//        String email = System.getenv("TEST5_GOOGLE_ACCOUNT");
+        String mp = System.getenv("TEST5_GOOGLE_MOUNT_POINT");
+
+//        URI uri = URI.create("googledrive:///?id=" + email);
+//        Map<String, Object> env = new HashMap<>();
+//        env.put("ignoreAppleDouble", true);
+//        FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, env);
+//        Path remote = fs.getRootDirectories().iterator().next();
+        Path remote = Paths.get("/tmp");
+
+        Path mountPoint = Paths.get(mp);
         Mounter mounter = FuseMountFactory.getMounter();
         EnvironmentVariables envVars = EnvironmentVariables.create()
                 .withFlags(mounter.defaultMountFlags())
                 .withMountPoint(mountPoint)
                 .withRevealCommand("nautilus")
                 .build();
-        Path tmp = Paths.get("/tmp");
-        Mount mnt = mounter.mount(tmp, envVars);
+        Mount mnt = mounter.mount(remote, envVars);
         mnt.revealInFileManager();
         System.out.println("Wait for it...");
         System.in.read();

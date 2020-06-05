@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
 import com.github.fge.filesystem.box.provider.BoxFileSystemProvider;
 import com.github.fge.fs.dropbox.provider.DropBoxFileSystemProvider;
@@ -126,6 +127,7 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
     }
 
     @Test
+    @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void test() throws IOException {
         Map<String, FileSystem> fileSystems = new HashMap<>();
         NameMap nameMap = new NameMap();
