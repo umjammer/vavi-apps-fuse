@@ -6,9 +6,11 @@
 
 package vavi.nio.file.onedrive3;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URLEncoder;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
@@ -17,6 +19,7 @@ import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
@@ -179,23 +182,42 @@ Debug.println("newOutputStream: " + e.getMessage());
 //new Exception("*** DUMMY ***").printStackTrace();
         }
 
-        return new Util.OutputStreamForUploading() { // TODO used for only to get file length
+        OneDriveUploadOption uploadOption = Util.getOneOfOptions(OneDriveUploadOption.class, options);
+        if (uploadOption != null) {
+            // java.nio.file is highly abstracted, so here source information is lost.
+            // but onedrive graph api requires content length for upload.
+            // so reluctantly we provide {@link OneDriveUploadOpenOption} for {@link java.nio.file.Files#copy} options.
+            Path source = uploadOption.getSource();
+Debug.println("upload w/ option: " + source);
+            return uploadEntry(path, (int) Files.size(source));
+        } else {
+Debug.println("upload w/o option");
+            return new Util.OutputStreamForUploading() { // TODO used for only getting file length
                 @Override
                 protected void onClosed() throws IOException {
                     InputStream is = getInputStream();
+Debug.println("upload w/o option: " + is.available());
+                    OutputStream os = uploadEntry(path, is.available());
+                    Util.transfer(is, os);
+                    is.close();
+                    os.close();
+                }
+            };
+        }
+    }
+
+    /** */
+    private OutputStream uploadEntry(Path path, int size) throws IOException {
         OneDriveFolder dirEntry = OneDriveFolder.class.cast(cache.getEntry(path.getParent()));
-                OneDriveFile entry = new OneDriveFile(client, dirEntry, toFilenameString(path), ItemIdentifierType.Path);
+        OneDriveFile entry = new OneDriveFile(client, dirEntry, URLEncoder.encode(toFilenameString(path), "utf-8"), ItemIdentifierType.Path);
         final OneDriveUploadSession uploadSession = entry.createUploadSession();
-                OutputStream os = new OneDriveOutputStream(uploadSession, path, is.available(), newEntry -> {
+        return new BufferedOutputStream(new OneDriveOutputStream(uploadSession, path, size, newEntry -> {
             try {
                 cache.addEntry(path, newEntry);
             } catch (IOException e) {
                 throw new IllegalStateException(e);
             }
-                });
-                Util.transfer(is, os);
-            }
-        };
+        }), Util.BUFFER_SIZE);
     }
 
     @Nonnull
