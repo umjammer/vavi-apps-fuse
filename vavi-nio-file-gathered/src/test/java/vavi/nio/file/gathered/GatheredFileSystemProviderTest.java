@@ -41,6 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2019/06/23 umjammer initial version <br>
  */
+@DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
 class GatheredFileSystemProviderTest {
 
     /**
@@ -127,7 +128,6 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
     }
 
     @Test
-    @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void test() throws IOException {
         Map<String, FileSystem> fileSystems = new HashMap<>();
         NameMap nameMap = new NameMap();
