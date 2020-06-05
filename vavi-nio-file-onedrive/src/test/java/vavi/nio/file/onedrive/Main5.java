@@ -33,7 +33,7 @@ import static java.nio.file.FileVisitResult.CONTINUE;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2017/03/14 umjammer initial version <br>
  */
-public final class Main4 {
+public final class Main5 {
 
     public static void main(final String... args) throws IOException {
         String email = args[0];
