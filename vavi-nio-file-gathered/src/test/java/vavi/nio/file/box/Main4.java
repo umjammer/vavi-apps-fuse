@@ -57,9 +57,9 @@ public class Main4 {
 
     @ParameterizedTest
     @ValueSource(strings = {
-        "vavi.net.fuse.javafs.JavaFSFuseProvider", // TODO failed
-//        "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider", // TODO unstable (sometimes failed)
-//        "vavi.net.fuse.fusejna.FuseJnaFuseProvider",
+        "vavi.net.fuse.javafs.JavaFSFuseProvider",
+        "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider",
+        "vavi.net.fuse.fusejna.FuseJnaFuseProvider",
     })
     public void test01(String providerClassName) throws Exception {
         System.setProperty("vavi.net.fuse.FuseProvider.class", providerClassName);

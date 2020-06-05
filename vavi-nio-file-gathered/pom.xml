@@ -102,7 +102,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>java7-fs-box</artifactId>
-      <version>0.1.8v</version>
+      <version>0.1.9v</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
