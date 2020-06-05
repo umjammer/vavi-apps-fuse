@@ -30,8 +30,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -51,6 +49,7 @@ import com.google.api.services.drive.model.FileList;
 import vavi.nio.file.Cache;
 import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
+import vavi.util.Debug;
 
 import static vavi.nio.file.Util.toFilenameString;
 
@@ -156,9 +155,8 @@ public final class GoogleDriveFileSystemDriver extends UnixLikeFileSystemDriverB
         }
 
         // TODO detect automatically?
-        if (options != null && options.stream().anyMatch(o -> GoogleDriveOpenOption.class.isInstance(o))) {
-            GoogleDriveOpenOption option = GoogleDriveOpenOption.class
-                    .cast(options.stream().filter(o -> GoogleDriveOpenOption.class.isInstance(o)).findFirst().get());
+        GoogleDriveOpenOption option = Util.getOneOfOptions(GoogleDriveOpenOption.class, options);
+        if (option != null) {
             return drive.files().export(entry.getId(), option.getValue()).executeMediaAsInputStream();
         } else {
             return drive.files().get(entry.getId()).executeMediaAsInputStream();
@@ -179,32 +177,51 @@ public final class GoogleDriveFileSystemDriver extends UnixLikeFileSystemDriverB
             }
         } catch (NoSuchFileException e) {
 System.out.println("newOutputStream: " + e.getMessage());
-if (options != null) {
- options.forEach(o -> { System.err.println("newOutputStream: " + o); });
-}
+//if (options != null) {
+// options.forEach(o -> { System.err.println("newOutputStream: " + o); });
+//}
         }
 
         // TODO detect automatically?
-        if (options != null && options.stream().anyMatch(o -> GoogleDriveOpenOption.class.isInstance(o))) {
         @SuppressWarnings("unused")
-            GoogleDriveOpenOption option = GoogleDriveOpenOption.class
-                    .cast(options.stream().filter(o -> GoogleDriveOpenOption.class.isInstance(o)).findFirst().get());
+        GoogleDriveOpenOption option = Util.getOneOfOptions(GoogleDriveOpenOption.class, options);
+
+        GoogleDriveUploadOption uploadOption = Util.getOneOfOptions(GoogleDriveUploadOption.class, options);
+        if (uploadOption != null) {
+            // java.nio.file is highly abstracted, so here source information is lost.
+            // but google drive api requires content length for upload.
+            // so reluctantly we provide {@link GoogleDriveUploadOpenOption} for {@link java.nio.file.Files#copy} options.
+            Path source = uploadOption.getSource();
+Debug.println("upload w/ option: " + source);
+            uploadEntry(path, java.nio.file.Files.newInputStream(source), java.nio.file.Files.size(source));
+
+            return new OutputStream() { // TODO redundant
+                @Override
+                public void write(int b) throws IOException {
                 }
-
-        uploadMonitor.start(path);
-
+            };
+        } else {
+Debug.println("upload w/o option");
             // TODO output directly
             return new Util.OutputStreamForUploading() {
-
                 @Override
                 protected void onClosed() throws IOException {
+                    InputStream is = getInputStream();
+                    uploadEntry(path, is, is.available());
+                }
+            };
+        }
+    }
+
+    /** */
+    private void uploadEntry(Path path, InputStream content, long size) throws IOException {
+        try {
             File fileMetadata = new File();
             fileMetadata.setName(toFilenameString(path));
             fileMetadata.setParents(Arrays.asList(cache.getEntry(path.getParent()).getId()));
 
-                InputStream is = getInputStream();
-                InputStreamContent mediaContent = new InputStreamContent(null, is);
-                mediaContent.setLength(is.available());
+            InputStreamContent mediaContent = new InputStreamContent(null, content);
+            mediaContent.setLength(size);
 
             Drive.Files.Create creator = drive.files().create(fileMetadata, mediaContent);
             MediaHttpUploader uploader = creator.getMediaHttpUploader();
@@ -212,40 +229,23 @@ if (options != null) {
             uploader.setProgressListener(u -> { System.err.println("upload progress: " + u.getProgress()); });
             final File newEntry = creator.setFields("id, name, size, parents, mimeType, createdTime").execute(); // TODO file is not finished status!
 
-                ExecutorService executorService = Executors.newSingleThreadExecutor();
-                executorService.submit(() -> {
-                    try {
             long timeout = 0;
             long delay = 100;
-                        try {
-System.err.println("executorService: " + uploader.getProgress() + ", " + uploader.getUploadState());
+System.err.println("upload: " + uploader.getProgress() + ", " + uploader.getUploadState());
             while (uploader.getUploadState() != UploadState.MEDIA_COMPLETE && uploader.getProgress() < 1 && timeout < 10 * 1000) {
-System.err.println("executorService: " + uploader.getProgress() + ", " + uploader.getUploadState() + ", " + timeout);
-                                Thread.sleep(delay);
+System.err.println("upload: " + uploader.getProgress() + ", " + uploader.getUploadState() + ", " + timeout);
+                try { Thread.sleep(delay); } catch (InterruptedException e) { e.printStackTrace(); }
                 timeout += delay;
                 delay *= 2;
             }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
 
 System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.size());
 
             cache.addEntry(path, newEntry);
-                    } catch (IOException e) {
-                        e.printStackTrace();
         } finally {
-                        try {
             uploadMonitor.finish(path);
-                        } catch(IOException e2) {
-                            e2.printStackTrace();
-                        } finally {
-                            lock = null;
+//            lock = null;
         }
-    }
-                });
-            }
-        };
     }
 
     @Nonnull

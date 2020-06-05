@@ -22,6 +22,8 @@ public class GoogleDriveFileSystemOptionsFactory extends FileSystemOptionsFactor
     public GoogleDriveFileSystemOptionsFactory() {
         addLinkOption(LinkOption.NOFOLLOW_LINKS);
         addCopyOption(GoogleDriveCopyOption.EXPORT_AS_GDOCS);
+        addCopyOption(new GoogleDriveUploadOption(null));
+        addWriteOpenOption(new GoogleDriveUploadOption(null));
         addReadOpenOption(GoogleDriveOpenOption.EXPORT_WITH_GDOCS_DOCX);
     }
 }
