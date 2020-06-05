@@ -23,8 +23,6 @@ import org.nuxeo.onedrive.client.OneDriveItem;
 
 import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider;
 
-import vavi.util.Debug;
-
 
 /**
  * {@link BasicFileAttributes} implementation for OneDrive
@@ -38,9 +36,9 @@ import vavi.util.Debug;
  */
 public final class OneDriveBasicFileAttributesProvider extends BasicFileAttributesProvider implements PosixFileAttributes {
 
-    private final OneDriveItem entry;
+    private final OneDriveItem.Metadata entry;
 
-    public OneDriveBasicFileAttributesProvider(@Nonnull final OneDriveItem entry) throws IOException {
+    public OneDriveBasicFileAttributesProvider(@Nonnull final OneDriveItem.Metadata entry) throws IOException {
         this.entry = Objects.requireNonNull(entry);
     }
 
@@ -57,12 +55,7 @@ public final class OneDriveBasicFileAttributesProvider extends BasicFileAttribut
      */
     @Override
     public FileTime lastModifiedTime() {
-        try {
-            return FileTime.fromMillis(entry.getMetadata().getLastModifiedDateTime().toEpochSecond() * 1000);
-        } catch (IOException e) {
-Debug.println(e.getMessage());
-            return FileTime.fromMillis(0);
-        }
+        return FileTime.fromMillis(entry.getLastModifiedDateTime().toEpochSecond() * 1000);
     }
 
     /**
@@ -70,12 +63,7 @@ Debug.println(e.getMessage());
      */
     @Override
     public boolean isRegularFile() {
-        try {
-            return entry.getMetadata().isFile();
-        } catch (IOException e) {
-Debug.println(e.getMessage());
-            return false;
-        }
+        return entry.isFile();
     }
 
     /**
@@ -83,12 +71,7 @@ Debug.println(e.getMessage());
      */
     @Override
     public boolean isDirectory() {
-        try {
-            return entry.getMetadata().isFolder();
-        } catch (IOException e) {
-Debug.println(e.getMessage());
-            return false;
-        }
+        return entry.isFolder();
     }
 
     /**
@@ -102,12 +85,7 @@ Debug.println(e.getMessage());
      */
     @Override
     public long size() {
-        try {
-            return entry.getMetadata().getSize();
-        } catch (IOException e) {
-Debug.println(e.getMessage());
-            return 0;
-        }
+        return entry.getSize();
     }
 
     /* @see java.nio.file.attribute.PosixFileAttributes#owner() */

@@ -52,10 +52,10 @@ public final class OneDriveOutputStream extends OutputStream {
     private final AtomicBoolean close = new AtomicBoolean();
     private long offset = 0L;
     private int length;
-    private OneDriveFile entry;
-    private Consumer<OneDriveFile> consumer;
+    private OneDriveFile.Metadata entry;
+    private Consumer<OneDriveFile.Metadata> consumer;
 
-    public OneDriveOutputStream(final OneDriveUploadSession upload, final Path file, int length, Consumer<OneDriveFile> consumer) {
+    public OneDriveOutputStream(final OneDriveUploadSession upload, final Path file, int length, Consumer<OneDriveFile.Metadata> consumer) {
         this.upload = upload;
         this.file = file;
         this.length = length;
@@ -69,6 +69,7 @@ public final class OneDriveOutputStream extends OutputStream {
 
     @Override
     public void write(final byte[] b, final int off, final int len) throws IOException {
+try {
         final byte[] content = Arrays.copyOfRange(b, off, len);
         final String header;
         if (length == -1) {
@@ -76,18 +77,17 @@ public final class OneDriveOutputStream extends OutputStream {
         } else {
             header = String.format("%d-%d/%d", offset, offset + content.length - 1, length);
         }
-try {
 Debug.printf("header %s", header);
         OneDriveJsonObject object = upload.uploadFragment(header, content);
         if (OneDriveFile.Metadata.class.isInstance(object)) {
-            entry = OneDriveFile.Metadata.class.cast(object).getResource();
+            entry = OneDriveFile.Metadata.class.cast(object);
 Debug.printf("Completed upload for %s", file);
         } else {
 Debug.printf(Level.FINE, "Uploaded fragment %s for file %s", header, file);
         }
         offset += content.length;
-Debug.printf("offset: %d", offset);
-} catch (Exception e) {
+Debug.printf("offset: %d (%d)", offset, content.length);
+} catch (Throwable e) {
  e.printStackTrace();
 }
     }

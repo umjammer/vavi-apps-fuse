@@ -20,7 +20,7 @@ import com.github.fge.filesystem.attributes.FileAttributesFactory;
 public final class OneDriveFileAttributesFactory extends FileAttributesFactory {
 
     public OneDriveFileAttributesFactory() {
-        setMetadataClass(OneDriveItem.class);
+        setMetadataClass(OneDriveItem.Metadata.class);
         addImplementation("basic", OneDriveBasicFileAttributesProvider.class);
     }
 }

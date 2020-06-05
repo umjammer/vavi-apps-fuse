@@ -6,6 +6,7 @@
 
 package vavi.nio.file.onedrive3;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -94,7 +95,7 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
         this.drive = drive;
 
         dummy = new OneDriveFile(client, drive, "dymmy", ItemIdentifierType.Path) {
-            public Metadata getMetadata(OneDriveExpand... expand) throws IOException {
+            public Metadata getMetadata(OneDriveExpand... expand) {
                 return new Metadata(new JsonObject()) {
                     public String getName() {
                         return "vavi-nio-file-onedrive3.dummy";
@@ -104,22 +105,22 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
                     }
                 };
             }
-        };
+        }.getMetadata();
     }
 
     /** */
     private UploadMonitor uploadMonitor = new UploadMonitor();
 
     /** entry for uploading (for attributes) */
-    private final OneDriveItem dummy;
+    private final OneDriveItem.Metadata dummy;
 
     /** */
-    private Cache<OneDriveItem> cache = new Cache<OneDriveItem>() {
+    private Cache<OneDriveItem.Metadata> cache = new Cache<OneDriveItem.Metadata>() {
         /**
          * @see #ignoreAppleDouble
          * @throws NoSuchFileException must be thrown when the path is not found in this cache
          */
-        public OneDriveItem getEntry(Path path) throws IOException {
+        public OneDriveItem.Metadata getEntry(Path path) throws IOException {
             if (cache.containsFile(path)) {
                 return cache.getFile(path);
             } else {
@@ -129,9 +130,9 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
 
 //                String pathString = toPathString(path);
 //Debug.println("path: " + pathString);
-                OneDriveItem entry;
+                OneDriveItem.Metadata entry;
                 if (path.getNameCount() == 0) {
-                    entry = drive.getRoot();
+                    entry = drive.getRoot().getMetadata();
                     cache.putFile(path, entry);
                     return entry;
                 } else {
@@ -155,24 +156,24 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
     @Nonnull
     @Override
     public InputStream newInputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
-        final OneDriveItem entry = cache.getEntry(path);
+        final OneDriveItem.Metadata entry = cache.getEntry(path);
 
         // TODO: metadata driver
-        if (entry.getMetadata().isFolder()) {
+        if (entry.isFolder()) {
             throw new IsDirectoryException("path: " + path);
         }
 
-        return OneDriveFile.class.cast(entry).download();
+        return new BufferedInputStream(OneDriveFile.class.cast(entry.getResource()).download(), Util.BUFFER_SIZE);
     }
 
     @Nonnull
     @Override
     public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
-        OneDriveItem entry = null;
+        OneDriveItem.Metadata entry = null;
         try {
             entry = cache.getEntry(path);
 
-            if (entry.getMetadata().isFolder()) {
+            if (entry.isFolder()) {
                 throw new IsDirectoryException("path: " + path);
             } else {
                 throw new FileAlreadyExistsException("path: " + path);
@@ -208,9 +209,9 @@ Debug.println("upload w/o option: " + is.available());
 
     /** */
     private OutputStream uploadEntry(Path path, int size) throws IOException {
-        OneDriveFolder dirEntry = OneDriveFolder.class.cast(cache.getEntry(path.getParent()));
-        OneDriveFile entry = new OneDriveFile(client, dirEntry, URLEncoder.encode(toFilenameString(path), "utf-8"), ItemIdentifierType.Path);
-        final OneDriveUploadSession uploadSession = entry.createUploadSession();
+        OneDriveFolder folder = OneDriveFolder.class.cast(cache.getEntry(path.getParent()).getResource());
+        OneDriveFile file = new OneDriveFile(client, folder, URLEncoder.encode(toFilenameString(path), "utf-8"), ItemIdentifierType.Path);
+        final OneDriveUploadSession uploadSession = file.createUploadSession();
         return new BufferedOutputStream(new OneDriveOutputStream(uploadSession, path, size, newEntry -> {
             try {
                 cache.addEntry(path, newEntry);
@@ -238,9 +239,9 @@ Debug.println("upload w/o option: " + is.available());
                 protected long getLeftOver() throws IOException {
                     long leftover = 0;
                     if (options.contains(StandardOpenOption.APPEND)) {
-                        OneDriveItem entry = cache.getEntry(path);
-                        if (entry != null && entry.getMetadata().getSize() >= 0) {
-                            leftover = entry.getMetadata().getSize();
+                        OneDriveItem.Metadata entry = cache.getEntry(path);
+                        if (entry != null && entry.getSize() >= 0) {
+                            leftover = entry.getSize();
                         }
                     }
                     return leftover;
@@ -252,14 +253,14 @@ Debug.println("upload w/o option: " + is.available());
                 }
             };
         } else {
-            OneDriveItem entry = cache.getEntry(path);
-            if (entry.getMetadata().isFolder()) {
+            OneDriveItem.Metadata entry = cache.getEntry(path);
+            if (entry.isFolder()) {
                 throw new IsDirectoryException(path.toString());
             }
             return new Util.SeekableByteChannelForReading(newInputStream(path, null)) {
                 @Override
                 protected long getSize() throws IOException {
-                    return OneDriveFile.class.cast(entry).getMetadata().getSize();
+                    return entry.getSize();
                 }
             };
         }
@@ -267,12 +268,12 @@ Debug.println("upload w/o option: " + is.available());
 
     @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
-        OneDriveItem parentEntry = cache.getEntry(dir.getParent());
+        OneDriveItem.Metadata parentEntry = cache.getEntry(dir.getParent());
 
         // TODO: how to diagnose?
-        OneDriveFolder.Metadata dirEntry = OneDriveFolder.class.cast(parentEntry).create(toFilenameString(dir));
+        OneDriveFolder.Metadata dirEntry = OneDriveFolder.class.cast(parentEntry.getResource()).create(toFilenameString(dir));
 
-        cache.addEntry(dir, OneDriveItem.class.cast(dirEntry.getResource()));
+        cache.addEntry(dir, dirEntry);
     }
 
     @Override
@@ -295,7 +296,7 @@ Debug.println("upload w/o option: " + is.available());
     @Override
     public void move(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
         if (cache.existsEntry(target)) {
-            if (cache.getEntry(target).getMetadata().isFolder()) {
+            if (cache.getEntry(target).isFolder()) {
                 if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
                     // replace the target
                     if (cache.getChildCount(target) > 0) {
@@ -347,9 +348,9 @@ Debug.println("uploading... : " + path);
             return;
         }
 
-        final OneDriveItem entry = cache.getEntry(path);
+        final OneDriveItem.Metadata entry = cache.getEntry(path);
 
-        if (!entry.getMetadata().isFile()) {
+        if (!entry.isFile()) {
             return;
         }
 
@@ -382,9 +383,9 @@ Debug.println("uploading... : " + path);
 
     /** */
     private List<Path> getDirectoryEntries(Path dir) throws IOException {
-        final OneDriveItem entry = cache.getEntry(dir);
+        final OneDriveItem.Metadata entry = cache.getEntry(dir);
 
-        if (!entry.getMetadata().isFolder()) {
+        if (!entry.isFolder()) {
             throw new NotDirectoryException(dir.toString());
         }
 
@@ -394,12 +395,12 @@ Debug.println("uploading... : " + path);
         } else {
             list = new ArrayList<>();
 
-            for (final OneDriveItem.Metadata child : OneDriveFolder.class.cast(entry).getChildren()) {
+            for (final OneDriveItem.Metadata child : OneDriveFolder.class.cast(entry.getResource()).getChildren()) {
                 Path childPath = dir.resolve(child.getName());
                 list.add(childPath);
 //System.err.println("child: " + childPath.toRealPath().toString());
 
-                cache.putFile(childPath, child.getResource());
+                cache.putFile(childPath, child);
             }
 
             cache.putFolder(dir, list);
@@ -409,10 +410,10 @@ Debug.println("uploading... : " + path);
     }
 
     /** */
-    private OneDriveItem getEntry(Path path) throws IOException {
-        final OneDriveItem parentEntry = cache.getEntry(path.getParent());
+    private OneDriveItem.Metadata getEntry(Path path) throws IOException {
+        final OneDriveItem.Metadata parentEntry = cache.getEntry(path.getParent());
 
-        Optional<OneDriveItem.Metadata> found = StreamSupport.stream(OneDriveFolder.class.cast(parentEntry).getChildren().spliterator(), false)
+        Optional<OneDriveItem.Metadata> found = StreamSupport.stream(OneDriveFolder.class.cast(parentEntry.getResource()).getChildren().spliterator(), false)
             .filter(child -> {
                 try {
 //System.out.println(child.getName() + ", " + toFilenameString(path));
@@ -422,7 +423,7 @@ Debug.println("uploading... : " + path);
                 }
             }).findFirst();
         if (found.isPresent()) {
-            return found.get().getResource();
+            return found.get();
         } else {
             throw new NoSuchFileException(path.toString());
         }
@@ -430,10 +431,10 @@ Debug.println("uploading... : " + path);
 
     /** */
     private void removeEntry(Path path) throws IOException {
-        OneDriveItem entry = cache.getEntry(path);
-        if (entry.getMetadata().isFolder()) {
+        OneDriveItem.Metadata entry = cache.getEntry(path);
+        if (entry.isFolder()) {
             // TODO use cache
-            final List<OneDriveItem> children = StreamSupport.stream(OneDriveFolder.class.cast(entry).getChildren().spliterator(), false)
+            final List<OneDriveItem> children = StreamSupport.stream(OneDriveFolder.class.cast(entry.getResource()).getChildren().spliterator(), false)
                     .map(e -> e.getResource()).collect(Collectors.toList());
 
             if (children.size() > 0) {
@@ -443,20 +444,20 @@ Debug.println("uploading... : " + path);
 
         // TODO: unknown what happens when a move operation is performed
         // and the target already exists
-        entry.delete();
+        entry.getResource().delete();
 
         cache.removeEntry(path);
     }
 
     /** */
     private void copyEntry(final Path source, final Path target) throws IOException {
-        OneDriveItem sourceEntry = cache.getEntry(source);
-        OneDriveItem targetParentEntry = cache.getEntry(target.getParent());
-        if (sourceEntry.getMetadata().isFile()) {
+        OneDriveItem.Metadata sourceEntry = cache.getEntry(source);
+        OneDriveItem.Metadata targetParentEntry = cache.getEntry(target.getParent());
+        if (sourceEntry.isFile()) {
             OneDriveCopyOperation operation = new OneDriveCopyOperation();
             operation.rename(toFilenameString(target));
-            operation.copy(OneDriveFolder.class.cast(targetParentEntry));
-            OneDriveLongRunningAction action = OneDriveFile.class.cast(sourceEntry).copy(operation);
+            operation.copy(OneDriveFolder.class.cast(targetParentEntry.getResource()));
+            OneDriveLongRunningAction action = sourceEntry.getResource().copy(operation);
             action.await(statusObject -> {
 Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",
  statusObject.getOperation(),
@@ -464,7 +465,7 @@ Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",
  statusObject.getStatus());
             });
             cache.addEntry(target, getEntry(target));
-        } else if (sourceEntry.getMetadata().isFolder()) {
+        } else if (sourceEntry.isFolder()) {
             throw new IsDirectoryException("source can not be a folder: " + source);
         }
     }
@@ -473,34 +474,34 @@ Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",
      * @param targetIsParent if the target is folder
      */
     private void moveEntry(final Path source, final Path target, boolean targetIsParent) throws IOException {
-        OneDriveItem sourceEntry = cache.getEntry(source);
-        OneDriveItem targetParentEntry = cache.getEntry(targetIsParent ? target : target.getParent());
-        if (sourceEntry.getMetadata().isFile()) {
+        OneDriveItem.Metadata sourceEntry = cache.getEntry(source);
+        OneDriveItem.Metadata targetParentEntry = cache.getEntry(targetIsParent ? target : target.getParent());
+        if (sourceEntry.isFile()) {
             OneDrivePatchOperation operation = new OneDrivePatchOperation();
             operation.rename(targetIsParent ? toFilenameString(source) : toFilenameString(target));
-            operation.move(OneDriveFolder.class.cast(targetParentEntry));
+            operation.move(OneDriveFolder.class.cast(targetParentEntry.getResource()));
             final FileSystemInfoFacet info = new FileSystemInfoFacet();
-            info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getMetadata().getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
+            info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
             operation.facet("fileSystemInfo", info);
-            OneDriveFile.class.cast(sourceEntry).patch(operation);
+            sourceEntry.getResource().patch(operation);
             cache.removeEntry(source);
             if (targetIsParent) {
                 cache.addEntry(target.resolve(source.getFileName()), getEntry(target.resolve(source.getFileName())));
             } else {
                 cache.addEntry(target, getEntry(target));
             }
-        } else if (sourceEntry.getMetadata().isFolder()) {
+        } else if (sourceEntry.isFolder()) {
             throw new IsDirectoryException("source can not be a folder: " + source);
         }
     }
 
     /** */
     private void renameEntry(final Path source, final Path target) throws IOException {
-        OneDriveItem sourceEntry = cache.getEntry(source);
+        OneDriveItem.Metadata sourceEntry = cache.getEntry(source);
 
         OneDrivePatchOperation operation = new OneDrivePatchOperation();
         operation.rename(toFilenameString(target));
-        sourceEntry.patch(operation);
+        sourceEntry.getResource().patch(operation);
         cache.removeEntry(source);
         cache.addEntry(target, getEntry(target));
     }
