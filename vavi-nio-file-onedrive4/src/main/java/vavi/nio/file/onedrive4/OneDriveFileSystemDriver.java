@@ -6,6 +6,7 @@
 
 package vavi.nio.file.onedrive4;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -194,16 +195,11 @@ Debug.println("newOutputStream: " + e.getMessage());
             // so reluctantly we provide {@link OneDriveUploadOpenOption} for {@link java.nio.file.Files#copy} options.
             Path source = uploadOption.getSource();
 Debug.println("upload w/ option: " + source);
-            uploadEntry(path, Files.newInputStream(source), (int) Files.size(source));
 
-            return new OutputStream() { // TODO redundant
-                @Override
-                public void write(int b) throws IOException {
-                }
-            };
+            return uploadEntry(path, (int) Files.size(source));
         } else {
 Debug.println("upload w/o option");
-            return new OutputStreamForUploading() { // TODO used for getting file length
+            return new Util.OutputStreamForUploading() { // TODO used for getting file length
                 @Override
                 protected void onClosed() throws IOException {
                     InputStream is = getInputStream();
@@ -214,6 +210,46 @@ Debug.println("upload w/o option");
     }
 
     /** */
+    private static final int threshold = 4 * 1024 * 1024;
+
+    /** OneDriveUploadOption */
+    private OutputStream uploadEntry(Path path, int size) throws IOException {
+        if (size > threshold) {
+            UploadSession uploadSession = client.drive().root().itemWithPath(URLEncoder.encode(toPathString(path), "utf-8")).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
+            vavi.nio.file.onedrive4.graph.ChunkedUploadProvider<DriveItem> chunkedUploadProvider =
+                    new vavi.nio.file.onedrive4.graph.ChunkedUploadProvider<>(uploadSession, client, size, DriveItem.class);
+            return new BufferedOutputStream(chunkedUploadProvider.upload(new IProgressCallback<DriveItem>() {
+                    @Override
+                    public void progress(final long current, final long max) {
+Debug.println(current + "/" + max);
+                    }
+                    @Override
+                    public void success(final DriveItem result) {
+                        try {
+                            cache.addEntry(path, result);
+                        } catch (IOException e) {
+                            throw new IllegalStateException(e);
+                        }
+Debug.println("upload done: " + result.name);
+                    }
+                    @Override
+                    public void failure(final ClientException ex) {
+                        // never called
+                    }
+                }), threshold);
+        } else {
+            return new Util.OutputStreamForUploading() {
+                @Override
+                protected void onClosed() throws IOException {
+                    InputStream is = getInputStream();
+                    DriveItem newEntry = client.drive().root().itemWithPath(URLEncoder.encode(toPathString(path), "utf-8")).content().buildRequest().put(ByteStreams.toByteArray(is)); // TODO depends on guava
+                    cache.addEntry(path, newEntry);
+                }
+            };
+        }
+    }
+
+    /** {@link Files#copy(Path, Path, CopyOption...)} */
     private void uploadEntry(Path path, InputStream is, int size) throws IOException {
         if (size > 4 * 1024 * 1024) {
             UploadSession uploadSession = client.drive().root().itemWithPath(URLEncoder.encode(toPathString(path), "utf-8")).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
@@ -231,11 +267,11 @@ Debug.println(current + "/" + max);
                         } catch (IOException e) {
                             throw new IllegalStateException(e);
                         }
-Debug.println("done");
+Debug.println("upload done: " + result.name);
                     }
                     @Override
                     public void failure(final ClientException ex) {
-                        throw new IllegalStateException(ex);
+                        throw ex;
                     }
                 });
         } else {
