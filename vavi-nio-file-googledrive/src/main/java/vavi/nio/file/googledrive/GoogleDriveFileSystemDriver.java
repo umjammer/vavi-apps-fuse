@@ -9,7 +9,6 @@ package vavi.nio.file.googledrive;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -22,7 +21,6 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
@@ -34,7 +32,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
+import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -47,7 +45,6 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
 import vavi.nio.file.Cache;
-import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
 import vavi.util.Debug;
 
@@ -61,7 +58,7 @@ import static vavi.nio.file.Util.toFilenameString;
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class GoogleDriveFileSystemDriver extends UnixLikeFileSystemDriverBase {
+public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverBase {
 
     private final Drive drive;
 
@@ -77,12 +74,6 @@ public final class GoogleDriveFileSystemDriver extends UnixLikeFileSystemDriverB
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
     }
-
-    /** */
-    private UploadMonitor uploadMonitor = new UploadMonitor();
-
-    /** entry for uploading (for attributes) */
-    private static final File dummy = new File().setName("vavi-nio-file-googledrive.dummy").setMimeType("");
 
     /** */
     private static final String MIME_TYPE_DIR = "application/vnd.google-apps.folder";
@@ -215,37 +206,32 @@ Debug.println("upload w/o option");
 
     /** */
     private void uploadEntry(Path path, InputStream content, long size) throws IOException {
-        try {
-            File fileMetadata = new File();
-            fileMetadata.setName(toFilenameString(path));
-            fileMetadata.setParents(Arrays.asList(cache.getEntry(path.getParent()).getId()));
+        File fileMetadata = new File();
+        fileMetadata.setName(toFilenameString(path));
+        fileMetadata.setParents(Arrays.asList(cache.getEntry(path.getParent()).getId()));
 
-            InputStreamContent mediaContent = new InputStreamContent(null, content);
-            mediaContent.setLength(size);
+        InputStreamContent mediaContent = new InputStreamContent(null, content);
+        mediaContent.setLength(size);
 
-            Drive.Files.Create creator = drive.files().create(fileMetadata, mediaContent);
-            MediaHttpUploader uploader = creator.getMediaHttpUploader();
-            uploader.setDirectUploadEnabled(true);
-            uploader.setProgressListener(u -> { System.err.println("upload progress: " + u.getProgress()); });
-            final File newEntry = creator.setFields("id, name, size, parents, mimeType, createdTime").execute(); // TODO file is not finished status!
+        Drive.Files.Create creator = drive.files().create(fileMetadata, mediaContent);
+        MediaHttpUploader uploader = creator.getMediaHttpUploader();
+        uploader.setDirectUploadEnabled(true);
+        uploader.setProgressListener(u -> { System.err.println("upload progress: " + u.getProgress()); });
+        final File newEntry = creator.setFields("id, name, size, parents, mimeType, createdTime").execute(); // TODO file is not finished status!
 
-            long timeout = 0;
-            long delay = 100;
+        long timeout = 0;
+        long delay = 100;
 System.err.println("upload: " + uploader.getProgress() + ", " + uploader.getUploadState());
-            while (uploader.getUploadState() != UploadState.MEDIA_COMPLETE && uploader.getProgress() < 1 && timeout < 10 * 1000) {
+        while (uploader.getUploadState() != UploadState.MEDIA_COMPLETE && uploader.getProgress() < 1 && timeout < 10 * 1000) {
 System.err.println("upload: " + uploader.getProgress() + ", " + uploader.getUploadState() + ", " + timeout);
-                try { Thread.sleep(delay); } catch (InterruptedException e) { e.printStackTrace(); }
-                timeout += delay;
-                delay *= 2;
-            }
+            try { Thread.sleep(delay); } catch (InterruptedException e) { e.printStackTrace(); }
+            timeout += delay;
+            delay *= 2;
+        }
 
 System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.size());
 
-            cache.addEntry(path, newEntry);
-        } finally {
-            uploadMonitor.finish(path);
-//            lock = null;
-        }
+        cache.addEntry(path, newEntry);
     }
 
     @Nonnull
@@ -253,48 +239,6 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
     public DirectoryStream<Path> newDirectoryStream(final Path dir,
                                                     final DirectoryStream.Filter<? super Path> filter) throws IOException {
         return Util.newDirectoryStream(getDirectoryEntries(dir), filter);
-    }
-
-    @Override
-    public SeekableByteChannel newByteChannel(Path path,
-                                              Set<? extends OpenOption> options,
-                                              FileAttribute<?>... attrs) throws IOException {
-//if (options != null) {
-// options.forEach(o -> { System.err.println("newByteChannel: " + o); });
-//}
-        if (options != null && Util.isWriting(options)) {
-            uploadMonitor.start(path);
-            return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
-                @Override
-                protected long getLeftOver() throws IOException {
-                    long leftover = 0;
-                    if (options.contains(StandardOpenOption.APPEND)) {
-                        File entry = cache.getEntry(path);
-                        if (entry != null && entry.getSize() >= 0) {
-                            leftover = entry.getSize();
-                        }
-                    }
-                    return leftover;
-                }
-
-                @Override
-                public void close() throws IOException {
-                    uploadMonitor.finish(path);
-                    super.close();
-                }
-            };
-        } else {
-            File entry = cache.getEntry(path);
-            if (isFolder(entry)) {
-                throw new IsDirectoryException(path.toString());
-            }
-            return new Util.SeekableByteChannelForReading(newInputStream(path, null)) {
-                @Override
-                protected long getSize() throws IOException {
-                    return entry.getSize();
-                }
-            };
-        }
     }
 
     @Override
@@ -378,12 +322,7 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
      * @see FileSystemProvider#checkAccess(Path, AccessMode...)
      */
     @Override
-    public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
-        if (uploadMonitor.isUploading(path)) {
-Debug.println("uploading... : " + path);
-            return;
-        }
-
+    protected void checkAccessImpl(final Path path, final AccessMode... modes) throws IOException {
         final File entry = cache.getEntry(path);
 
         if (isFolder(entry)) {
@@ -408,12 +347,7 @@ Debug.println("uploading... : " + path);
      */
     @Nonnull
     @Override
-    public Object getPathMetadata(final Path path) throws IOException {
-        if (uploadMonitor.isUploading(path)) {
-Debug.println("uploading... : " + path);
-            return dummy;
-        }
-
+    protected Object getPathMetadataImpl(final Path path) throws IOException {
         return cache.getEntry(path);
     }
 
