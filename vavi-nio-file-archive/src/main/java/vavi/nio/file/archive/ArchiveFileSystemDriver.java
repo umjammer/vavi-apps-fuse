@@ -28,7 +28,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
+import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import vavi.nio.file.Util;
@@ -43,7 +43,7 @@ import vavi.util.archive.Entry;
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class ArchiveFileSystemDriver extends UnixLikeFileSystemDriverBase {
+public final class ArchiveFileSystemDriver extends ExtendedFileSystemDriverBase {
 
     private final Archive archive;
 
@@ -141,7 +141,7 @@ public final class ArchiveFileSystemDriver extends UnixLikeFileSystemDriverBase 
      * @see FileSystemProvider#checkAccess(Path, AccessMode...)
      */
     @Override
-    public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
+    protected void checkAccessImpl(final Path path, final AccessMode... modes) throws IOException {
     }
 
     @Override
@@ -154,7 +154,7 @@ public final class ArchiveFileSystemDriver extends UnixLikeFileSystemDriverBase 
      */
     @Nonnull
     @Override
-    public Object getPathMetadata(final Path path) throws IOException {
+    protected Object getPathMetadataImpl(final Path path) throws IOException {
         return archive.getEntry(path.getFileName().toString());
     }
 
