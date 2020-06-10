@@ -16,6 +16,7 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 
@@ -55,7 +56,7 @@ public final class OneDriveBasicFileAttributesProvider extends BasicFileAttribut
      */
     @Override
     public FileTime lastModifiedTime() {
-        return FileTime.fromMillis(entry.getLastModifiedDateTime().toEpochSecond() * 1000);
+        return FileTime.from(entry.getLastModifiedDateTime().toEpochSecond(), TimeUnit.SECONDS);
     }
 
     /**

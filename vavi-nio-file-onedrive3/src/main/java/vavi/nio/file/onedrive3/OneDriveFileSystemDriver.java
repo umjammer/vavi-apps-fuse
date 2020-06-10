@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
-import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -26,12 +25,10 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +43,6 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import org.nuxeo.onedrive.client.OneDriveAPI;
 import org.nuxeo.onedrive.client.OneDriveCopyOperation;
 import org.nuxeo.onedrive.client.OneDriveDrive;
-import org.nuxeo.onedrive.client.OneDriveExpand;
 import org.nuxeo.onedrive.client.OneDriveFile;
 import org.nuxeo.onedrive.client.OneDriveFolder;
 import org.nuxeo.onedrive.client.OneDriveItem;
@@ -56,13 +52,11 @@ import org.nuxeo.onedrive.client.OneDrivePatchOperation;
 import org.nuxeo.onedrive.client.OneDriveUploadSession;
 import org.nuxeo.onedrive.client.facets.FileSystemInfoFacet;
 
-import com.eclipsesource.json.JsonObject;
-import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
+import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import vavi.nio.file.Cache;
-import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
 import vavi.util.Debug;
 
@@ -76,7 +70,7 @@ import static vavi.nio.file.Util.toFilenameString;
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase {
+public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase {
 
     private final OneDriveAPI client;
     private final OneDriveDrive drive;
@@ -93,26 +87,7 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
         this.drive = drive;
-
-        dummy = new OneDriveFile(client, drive, "dymmy", ItemIdentifierType.Path) {
-            public Metadata getMetadata(OneDriveExpand... expand) {
-                return new Metadata(new JsonObject()) {
-                    public String getName() {
-                        return "vavi-nio-file-onedrive3.dummy";
-                    }
-                    public ZonedDateTime getLastModifiedDateTime() {
-                        return ZonedDateTime.now();
-                    }
-                };
-            }
-        }.getMetadata();
     }
-
-    /** */
-    private UploadMonitor uploadMonitor = new UploadMonitor();
-
-    /** entry for uploading (for attributes) */
-    private final OneDriveItem.Metadata dummy;
 
     /** */
     private Cache<OneDriveItem.Metadata> cache = new Cache<OneDriveItem.Metadata>() {
@@ -228,43 +203,6 @@ Debug.println("upload w/o option: " + is.available());
         return Util.newDirectoryStream(getDirectoryEntries(dir), filter);
     }
 
-    @Override
-    public SeekableByteChannel newByteChannel(Path path,
-                                              Set<? extends OpenOption> options,
-                                              FileAttribute<?>... attrs) throws IOException {
-        if (options != null && Util.isWriting(options)) {
-            uploadMonitor.start(path);
-            return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
-                @Override
-                protected long getLeftOver() throws IOException {
-                    long leftover = 0;
-                    if (options.contains(StandardOpenOption.APPEND)) {
-                        OneDriveItem.Metadata entry = cache.getEntry(path);
-                        if (entry != null && entry.getSize() >= 0) {
-                            leftover = entry.getSize();
-                        }
-                    }
-                    return leftover;
-                }
-                @Override
-                public void close() throws IOException {
-                    uploadMonitor.finish(path);
-                    super.close();
-                }
-            };
-        } else {
-            OneDriveItem.Metadata entry = cache.getEntry(path);
-            if (entry.isFolder()) {
-                throw new IsDirectoryException(path.toString());
-            }
-            return new Util.SeekableByteChannelForReading(newInputStream(path, null)) {
-                @Override
-                protected long getSize() throws IOException {
-                    return entry.getSize();
-                }
-            };
-        }
-    }
 
     @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
@@ -342,12 +280,7 @@ Debug.println("upload w/o option: " + is.available());
      * @see FileSystemProvider#checkAccess(Path, AccessMode...)
      */
     @Override
-    public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
-        if (uploadMonitor.isUploading(path)) {
-Debug.println("uploading... : " + path);
-            return;
-        }
-
+    protected void checkAccessImpl(final Path path, final AccessMode... modes) throws IOException {
         final OneDriveItem.Metadata entry = cache.getEntry(path);
 
         if (!entry.isFile()) {
@@ -372,12 +305,7 @@ Debug.println("uploading... : " + path);
      */
     @Nonnull
     @Override
-    public Object getPathMetadata(final Path path) throws IOException {
-        if (uploadMonitor.isUploading(path)) {
-Debug.println("uploading... : " + path);
-            return dummy;
-        }
-
+    protected Object getPathMetadataImpl(final Path path) throws IOException {
         return cache.getEntry(path);
     }
 
