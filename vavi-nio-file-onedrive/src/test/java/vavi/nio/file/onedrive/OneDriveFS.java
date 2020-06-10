@@ -19,7 +19,7 @@ import vavi.util.properties.annotation.PropsEntity;
 
 
 /**
- * test onedrive on fuse-jna.
+ * test onedrive on fuse.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/02/29 umjammer initial version <br>
