@@ -9,7 +9,6 @@ package vavi.nio.file.onedrive;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -23,7 +22,6 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
@@ -36,14 +34,12 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.json.simple.parser.ParseException;
 
-import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
+import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import vavi.nio.file.Cache;
-import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
-import vavi.util.Debug;
 
 import static vavi.nio.file.Util.toFilenameString;
 import static vavi.nio.file.Util.toPathString;
@@ -64,7 +60,7 @@ import de.tuberlin.onedrivesdk.uploadFile.OneUploadFile;
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase {
+public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase {
 
     private final OneDriveSDK client;
 
@@ -80,22 +76,6 @@ public final class OneDriveFileSystemDriver extends UnixLikeFileSystemDriverBase
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
     }
-
-    /** */
-    private UploadMonitor uploadMonitor = new UploadMonitor();
-
-    /** entry for uploading (for attributes) */
-    private static final OneItem dummy = new OneItem() {
-        public String getName() {
-            return "vavi-nio-file-onedrive.dummy";
-        }
-        public boolean isFile() {
-            return true;
-        }
-        public boolean isFolder() {
-            return false;
-        }
-    };
 
     /** */
     private Cache<OneItem> cache = new Cache<OneItem>() {
@@ -195,44 +175,6 @@ e.printStackTrace();
     }
 
     @Override
-    public SeekableByteChannel newByteChannel(Path path,
-                                              Set<? extends OpenOption> options,
-                                              FileAttribute<?>... attrs) throws IOException {
-        if (options != null  && Util.isWriting(options)) {
-            uploadMonitor.start(path);
-            return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
-                @Override
-                protected long getLeftOver() throws IOException {
-                    long leftover = 0;
-                    if (options.contains(StandardOpenOption.APPEND)) {
-                        OneItem entry = cache.getEntry(path);
-                        if (entry != null && OneFile.class.cast(entry).getSize() >= 0) {
-                            leftover = OneFile.class.cast(entry).getSize();
-                        }
-                    }
-                    return leftover;
-                }
-                @Override
-                public void close() throws IOException {
-                    uploadMonitor.finish(path);
-                    super.close();
-                }
-            };
-        } else {
-            OneItem entry = cache.getEntry(path);
-            if (entry.isFolder()) {
-                throw new IsDirectoryException(path.toString());
-            }
-            return new Util.SeekableByteChannelForReading(newInputStream(path, null)) {
-                @Override
-                protected long getSize() throws IOException {
-                    return OneFile.class.cast(entry).getSize();
-                }
-            };
-        }
-    }
-
-    @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
         try {
             OneItem parentEntry = cache.getEntry(dir.getParent());
@@ -325,12 +267,7 @@ e.printStackTrace();
      * @see FileSystemProvider#checkAccess(Path, AccessMode...)
      */
     @Override
-    public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
-        if (uploadMonitor.isUploading(path)) {
-Debug.println("uploading... : " + path);
-            return;
-        }
-
+    protected void checkAccessImpl(final Path path, final AccessMode... modes) throws IOException {
         final OneItem entry = cache.getEntry(path);
 
         if (!entry.isFile()) {
@@ -355,12 +292,7 @@ Debug.println("uploading... : " + path);
      */
     @Nonnull
     @Override
-    public Object getPathMetadata(final Path path) throws IOException {
-        if (uploadMonitor.isUploading(path)) {
-Debug.println("uploading... : " + path);
-            return dummy;
-        }
-
+    protected Object getPathMetadataImpl(final Path path) throws IOException {
         return cache.getEntry(path);
     }
 
