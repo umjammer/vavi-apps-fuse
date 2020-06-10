@@ -7,7 +7,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.2</version>
+    <version>0.1.3</version>
   </parent>
 
   <artifactId>vavi-net-fuse</artifactId>
@@ -60,7 +60,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
-      <version>1.1.1</version>
+      <version>1.1.2</version>
     </dependency>
 
     <dependency>

@@ -4,7 +4,7 @@
   <parent>
     <artifactId>vavi-apps-fuse</artifactId>
     <groupId>vavi</groupId>
-    <version>0.1.2</version>
+    <version>0.1.3</version>
   </parent>
 
   <artifactId>vavi-nio-file-onedrive3</artifactId>
@@ -28,7 +28,7 @@
   <dependencies>
     <dependency>
       <!-- java-fs base -->
-      <groupId>com.github.umjammer</groupId>
+      <groupId>${java7-fs-base.groupId}</groupId>
       <artifactId>java7-fs-base</artifactId>
     </dependency>
 
