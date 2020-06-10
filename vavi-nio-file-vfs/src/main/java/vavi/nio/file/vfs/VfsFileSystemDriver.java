@@ -9,7 +9,6 @@ package vavi.nio.file.vfs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -22,7 +21,6 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
@@ -36,16 +34,13 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
-import org.apache.commons.vfs2.FileType;
 import org.apache.commons.vfs2.Selectors;
 
-import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
+import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
-import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
-import vavi.util.Debug;
 
 import static vavi.nio.file.Util.isAppleDouble;
 import static vavi.nio.file.Util.toFilenameString;
@@ -59,7 +54,7 @@ import static vavi.nio.file.Util.toPathString;
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
+public final class VfsFileSystemDriver extends ExtendedFileSystemDriverBase {
 
     private final FileSystemManager manager;
 
@@ -86,9 +81,6 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
         this.baseUrl = baseUrl;
     }
-
-    /** */
-    private UploadMonitor uploadMonitor = new UploadMonitor();
 
     /**
      * VFS might have cache?
@@ -156,44 +148,6 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
     public DirectoryStream<Path> newDirectoryStream(final Path dir,
                                                     final DirectoryStream.Filter<? super Path> filter) throws IOException {
         return Util.newDirectoryStream(getDirectoryEntries(dir), filter);
-    }
-
-    @Override
-    public SeekableByteChannel newByteChannel(Path path,
-                                              Set<? extends OpenOption> options,
-                                              FileAttribute<?>... attrs) throws IOException {
-        if (options != null && Util.isWriting(options)) {
-            uploadMonitor.start(path);
-            return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
-                @Override
-                protected long getLeftOver() throws IOException {
-                    long leftover = 0;
-                    if (options.contains(StandardOpenOption.APPEND)) {
-                        FileObject entry = getEntry(path);
-                        if (entry != null && entry.getContent().getSize() >= 0) {
-                            leftover = entry.getContent().getSize();
-                        }
-                    }
-                    return leftover;
-                }
-                @Override
-                public void close() throws IOException {
-                    uploadMonitor.finish(path);
-                    super.close();
-                }
-            };
-        } else {
-            FileObject entry = getEntry(path);
-            if (entry.getType().equals(FileType.FOLDER)) {
-                throw new NoSuchFileException(path.toString());
-            }
-            return new Util.SeekableByteChannelForReading(newInputStream(path, null)) {
-                @Override
-                protected long getSize() throws IOException {
-                    return entry.getContent().getSize();
-                }
-            };
-        }
     }
 
     @Override
@@ -274,12 +228,7 @@ public final class VfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
      * @see FileSystemProvider#checkAccess(Path, AccessMode...)
      */
     @Override
-    public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
-        if (uploadMonitor.isUploading(path)) {
-Debug.println("uploading... : " + path);
-            return;
-        }
-
+    protected void checkAccessImpl(final Path path, final AccessMode... modes) throws IOException {
         final FileObject entry = getEntry(path);
 
         if (entry.isFolder()) {
@@ -304,12 +253,7 @@ Debug.println("uploading... : " + path);
      */
     @Nonnull
     @Override
-    public Object getPathMetadata(final Path path) throws IOException {
-        if (uploadMonitor.isUploading(path)) {
-Debug.println("uploading... : " + path);
-            return getEntry(path);
-        }
-
+    protected Object getPathMetadataImpl(final Path path) throws IOException {
         return getEntry(path);
     }
 
