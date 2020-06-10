@@ -9,7 +9,6 @@ package vavi.nio.file.acd;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -22,7 +21,6 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
@@ -35,17 +33,15 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.yetiz.lib.acd.ACD;
 import org.yetiz.lib.acd.ACDSession;
-import org.yetiz.lib.acd.Entity.FileInfo;
 import org.yetiz.lib.acd.Entity.FolderInfo;
 import org.yetiz.lib.acd.Entity.NodeInfo;
 import org.yetiz.lib.acd.api.v1.Nodes;
 
-import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
+import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import vavi.nio.file.Cache;
-import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
 import vavi.util.Debug;
 
@@ -60,7 +56,7 @@ import static vavi.nio.file.Util.toPathString;
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class AcdFileSystemDriver extends UnixLikeFileSystemDriverBase {
+public final class AcdFileSystemDriver extends ExtendedFileSystemDriverBase {
 
     private final ACD drive;
     private ACDSession session;
@@ -79,12 +75,6 @@ public final class AcdFileSystemDriver extends UnixLikeFileSystemDriverBase {
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
     }
-
-    /** */
-    private UploadMonitor uploadMonitor = new UploadMonitor();
-
-    /** entry for uploading (for attributes) */
-    private static final FileInfo dummy = new FileInfo();
 
     /** */
     private Cache<NodeInfo> cache = new Cache<NodeInfo>() {
@@ -168,45 +158,6 @@ System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + "
     }
 
     @Override
-    public SeekableByteChannel newByteChannel(Path path,
-                                              Set<? extends OpenOption> options,
-                                              FileAttribute<?>... attrs) throws IOException {
-        if (options != null  && Util.isWriting(options)) {
-            uploadMonitor.start(path);
-            return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
-                @Override
-                protected long getLeftOver() throws IOException {
-                    long leftover = 0;
-                    if (options.contains(StandardOpenOption.APPEND)) {
-                        NodeInfo entry = cache.getEntry(path);
-                        if (entry != null && FileInfo.class.cast(entry).getContentProperties().getSize() >= 0) {
-                            leftover = FileInfo.class.cast(entry).getContentProperties().getSize();
-                        }
-                    }
-                    return leftover;
-                }
-
-                @Override
-                public void close() throws IOException {
-                    uploadMonitor.finish(path);
-                    super.close();
-                }
-            };
-        } else {
-            NodeInfo entry = cache.getEntry(path);
-            if (entry.isFolder()) {
-                throw new IsDirectoryException(path.toString());
-            }
-            return new Util.SeekableByteChannelForReading(newInputStream(path, null)) {
-                @Override
-                protected long getSize() throws IOException {
-                    return FileInfo.class.cast(entry).getContentProperties().getSize();
-                }
-            };
-        }
-    }
-
-    @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
         NodeInfo parentEntry = cache.getEntry(dir.getParent());
 
@@ -283,12 +234,7 @@ System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + "
      * @see FileSystemProvider#checkAccess(Path, AccessMode...)
      */
     @Override
-    public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
-        if (uploadMonitor.isUploading(path)) {
-Debug.println("uploading... : " + path);
-            return;
-        }
-
+    protected void checkAccessImpl(final Path path, final AccessMode... modes) throws IOException {
         final NodeInfo entry = cache.getEntry(path);
 
         if (!entry.isFile()) {
@@ -313,12 +259,7 @@ Debug.println("uploading... : " + path);
      */
     @Nonnull
     @Override
-    public Object getPathMetadata(final Path path) throws IOException {
-        if (uploadMonitor.isUploading(path)) {
-Debug.println("uploading... : " + path);
-            return dummy;
-        }
-
+    protected Object getPathMetadataImpl(final Path path) throws IOException {
         return cache.getEntry(path);
     }
 
