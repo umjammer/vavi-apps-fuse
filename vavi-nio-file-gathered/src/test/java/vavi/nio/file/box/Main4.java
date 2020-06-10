@@ -6,9 +6,11 @@
 
 package vavi.nio.file.box;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,7 +19,11 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import com.github.fge.filesystem.box.provider.BoxFileSystemProvider;
+
 import vavi.net.fuse.Base;
+
+import co.paralleluniverse.javafs.JavaFS;
 
 
 /**
@@ -69,6 +75,27 @@ public class Main4 {
         } finally {
             fs.close();
         }
+    }
+
+    //
+
+    /**
+     * @param args 0: mount point, 1: email
+     */
+    public static void main(final String... args) throws IOException {
+        String email = args[1];
+
+        final Map<String, Object> env = new HashMap<>();
+        env.put("ignoreAppleDouble", true);
+
+        URI uri = URI.create("box:///?id=" + email);
+
+        final FileSystem fs = new BoxFileSystemProvider().newFileSystem(uri, env);
+
+        Map<String, String> options = new HashMap<>();
+        options.put("fsname", "box_fs" + "@" + System.currentTimeMillis());
+
+        JavaFS.mount(fs, Paths.get(args[0]), true, true, options);
     }
 }
 
