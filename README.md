@@ -57,10 +57,10 @@ https://github.com/umjammer/vavi-apps-fuse/wiki/Libraries
  * ~~flickr~~ (quit 1T service)
  * ~~apache-commons-vfs~~ (wip)
  * ~~vavi-util-archive~~ (wip)
- * shutdownHook
+ * ~~shutdownHook~~
  * ~~https://github.com/unsound/hfsexplorer~~ (wip)
  * ~~virtualbox vdi~~ ([wip](https://github.com/umjammer/vavi-nio-file-discutils))
  * mincraft nbt
  * ~~credential from uri~~
- * https://github.com/cryptomator/fuse-nio-adapter
+ * ~~https://github.com/cryptomator/fuse-nio-adapter~~
 
