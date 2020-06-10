@@ -9,7 +9,6 @@ package vavi.nio.file.hfs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
@@ -19,7 +18,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
@@ -30,21 +28,16 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import org.catacombae.storage.fs.FSAttributes;
 import org.catacombae.storage.fs.FSEntry;
-import org.catacombae.storage.fs.FSFile;
 import org.catacombae.storage.fs.FSFolder;
-import org.catacombae.storage.fs.FSFork;
 import org.catacombae.storage.fs.FSForkType;
 import org.catacombae.storage.fs.hfscommon.HFSCommonFileSystemHandler;
 
-import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
+import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
-import vavi.nio.file.UploadMonitor;
 import vavi.nio.file.Util;
-import vavi.util.Debug;
 
 import static vavi.nio.file.Util.isAppleDouble;
 import static vavi.nio.file.Util.toPathString;
@@ -57,7 +50,7 @@ import static vavi.nio.file.Util.toPathString;
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class HfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
+public final class HfsFileSystemDriver extends ExtendedFileSystemDriverBase {
 
     private final HFSCommonFileSystemHandler handler;
 
@@ -75,34 +68,6 @@ public final class HfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
         this.handler = handler;
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
     }
-
-    /** */
-    private UploadMonitor uploadMonitor = new UploadMonitor();
-
-    /** entry for uploading (for attributes) */
-    private static final FSEntry dummy = new FSFile() {
-        public FSAttributes getAttributes() {
-            return null;
-        }
-        public String getName() {
-            return "vavi-nio-file-hfs.dummy";
-        }
-        public boolean isCompressed() {
-            return false;
-        }
-        public FSFork[] getAllForks() {
-            return null;
-        }
-        public FSFork getForkByType(FSForkType type) {
-            return null;
-        }
-        public long getCombinedLength() {
-            return 0;
-        }
-        public FSFork getMainFork() {
-            return null;
-        }
-    };
 
     /** */
     private boolean isFolder(FSEntry entry) {
@@ -158,46 +123,6 @@ public final class HfsFileSystemDriver extends UnixLikeFileSystemDriverBase {
     }
 
     @Override
-    public SeekableByteChannel newByteChannel(Path path,
-                                              Set<? extends OpenOption> options,
-                                              FileAttribute<?>... attrs) throws IOException {
-        if (options != null && Util.isWriting(options)) {
-            uploadMonitor.start(path);
-            return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
-                @Override
-                protected long getLeftOver() throws IOException {
-                    long leftover = 0;
-                    if (options.contains(StandardOpenOption.APPEND)) {
-                        FSEntry entry = getEntry(path);
-                        if (entry != null && entry.getForkByType(FSForkType.DATA).getLength() >= 0) {
-                            leftover = entry.getForkByType(FSForkType.DATA).getLength();
-                        }
-                    }
-                    return leftover;
-                }
-
-                @Override
-                public void close() throws IOException {
-System.out.println("SeekableByteChannelForWriting::close");
-                    uploadMonitor.finish(path);
-                    super.close();
-                }
-            };
-        } else {
-            FSEntry entry = getEntry(path);
-            if (isFolder(entry)) {
-                throw new IsDirectoryException(path.toString());
-            }
-            return new Util.SeekableByteChannelForReading(newInputStream(path, null)) {
-                @Override
-                protected long getSize() throws IOException {
-                    return entry.getForkByType(FSForkType.DATA).getLength();
-                }
-            };
-        }
-    }
-
-    @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
         throw new UnsupportedOperationException("this file system is read only");
     }
@@ -229,12 +154,7 @@ System.out.println("SeekableByteChannelForWriting::close");
      * @see FileSystemProvider#checkAccess(Path, AccessMode...)
      */
     @Override
-    public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
-        if (uploadMonitor.isUploading(path)) {
-Debug.println("uploading... : " + path);
-            return;
-        }
-
+    protected void checkAccessImpl(final Path path, final AccessMode... modes) throws IOException {
         final FSEntry entry = getEntry(path);
 
         if (isFolder(entry)) {
@@ -259,12 +179,7 @@ Debug.println("uploading... : " + path);
      */
     @Nonnull
     @Override
-    public Object getPathMetadata(final Path path) throws IOException {
-        if (uploadMonitor.isUploading(path)) {
-Debug.println("uploading... : " + path);
-            return dummy;
-        }
-
+    protected Object getPathMetadataImpl(final Path path) throws IOException {
         return getEntry(path);
     }
 
