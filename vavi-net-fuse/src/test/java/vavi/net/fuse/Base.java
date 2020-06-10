@@ -1,9 +1,15 @@
+/*
+ * Copyright (c) 2020 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
+
 package vavi.net.fuse;
+
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Map;
 
 import vavi.util.Debug;
@@ -13,12 +19,6 @@ import vavix.util.Checksum;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
-/*
- * Copyright (c) 2020 by Naohide Sano, All rights reserved.
- *
- * Programmed by Naohide Sano
- */
 
 
 /**
@@ -85,8 +85,6 @@ Debug.println("[cp] " + remote + " " + localTmp);
             assertEquals(0, exec("/bin/cp", remote.toString(), localTmp.toString()));
             assertEquals(0, exec("/bin/ls", "-l", remoteDir.toString()));
 Debug.println("[_chmod] 644 " + localTmp);
-            // jimfs doesn't have permissions after creation
-            Files.setAttribute(localTmp, "posix:permissions", PosixFilePermissions.fromString("rw-r--r--"));
             assertEquals(0, exec("/bin/ls", "-l", localTmp.toString()));
             assertTrue(Files.exists(localTmp));
             assertEquals(Files.size(remote), Files.size(localTmp));

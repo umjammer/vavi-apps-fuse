@@ -30,11 +30,14 @@ import ru.serce.jnrfuse.FuseStubFS;
 public class JnrFuseFuse implements Fuse {
 
     /** */
+    public static final String ENV_NO_APPLE_DOUBLE = JavaNioFileFS.ENV_NO_APPLE_DOUBLE;
+
+    /** */
     private FuseStubFS fuse;
 
     @Override
     public void mount(FileSystem fs, String mountPoint, Map<String, Object> env) throws IOException {
-        fuse = new JavaNioFileFS(fs);
+        fuse = new JavaNioFileFS(fs, env);
         fuse.mount(Paths.get(mountPoint));
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { try { close(); } catch (IOException e) { throw new IllegalStateException(e); }}));
     }

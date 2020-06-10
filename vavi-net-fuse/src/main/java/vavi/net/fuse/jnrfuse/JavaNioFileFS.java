@@ -21,6 +21,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -58,6 +59,9 @@ class JavaNioFileFS extends FuseStubFS {
     private transient FileSystem fileSystem;
 
     /** */
+    static final String ENV_NO_APPLE_DOUBLE = "no_apple_double";
+
+    /** */
     private final AtomicLong fileHandle = new AtomicLong(0);
 
     /** <file handle, channel> */
@@ -66,7 +70,7 @@ class JavaNioFileFS extends FuseStubFS {
     /**
      * @param fileSystem
      */
-    public JavaNioFileFS(FileSystem fileSystem) throws IOException {
+    public JavaNioFileFS(FileSystem fileSystem, Map<String, Object> env) throws IOException {
         this.fileSystem = fileSystem;
     }
 
