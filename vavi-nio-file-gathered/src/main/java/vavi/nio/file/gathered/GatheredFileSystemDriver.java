@@ -9,7 +9,6 @@ package vavi.nio.file.gathered;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
@@ -19,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
@@ -31,7 +29,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import com.github.fge.filesystem.driver.UnixLikeFileSystemDriverBase;
+import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
@@ -47,7 +45,7 @@ import static vavi.nio.file.Util.toPathString;
  * @version 0.00 2019/03/30 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class GatheredFileSystemDriver extends UnixLikeFileSystemDriverBase {
+public final class GatheredFileSystemDriver extends ExtendedFileSystemDriverBase {
 
     /** should be unaccessible from outer */
     private final Map<String, FileSystem> fileSystems;
@@ -96,38 +94,6 @@ public final class GatheredFileSystemDriver extends UnixLikeFileSystemDriverBase
     }
 
     @Override
-    public SeekableByteChannel newByteChannel(Path path,
-                                              Set<? extends OpenOption> options,
-                                              FileAttribute<?>... attrs) throws IOException {
-        if (options != null && (options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.APPEND))) {
-            return new Util.SeekableByteChannelForWriting(newOutputStream(path, options)) {
-                @Override
-                protected long getLeftOver() throws IOException {
-                    long leftover = 0;
-                    if (options.contains(StandardOpenOption.APPEND)) {
-                        Object entry = getPathMetadata(path);
-                        if (entry != null && Path.class.isInstance(entry) && Files.isRegularFile(Path.class.cast(entry))) {
-                            leftover = Files.size(Path.class.cast(entry));
-                        }
-                    }
-                    return leftover;
-                }
-            };
-        } else {
-            Object entry = getPathMetadata(path);
-            if (!Path.class.isInstance(entry) || Files.isDirectory(Path.class.cast(entry))) {
-                throw new IsDirectoryException(path.toString());
-            }
-            return new Util.SeekableByteChannelForReading(newInputStream(path, null)) {
-                @Override
-                protected long getSize() throws IOException {
-                    return Files.size(Path.class.cast(entry));
-                }
-            };
-        }
-    }
-
-    @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
         // TODO we can implement using Files
         throw new UnsupportedOperationException("createDirectory is not supported by the file system");
@@ -163,7 +129,7 @@ public final class GatheredFileSystemDriver extends UnixLikeFileSystemDriverBase
      * @see FileSystemProvider#checkAccess(Path, AccessMode...)
      */
     @Override
-    public void checkAccess(final Path path, final AccessMode... modes) throws IOException {
+    protected void checkAccessImpl(final Path path, final AccessMode... modes) throws IOException {
         // TODO currently check read only?
     }
 
@@ -177,7 +143,7 @@ public final class GatheredFileSystemDriver extends UnixLikeFileSystemDriverBase
      */
     @Nonnull
     @Override
-    public Object getPathMetadata(final Path path) throws IOException {
+    protected Object getPathMetadataImpl(final Path path) throws IOException {
 //Debug.println("path: " + path);
         if (path.getNameCount() < 2) {
             return getFileSystemOf(path);

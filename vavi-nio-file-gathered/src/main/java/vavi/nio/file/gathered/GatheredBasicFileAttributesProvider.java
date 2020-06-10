@@ -70,10 +70,10 @@ public final class GatheredBasicFileAttributesProvider extends BasicFileAttribut
 if (!e.getMessage().contains("ignore apple double file")) {
  Debug.println(e);
 }
-            return FileTime.fromMillis(0);
+            return UNIX_EPOCH;
         } catch (IOException e) {
 e.printStackTrace();
-            return FileTime.fromMillis(0);
+            return UNIX_EPOCH;
         }
     }
 
