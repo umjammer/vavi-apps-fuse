@@ -26,6 +26,7 @@ import vavi.util.properties.annotation.PropsEntity;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/08/09 umjammer initial version <br>
  */
+@Deprecated
 @PropsEntity(url = "file://${user.home}/.vavifuse/credentials.properties")
 public class TestVfsWebdav {
 

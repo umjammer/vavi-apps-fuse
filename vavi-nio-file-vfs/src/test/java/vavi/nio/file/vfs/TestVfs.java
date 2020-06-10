@@ -6,6 +6,7 @@ package vavi.nio.file.vfs;
  */
 
 import java.io.IOException;
+import java.net.URI;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
@@ -13,6 +14,7 @@ import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.VFS;
 import org.apache.commons.vfs2.auth.StaticUserAuthenticator;
 import org.apache.commons.vfs2.impl.DefaultFileSystemConfigBuilder;
+import org.junit.jupiter.api.Test;
 
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
@@ -62,6 +64,30 @@ System.err.println(File.exists() + " " + File.getContent().getLastModifiedTime()
 System.err.println(fo.getName());
             }
         }
+    }
+
+    @Test
+    void test00() throws Exception {
+        URI uri = URI.create("vfs:sftp://user:password@nsanomac4.local:10022/Users/nsano?alias=alias");
+        System.err.println(uri.getScheme());
+        System.err.println(uri.getHost());
+        System.err.println(uri.getPath());
+        System.err.println(uri.getPort());
+        System.err.println(uri.getQuery());
+        System.err.println(uri.getFragment());
+        System.err.println(uri.getAuthority());
+        System.err.println(uri.getUserInfo());
+
+        String uriString = uri.toString();
+        URI subUri = URI.create(uriString.substring(uriString.indexOf(':') + 1));
+        System.err.println(subUri.getScheme());
+        System.err.println(subUri.getHost());
+        System.err.println(subUri.getPath());
+        System.err.println(subUri.getPort());
+        System.err.println(subUri.getQuery());
+        System.err.println(subUri.getFragment());
+        System.err.println(subUri.getAuthority());
+        System.err.println(subUri.getUserInfo());
     }
 }
 

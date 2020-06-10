@@ -6,6 +6,7 @@
 
 package vavi.nio.file.vfs;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.file.FileSystem;
@@ -19,6 +20,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import vavi.net.fuse.Base;
+import vavi.net.fuse.Fuse;
 
 
 /**
@@ -72,6 +74,30 @@ public class Main4 {
         Base.testFuse(fs, mountPoint, options);
 
         fs.close();
+    }
+
+    //
+
+    /**
+     * @param args 0: alias, args 1: mount point (should be replaced by alias)
+     */
+    public static void main(final String... args) throws IOException {
+        String alias = args[0];
+        String mountPoint = String.format(args[1], alias);
+
+        final URI uri = URI.create("vfs:sftp:///Users/nsano/tmp/vfs?alias=" + alias);
+
+        final Map<String, Object> env = new HashMap<>();
+        env.put("ignoreAppleDouble", true);
+
+        FileSystem fs = new VfsFileSystemProvider().newFileSystem(uri, env);
+
+        Map<String, Object> options = new HashMap<>();
+        options.put("fsname", "vfs_fs" + "@" + System.currentTimeMillis());
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, true);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
+
+        Fuse.getFuse().mount(fs, mountPoint, options);
     }
 }
 
