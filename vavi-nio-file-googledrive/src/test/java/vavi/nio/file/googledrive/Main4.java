@@ -6,9 +6,11 @@
 
 package vavi.nio.file.googledrive;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +20,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import vavi.net.fuse.Base;
+import vavi.net.fuse.Fuse;
 
 
 /**
@@ -67,6 +70,30 @@ public class Main4 {
         Base.testFuse(fs, mountPoint, options);
 
         fs.close();
+    }
+
+    //
+
+    public static void main(final String... args) throws IOException {
+        String email = args[1];
+
+        Map<String, Object> env = new HashMap<>();
+        env.put("ignoreAppleDouble", true);
+
+        URI uri = URI.create("googledrive:///?id=" + email);
+
+        FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, env);
+
+        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
+
+        Map<String, Object> options = new HashMap<>();
+        options.put("fsname", "googledrive_fs" + "@" + System.currentTimeMillis());
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, true);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
+        options.put("noappledouble", null);
+//        options.put("noapplexattr", null);
+
+        Fuse.getFuse().mount(fs, args[0], Collections.EMPTY_MAP);
     }
 }
 
