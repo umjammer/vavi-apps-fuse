@@ -141,12 +141,8 @@ Debug.println("newOutputStream: " + e.getMessage());
         java.io.File temp = java.io.File.createTempFile("vavi-apps-fuse-", ".upload");
 
         return new AcdOutputStream(drive, temp, toFilenameString(path), FolderInfo.class.cast(cache.getEntry(path.getParent())), file -> {
-            try {
 System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + ", " + file.getContentProperties().getSize());
-                cache.addEntry(path, file);
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
+            cache.addEntry(path, file);
         });
     }
 

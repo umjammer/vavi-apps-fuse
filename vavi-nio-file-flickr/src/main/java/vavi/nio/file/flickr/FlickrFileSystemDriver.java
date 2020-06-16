@@ -18,6 +18,7 @@ import java.nio.file.FileStore;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
@@ -72,7 +73,7 @@ public final class FlickrFileSystemDriver extends ExtendedFileSystemDriverBase {
             photo.setTitle("/");
             photo.setId("root");
             photo.setLastUpdate(new Date(0)); // TODO
-            entryCache.put("/", photo);
+            entryCache.put(Paths.get("/"), photo); // TODO filesystem
         }
 
         /**

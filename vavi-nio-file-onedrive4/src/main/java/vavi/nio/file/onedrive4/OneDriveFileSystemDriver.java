@@ -207,11 +207,7 @@ Debug.println(current + "/" + max);
                     }
                     @Override
                     public void success(final DriveItem result) {
-                        try {
                             cache.addEntry(path, result);
-                        } catch (IOException e) {
-                            throw new IllegalStateException(e);
-                        }
 Debug.println("upload done: " + result.name);
                     }
                     @Override
@@ -244,11 +240,7 @@ Debug.println(current + "/" + max);
                     }
                     @Override
                     public void success(final DriveItem result) {
-                        try {
                             cache.addEntry(path, result);
-                        } catch (IOException e) {
-                            throw new IllegalStateException(e);
-                        }
 Debug.println("upload done: " + result.name);
                     }
                     @Override
@@ -449,11 +441,7 @@ Debug.println("copy progress: " + current + "/" + max);
                     @Override
                     public void success(final DriveItem result) {
 Debug.println("copy done: " + result.id);
-                        try {
                             cache.addEntry(target, result);
-                        } catch (IOException e) {
-                            throw new IllegalStateException(e);
-                        }
                     }
                     @Override
                     public void failure(final ClientException ex) {

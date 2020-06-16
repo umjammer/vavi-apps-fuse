@@ -188,11 +188,7 @@ Debug.println("upload w/o option: " + is.available());
         OneDriveFile file = new OneDriveFile(client, folder, URLEncoder.encode(toFilenameString(path), "utf-8"), ItemIdentifierType.Path);
         final OneDriveUploadSession uploadSession = file.createUploadSession();
         return new BufferedOutputStream(new OneDriveOutputStream(uploadSession, path, size, newEntry -> {
-            try {
                 cache.addEntry(path, newEntry);
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
         }), Util.BUFFER_SIZE);
     }
 
