@@ -11,6 +11,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
 
 import vavi.net.fuse.Fuse;
 import vavi.util.Debug;
@@ -56,15 +57,21 @@ public class JavaFSFuse implements Fuse {
 //Debug.println("debug: " + debug);
 //Debug.println("readonly: " + debug);
         JavaFS.mount(fs, Paths.get(mountPoint), readOnly, debug, env_);
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> { try { close(); } catch (IOException e) { throw new IllegalStateException(e); }}));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> { try { close(); } catch (IOException e) { e.printStackTrace(); }}));
     }
 
     @Override
     public void close() throws IOException {
+        try {
         if (mountPoint != null) {
-Debug.println("umount");
+Debug.println("umount...");
             JavaFS.unmount(Paths.get(mountPoint));
             mountPoint = null;
+Debug.println("umount done");
+            }
+        } catch (IOException e) {
+Debug.println(Level.WARNING, "umount: " + e);
+            throw e;
         }
     }
 }

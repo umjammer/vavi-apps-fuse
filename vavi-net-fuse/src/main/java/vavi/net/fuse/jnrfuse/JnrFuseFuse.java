@@ -39,15 +39,16 @@ public class JnrFuseFuse implements Fuse {
     public void mount(FileSystem fs, String mountPoint, Map<String, Object> env) throws IOException {
         fuse = new JavaNioFileFS(fs, env);
         fuse.mount(Paths.get(mountPoint));
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> { try { close(); } catch (IOException e) { throw new IllegalStateException(e); }}));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> { try { close(); } catch (IOException e) { e.printStackTrace(); }}));
     }
 
     @Override
     public void close() throws IOException {
         if (fuse != null) {
-Debug.println("unmount");
+Debug.println("unmount...");
             fuse.umount();
             fuse = null;
+Debug.println("unmount done");
         }
     }
 

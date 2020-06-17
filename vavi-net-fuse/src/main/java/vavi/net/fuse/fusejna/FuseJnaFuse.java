@@ -13,6 +13,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 
 import vavi.net.fuse.Fuse;
 import vavi.util.Debug;
@@ -41,7 +42,7 @@ public class FuseJnaFuse implements Fuse {
         try {
             fuse = new JavaNioFileFS(fs, env);
             fuse.mount(Paths.get(mountPoint).toFile(), false);
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> { try { close(); } catch (IOException e) { throw new IllegalStateException(e); }}));
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> { try { close(); } catch (Exception e) { e.printStackTrace(); }}));
         } catch (FuseException e) {
             throw new IOException(e);
         }
@@ -51,11 +52,13 @@ public class FuseJnaFuse implements Fuse {
     public void close() throws IOException {
         try {
             if (fuse != null) {
-Debug.println("unmount");
+Debug.println("unmount...");
                 fuse.unmount();
                 fuse = null;
+Debug.println("unmount done");
             }
         } catch (FuseException e) {
+Debug.println(Level.WARNING, "unmount: " + e);
             throw new IOException(e);
         }
     }
