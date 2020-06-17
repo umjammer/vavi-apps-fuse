@@ -27,9 +27,9 @@ import co.paralleluniverse.javafs.JavaFS;
  */
 public class JavaFSFuse implements Fuse {
 
-    public static String ENV_READ_ONLY = "readOnly";
+    public static final String ENV_READ_ONLY = "readOnly";
 
-    public static String ENV_DEBUG = "debug";
+    public static final String ENV_DEBUG = "debug";
 
     /** */
     private String mountPoint;
@@ -63,10 +63,10 @@ public class JavaFSFuse implements Fuse {
     @Override
     public void close() throws IOException {
         try {
-        if (mountPoint != null) {
+            if (mountPoint != null) {
 Debug.println("umount...");
-            JavaFS.unmount(Paths.get(mountPoint));
-            mountPoint = null;
+                JavaFS.unmount(Paths.get(mountPoint));
+                mountPoint = null;
 Debug.println("umount done");
             }
         } catch (IOException e) {

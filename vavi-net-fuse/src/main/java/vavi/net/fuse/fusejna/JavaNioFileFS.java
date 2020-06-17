@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 
+import vavi.nio.file.Util;
 import vavi.util.Debug;
 
 import jnr.constants.platform.Errno;
@@ -51,7 +52,7 @@ import net.fusejna.util.FuseFilesystemAdapterAssumeImplemented;
 class JavaNioFileFS extends FuseFilesystemAdapterAssumeImplemented {
 
     /** */
-    private transient FileSystem fileSystem;
+    protected transient FileSystem fileSystem;
 
     /** */
     static final String ENV_NO_APPLE_DOUBLE = "no_apple_double";
@@ -185,31 +186,35 @@ Debug.printStackTrace(e);
 
     @Override
     public int read(final String path, final ByteBuffer buffer, final long size, final long offset, final FileInfoWrapper info) {
-Debug.println("read: " + path + ", " + offset);
+Debug.println("read: " + path + ", " + offset + ", " + size + ", " + info.fh());
         try {
-            SeekableByteChannel channel = fileHandles.get(info.fh());
-            if (info.nonseekable()) {
-                assert offset == channel.position();
-            } else {
-                channel.position(offset);
-            }
-            int n = channel.read(buffer);
-            if (n > 0) {
-                if ((info.flags() & O_NONBLOCK) != 0) {
-                    assert n <= 0 || n == size;
+            if (fileHandles.containsKey(info.fh())) {
+                SeekableByteChannel channel = fileHandles.get(info.fh());
+                if (info.nonseekable()) {
+                    assert offset == channel.position();
                 } else {
-                    int c;
-                    while (n < size) {
-                        if ((c = channel.read(buffer)) <= 0)
-                            break;
-                        n += c;
-                    }
+                    channel.position(offset);
                 }
+                int n = channel.read(buffer);
+                if (n > 0) {
+                    if ((info.flags() & O_NONBLOCK) != 0) {
+                        assert n <= 0 || n == size;
+                    } else {
+                        int c;
+                        while (n < size) {
+                            if ((c = channel.read(buffer)) <= 0)
+                                break;
+                            n += c;
+                        }
+                    }
 Debug.println("read: " + n);
-                return n;
-            } else {
+                    return n;
+                } else {
 Debug.println("read: 0");
-                return 0; // we did not read any bytes
+                    return 0; // we did not read any bytes
+                }
+            } else {
+                return -ErrorCodes.EEXIST();
             }
         } catch (IOException e) {
 Debug.printStackTrace(e);
@@ -222,7 +227,13 @@ Debug.printStackTrace(e);
 Debug.println("readdir: " + path);
         try {
             fileSystem.provider().newDirectoryStream(fileSystem.getPath(path), p -> true)
-                .forEach(p -> filler.add(p.getFileName().toString()));
+                .forEach(p -> {
+                    try {
+                        filler.add(Util.toFilenameString(p));
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                });
             return 0;
         } catch (IOException e) {
 Debug.printStackTrace(e);
@@ -282,8 +293,8 @@ Debug.printStackTrace(e);
 Debug.println("write: " + path + ", " + offset + ", " + size + ", " + info.fh());
         try {
             if (fileHandles.containsKey(info.fh())) {
-            SeekableByteChannel channel = fileHandles.get(info.fh());
-            if (!info.append() && !info.nonseekable()) {
+                SeekableByteChannel channel = fileHandles.get(info.fh());
+                if (!info.append() && !info.nonseekable()) {
 try { // TODO ad-hoc
                     channel.position(offset);
 } catch (IOException e) {
@@ -300,22 +311,25 @@ try { // TODO ad-hoc
   throw e;
  }
 }
-            }
-            int n = channel.write(buf);
-            if (n > 0) {
-                if ((info.flags() & O_NONBLOCK) != 0) {
-                    assert n <= 0 || n == bufSize;
-                } else {
-                    int c;
-                    while (n < bufSize) {
-                        if ((c = channel.write(buf)) <= 0) {
-                            break;
+                }
+                int n = channel.write(buf);
+                if (n > 0) {
+                    if ((info.flags() & O_NONBLOCK) != 0) {
+                        assert n <= 0 || n == size;
+                    } else {
+                        int c;
+                        while (n < size) {
+                            if ((c = channel.write(buf)) <= 0) {
+                                break;
+                            }
+                            n += c;
                         }
-                        n += c;
                     }
                 }
+                return n;
+            } else {
+                return -ErrorCodes.EEXIST();
             }
-            return n;
         } catch (IOException e) {
 Debug.printStackTrace(e);
             return -ErrorCodes.EIO();
@@ -356,9 +370,13 @@ Debug.printStackTrace(e);
     public int release(final String path, final FileInfoWrapper info) {
 Debug.println("release: " + path);
         try {
-            Channel channel = fileHandles.get(info.fh());
-            channel.close();
-            return 0;
+            if (fileHandles.containsKey(info.fh())) {
+                Channel channel = fileHandles.get(info.fh());
+                channel.close();
+                return 0;
+            } else {
+                return -ErrorCodes.EEXIST();
+            }
         } catch (IOException e) {
 Debug.println(e);
             return -ErrorCodes.EIO();

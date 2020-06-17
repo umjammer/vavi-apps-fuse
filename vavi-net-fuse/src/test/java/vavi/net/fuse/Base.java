@@ -6,11 +6,13 @@
 
 package vavi.net.fuse;
 
+import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Random;
 
 import vavi.util.Debug;
 
@@ -45,16 +47,38 @@ public class Base {
 
     /** */
     public static void testFuse(FileSystem fs, String mountPoint, Map<String, Object> options) throws Exception {
+        Path local = null;
+        Path localTmp = null;
         try (Fuse fuse = Fuse.getFuse()) {
             fuse.mount(fs, mountPoint, options);
 
+            Path localTmpDir = Paths.get("tmp");
+            if (!Files.exists(localTmpDir)) {
+Debug.println("[_mkdir] " + localTmpDir);
+                Files.createDirectory(localTmpDir);
+            }
+
             // local -> remote
-            Path local = Paths.get("src/test/resources/Hello.java");
+            local = Files.createTempFile(localTmpDir, "vavifuse-1-", ".tmp");
+            byte[] bytes = new byte[5 * 1024 * 1024 + 12345];
+            Random random = new Random(System.currentTimeMillis());
+            random.nextBytes(bytes);
+            Files.write(local, bytes);
+
             Path remoteDir = Paths.get(mountPoint, "VAVI_FUSE_TEST4");
             if (!Files.exists(remoteDir)) {
 Debug.println("[mkdir] " + remoteDir);
                 assertEquals(0, exec("/bin/mkdir", remoteDir.toString()));
             }
+Debug.println("[_rm] " + remoteDir + "/*");
+            Files.list(remoteDir).forEach(p -> {
+                try {
+Debug.println("{_rm} " + p);
+                    Files.delete(p);
+                } catch (IOException e) {
+                    throw new IllegalStateException(e);
+                }
+            });
             Path remote = remoteDir.resolve(local.getFileName());
             if (Files.exists(remote)) {
 Debug.println("[rm] " + remote);
@@ -70,12 +94,7 @@ Debug.println("[cp] " + local + " " + remote);
             assertEquals(Checksum.getChecksum(local), Checksum.getChecksum(remote));
 
             // remote -> local
-            Path localTmpDir = Paths.get("tmp");
-            if (!Files.exists(localTmpDir)) {
-Debug.println("[_mkdir] " + localTmpDir);
-                Files.createDirectory(localTmpDir);
-            }
-            Path localTmp = localTmpDir.resolve(remote.getFileName().toString());
+            localTmp = Files.createTempFile(localTmpDir, "vavifuse-2-", ".tmp");
             if (Files.exists(localTmp)) {
 Debug.println("[_rm] " + localTmp);
                 Files.delete(localTmp);
@@ -84,7 +103,6 @@ Debug.println("[_rm] " + localTmp);
 Debug.println("[cp] " + remote + " " + localTmp);
             assertEquals(0, exec("/bin/cp", remote.toString(), localTmp.toString()));
             assertEquals(0, exec("/bin/ls", "-l", remoteDir.toString()));
-Debug.println("[_chmod] 644 " + localTmp);
             assertEquals(0, exec("/bin/ls", "-l", localTmp.toString()));
             assertTrue(Files.exists(localTmp));
             assertEquals(Files.size(remote), Files.size(localTmp));
@@ -93,13 +111,28 @@ Debug.println("[_chmod] 644 " + localTmp);
             // clean up
 Debug.println("[rm] " + remote);
             assertEquals(0, exec("/bin/rm", remote.toString()));
-Debug.println("[rmdir] " + localTmpDir);
+Debug.println("[_rm] " + remoteDir + "/*");
+            Files.list(remoteDir).forEach(p -> {
+                try {
+Debug.println("{_rm} " + p);
+                    Files.delete(p);
+                } catch (IOException e) {
+                    throw new IllegalStateException(e);
+                }
+            });
+Debug.println("[rmdir] " + remoteDir);
             assertEquals(0, exec("/bin/rmdir", remoteDir.toString()));
             assertFalse(Files.exists(remote));
             assertFalse(Files.exists(remoteDir));
+        } finally {
+            if (localTmp != null && Files.exists(localTmp)) {
 Debug.println("[_rm] " + localTmp);
-            Files.delete(localTmp);
-            assertFalse(Files.exists(localTmp));
+                Files.delete(localTmp);
+            }
+            if (local != null && Files.exists(local)) {
+Debug.println("[_rm] " + local);
+                Files.delete(local);
+            }
         }
     }
 }

@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 
+import vavi.nio.file.Util;
 import vavi.util.Debug;
 
 import jnr.constants.platform.Errno;
@@ -53,7 +54,7 @@ import ru.serce.jnrfuse.struct.Statvfs;
  */
 class JavaNioFileFS extends FuseStubFS {
 
-    private static final int BUFFER_SIZE = 4096;
+    private static final int BUFFER_SIZE = 8192;
 
     /** */
     private transient FileSystem fileSystem;
@@ -94,7 +95,7 @@ Debug.println(e);
     }
 
     @Override
-    public int create(String path, @mode_t long mode, FuseFileInfo fi) {
+    public int create(String path, @mode_t long mode, FuseFileInfo info) {
 Debug.println("create: " + path);
         try {
             Set<OpenOption> options = new HashSet<>();
@@ -103,7 +104,7 @@ Debug.println("create: " + path);
             SeekableByteChannel channel = fileSystem.provider().newByteChannel(fileSystem.getPath(path), options);
             long fh = fileHandle.incrementAndGet();
             fileHandles.put(fh, channel);
-            fi.fh.set(fh);
+            info.fh.set(fh);
 
             return 0;
         } catch (IOException e) {
@@ -187,27 +188,31 @@ Debug.printStackTrace(e);
     }
 
     @Override
-    public int read(String path, Pointer buf, long num, long offset, FuseFileInfo info) {
-Debug.println("read: " + path + ", " + offset);
+    public int read(String path, Pointer buf, long size, long offset, FuseFileInfo info) {
+Debug.println("read: " + path + ", " + offset + ", " + size + ", " + info.fh.get());
         try {
-            SeekableByteChannel channel = fileHandles.get(info.fh.get());
-            ByteBuffer bb = ByteBuffer.allocate(BUFFER_SIZE);
-            long pos = 0;
-Debug.printf("Attempting to read %d-%d:", offset, offset + num);
-            do {
-                bb.clear();
-                bb.limit((int) Math.min(bb.capacity(), num));
-                int read = channel.read(bb);
-                if (read == -1) {
+            if (fileHandles.containsKey(info.fh.get())) {
+                SeekableByteChannel channel = fileHandles.get(info.fh.get());
+                ByteBuffer bb = ByteBuffer.allocate(BUFFER_SIZE);
+                long pos = 0;
+Debug.printf("Attempting to read %d-%d:", offset, offset + size);
+                do {
+                    bb.clear();
+                    bb.limit((int) Math.min(bb.capacity(), size - pos));
+                    int read = channel.read(bb);
+                    if (read == -1) {
 Debug.println("Reached EOF");
-                    return (int) pos; // reached EOF TODO: wtf cast
-                } else {
+                        return (int) pos; // reached EOF TODO: wtf cast
+                    } else {
 Debug.printf("Reading %d-%d", offset + pos, offset + pos + read);
-                    buf.put(pos, bb.array(), 0, read);
-                    pos += read;
-                }
-            } while (pos < num);
-            return (int) pos;
+                        buf.put(pos, bb.array(), 0, read);
+                        pos += read;
+                    }
+                } while (pos < size);
+                return (int) pos;
+            } else {
+                return -ErrorCodes.EEXIST();
+            }
         } catch (IOException e) {
 Debug.printStackTrace(e);
             return -ErrorCodes.EIO();
@@ -216,11 +221,17 @@ Debug.printStackTrace(e);
 
     // TODO https://github.com/SerCeMan/jnr-fuse/issues/72
     @Override
-    public int readdir(String path, Pointer buf, FuseFillDir filler, @off_t long offset, FuseFileInfo fi) {
+    public int readdir(String path, Pointer buf, FuseFillDir filler, @off_t long offset, FuseFileInfo info) {
 Debug.println("readdir: " + path);
         try {
             fileSystem.provider().newDirectoryStream(fileSystem.getPath(path), p -> true)
-                .forEach(p -> filler.apply(buf, p.getFileName().toString(), null, 0));
+                .forEach(p -> {
+                    try {
+                        filler.apply(buf, Util.toFilenameString(p), null, 0);
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                });
             return 0;
         } catch (IOException e) {
 Debug.printStackTrace(e);
@@ -276,8 +287,8 @@ Debug.printStackTrace(e);
 Debug.println("write: " + path + ", " + offset + ", " + size + ", " + info.fh.get());
         try {
             if (fileHandles.containsKey(info.fh.get())) {
-            ByteBuffer bb = ByteBuffer.allocate(BUFFER_SIZE);
-            long written = 0;
+                ByteBuffer bb = ByteBuffer.allocate(BUFFER_SIZE);
+                long written = 0;
                 SeekableByteChannel channel = fileHandles.get(info.fh.get());
 try { // TODO ad-hoc
                 channel.position(offset);
@@ -295,16 +306,19 @@ try { // TODO ad-hoc
   throw e;
  }
 }
-            do {
-                long remaining = size - written;
-                bb.clear();
-                int len = (int) Math.min(remaining, bb.capacity());
-                buf.get(written, bb.array(), 0, len);
-                bb.limit(len);
-                channel.write(bb); // TODO check return value
-                written += len;
-            } while (written < size);
-            return (int) written;
+                do {
+                    long remaining = size - written;
+                    bb.clear();
+                    int len = (int) Math.min(remaining, bb.capacity());
+                    buf.get(written, bb.array(), 0, len);
+                    bb.limit(len);
+                    int r = channel.write(bb);
+                    written += r;
+                } while (written < size);
+                return (int) written;
+            } else {
+                return -ErrorCodes.EEXIST();
+            }
         } catch (IOException e) {
 Debug.printStackTrace(e);
             return -ErrorCodes.EIO();
@@ -363,9 +377,13 @@ Debug.printStackTrace(e);
     public int release(String path, FuseFileInfo info) {
 Debug.println("release: " + path);
         try {
-            Channel channel = fileHandles.get(info.fh.get());
-            channel.close();
-            return 0;
+            if (fileHandles.containsKey(info.fh.get())) {
+                Channel channel = fileHandles.get(info.fh.get());
+                channel.close();
+                return 0;
+            } else {
+                return -ErrorCodes.EEXIST();
+            }
         } catch (IOException e) {
 Debug.printStackTrace(e);
             return -ErrorCodes.EIO();

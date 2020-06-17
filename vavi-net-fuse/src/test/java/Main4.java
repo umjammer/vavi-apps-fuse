@@ -45,6 +45,8 @@ import vavi.util.Debug;
  * <li> release
  * </ul>
  *
+ * TODO read is not called because of cache???
+ *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2017/03/19 umjammer initial version <br>
  */
