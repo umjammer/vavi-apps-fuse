@@ -151,7 +151,11 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
             throw new IsDirectoryException(path.toString());
         }
 
+        try {
         return client.drive().items(entry.id).content().buildRequest().get();
+        } catch (ClientException e) {
+            throw new IOException(e);
+        }
     }
 
     @Nonnull
