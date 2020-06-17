@@ -152,7 +152,7 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
         }
 
         try {
-        return client.drive().items(entry.id).content().buildRequest().get();
+            return client.drive().items(entry.id).content().buildRequest().get();
         } catch (ClientException e) {
             throw new IOException(e);
         }
@@ -211,7 +211,7 @@ Debug.println(current + "/" + max);
                     }
                     @Override
                     public void success(final DriveItem result) {
-                            cache.addEntry(path, result);
+                        cache.addEntry(path, result);
 Debug.println("upload done: " + result.name);
                     }
                     @Override
@@ -244,7 +244,7 @@ Debug.println(current + "/" + max);
                     }
                     @Override
                     public void success(final DriveItem result) {
-                            cache.addEntry(path, result);
+                        cache.addEntry(path, result);
 Debug.println("upload done: " + result.name);
                     }
                     @Override
@@ -445,7 +445,7 @@ Debug.println("copy progress: " + current + "/" + max);
                     @Override
                     public void success(final DriveItem result) {
 Debug.println("copy done: " + result.id);
-                            cache.addEntry(target, result);
+                        cache.addEntry(target, result);
                     }
                     @Override
                     public void failure(final ClientException ex) {
@@ -477,8 +477,13 @@ Debug.println("copy done: " + result.id);
                 cache.addEntry(target, patchedEntry);
             }
         } else if (isFolder(sourceEntry)) {
-            // TODO java spec. allows empty folder
-            throw new IsDirectoryException("source can not be a folder: " + source);
+            DriveItem preEntry = new DriveItem();
+            preEntry.name = toFilenameString(target);
+            preEntry.folder = new Folder();
+            preEntry.parentReference = new ItemReference();
+            preEntry.parentReference.id = targetParentEntry.id;
+            DriveItem patchedEntry = client.drive().items(sourceEntry.id).buildRequest().patch(preEntry);
+            cache.moveEntry(source, target, patchedEntry);
         }
     }
 
