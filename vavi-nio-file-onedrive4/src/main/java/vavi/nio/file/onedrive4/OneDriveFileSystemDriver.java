@@ -409,7 +409,7 @@ System.out.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(
     private void removeEntry(Path path) throws IOException {
         DriveItem entry = cache.getEntry(path);
         if (isFolder(entry)) {
-            if (cache.getChildCount(path) > 0) {
+            if (cache.getChildCount(path) > 0) { // TODO check real instead of cache
                 throw new DirectoryNotEmptyException(path.toString());
             }
         }
