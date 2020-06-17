@@ -22,6 +22,9 @@ import java.util.ServiceLoader;
  */
 public interface Fuse extends Closeable {
 
+    /** */
+    public static final String ENV_SINGLE_THREAD = "single_thread";
+
     /** should be non blocking */
     void mount(FileSystem fs, String mountPoint, Map<String, Object> env) throws IOException;
 
