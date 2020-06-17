@@ -122,7 +122,7 @@ public final class VfsFileSystemDriver extends ExtendedFileSystemDriverBase {
             throw new IsDirectoryException(path.toString());
         }
 
-        return entry.getContent().getInputStream();
+        return entry.getContent().getInputStream(Util.BUFFER_SIZE);
     }
 
     @Nonnull
@@ -140,7 +140,7 @@ public final class VfsFileSystemDriver extends ExtendedFileSystemDriverBase {
             entry.createFile();
         }
 
-        return entry.getContent().getOutputStream();
+        return entry.getContent().getOutputStream(Util.BUFFER_SIZE);
     }
 
     @Nonnull
