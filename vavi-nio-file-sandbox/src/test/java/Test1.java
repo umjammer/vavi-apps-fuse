@@ -6,6 +6,7 @@
 
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -46,6 +47,13 @@ public class Test1 {
     @Test
     void test01() {
         System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", "a", System.currentTimeMillis(), 1);
+    }
+
+    @Test
+    void test04() {
+        String m = "{\"@vavi\":" + 123456L + "}";
+        long o = Long.parseLong(m.substring(9, m.length() - 1));
+        assertEquals(123456L, o);
     }
 }
 
