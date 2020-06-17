@@ -454,7 +454,18 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
                 cache.addEntry(target, newEntry);
             }
         } else if (isFolder(sourceEntry)) {
-            throw new IsDirectoryException("source can not be a folder: " + source);
+            File dirEntry = new File();
+            dirEntry.setName(toFilenameString(target));
+            dirEntry.setMimeType(MIME_TYPE_DIR);
+            String previousParents = null;
+            if (sourceEntry.getParents() != null) {
+                previousParents = String.join(",", sourceEntry.getParents());
+            }
+            File newEntry = drive.files().update(sourceEntry.getId(), dirEntry)
+                    .setAddParents(targetParentEntry.getId())
+                    .setRemoveParents(previousParents)
+                    .setFields("id, parents, name, size, mimeType, createdTime").execute();
+            cache.moveEntry(source, target, newEntry);
         }
     }
 
