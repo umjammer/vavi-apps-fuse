@@ -27,7 +27,7 @@ import co.paralleluniverse.javafs.JavaFS;
 
 
 /**
- * Main4. (fuse)
+ * fuse test. (dropbox)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2017/03/19 umjammer initial version <br>
