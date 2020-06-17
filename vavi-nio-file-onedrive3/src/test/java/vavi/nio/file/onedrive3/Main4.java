@@ -77,9 +77,6 @@ public class Main4 {
     public static void main(final String... args) throws IOException {
         String email = args[1];
 
-        // Create the necessary elements to create a filesystem.
-        // Note: the URI _must_ have a scheme of "onedrive", and
-        // _must_ be hierarchical.
         URI uri = URI.create("onedrive:///?id=" + email);
 
         OAuth2AppCredential appCredential = new MicrosoftGraphLocalAppCredential();
