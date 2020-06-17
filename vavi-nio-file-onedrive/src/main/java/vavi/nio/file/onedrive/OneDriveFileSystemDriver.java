@@ -377,6 +377,7 @@ e.printStackTrace();
                     cache.addEntry(target, OneItem.class.cast(newEntry));
                 }
             } else if (sourceEntry.isFolder()) {
+                // TODO engine doesn't have folder move functionality
                 throw new IsDirectoryException("source can not be a folder: " + source);
             }
         } catch (ParseException | InterruptedException e) {
