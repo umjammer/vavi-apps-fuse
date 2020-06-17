@@ -317,8 +317,7 @@ public final class VfsFileSystemDriver extends ExtendedFileSystemDriverBase {
         if (sourceEntry.isFile()) {
             sourceEntry.moveTo(targetEntry);
         } else if (sourceEntry.isFolder()) {
-            // TODO java spec. allows empty folder
-            throw new IsDirectoryException(source.toString());
+            sourceEntry.moveTo(targetEntry);
         }
     }
 
