@@ -4,7 +4,7 @@
   <parent>
     <artifactId>vavi-apps-fuse</artifactId>
     <groupId>vavi</groupId>
-    <version>0.1.3</version>
+    <version>0.1.4</version>
   </parent>
 
   <artifactId>vavi-nio-file-vfs</artifactId>
@@ -62,12 +62,12 @@
       <!-- java-fs vfs2 ssh -->
       <groupId>jcifs</groupId>
       <artifactId>jcifs</artifactId>
-      <version>0.8.3</version>
+      <version>1.3.17</version>
     </dependency>
     <dependency>
       <groupId>com.jcraft</groupId>
       <artifactId>jsch</artifactId>
-      <version>0.1.51</version>
+      <version>0.1.55</version>
     </dependency>
     <dependency>
       <groupId>commons-httpclient</groupId>
