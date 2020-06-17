@@ -272,12 +272,29 @@ Debug.printStackTrace(e);
     }
 
     @Override
-    public int write(String path, Pointer buf, @size_t long size, @off_t long offset, FuseFileInfo fi) {
-Debug.println("write: " + path + ", " + offset);
+    public int write(String path, Pointer buf, @size_t long size, @off_t long offset, FuseFileInfo info) {
+Debug.println("write: " + path + ", " + offset + ", " + size + ", " + info.fh.get());
         try {
+            if (fileHandles.containsKey(info.fh.get())) {
             ByteBuffer bb = ByteBuffer.allocate(BUFFER_SIZE);
             long written = 0;
-            SeekableByteChannel channel = fileHandles.get(fi.fh.get());
+                SeekableByteChannel channel = fileHandles.get(info.fh.get());
+try { // TODO ad-hoc
+                channel.position(offset);
+} catch (IOException e) {
+ if (e.getMessage().contains("@vavi")) {
+  long o = Long.parseLong(e.getMessage().substring(9, e.getMessage().length() - 1));
+  if (offset > o) {
+   Debug.println(Level.SEVERE, "write: skip bad position: " + offset);
+   throw new IOException("cannot skip last bytes send", e);
+  } else {
+   Debug.println(Level.WARNING, "write: correct bad position: " + offset + " -> " + o);
+   return Math.min((int) (o - offset), (int) size);
+  }
+ } else {
+  throw e;
+ }
+}
             do {
                 long remaining = size - written;
                 bb.clear();
