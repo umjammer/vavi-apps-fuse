@@ -188,7 +188,7 @@ Debug.println("upload w/o option: " + is.available());
         OneDriveFile file = new OneDriveFile(client, folder, URLEncoder.encode(toFilenameString(path), "utf-8"), ItemIdentifierType.Path);
         final OneDriveUploadSession uploadSession = file.createUploadSession();
         return new BufferedOutputStream(new OneDriveOutputStream(uploadSession, path, size, newEntry -> {
-                cache.addEntry(path, newEntry);
+            cache.addEntry(path, newEntry);
         }), Util.BUFFER_SIZE);
     }
 
@@ -415,7 +415,14 @@ Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",
                 cache.addEntry(target, getEntry(target));
             }
         } else if (sourceEntry.isFolder()) {
-            throw new IsDirectoryException("source can not be a folder: " + source);
+            OneDrivePatchOperation operation = new OneDrivePatchOperation();
+            operation.rename(toFilenameString(target));
+            operation.move(OneDriveFolder.class.cast(targetParentEntry.getResource()));
+            final FileSystemInfoFacet info = new FileSystemInfoFacet();
+            info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
+            operation.facet("fileSystemInfo", info);
+            sourceEntry.getResource().patch(operation);
+            cache.moveEntry(source, target, getEntry(target));
         }
     }
 
