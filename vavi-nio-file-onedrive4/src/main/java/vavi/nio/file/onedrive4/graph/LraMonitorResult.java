@@ -10,21 +10,21 @@ import com.microsoft.graph.core.ClientException;
 import com.microsoft.graph.http.GraphServiceException;
 
 /**
- * Wrapper class for different upload response from server.
+ * Wrapper class for different monitor response from server.
  */
-public class CopyMonitorResult {
+public class LraMonitorResult {
     /**
-     * The uploaded item response.
+     * The monitor item response.
      */
     private final MonitorObject monitorObject;
 
     /**
      * The next session response.
      */
-    private final CopySession session;
+    private final LraSession session;
 
     /**
-     * The error happened during upload.
+     * The error happened during monitor.
      */
     private final ClientException error;
 
@@ -36,7 +36,7 @@ public class CopyMonitorResult {
      *
      * @param monitor The created item.
      */
-    public CopyMonitorResult(MonitorObject monitor) {
+    public LraMonitorResult(MonitorObject monitor) {
         this.monitorObject = monitor;
         this.session = null;
         this.error = null;
@@ -48,7 +48,7 @@ public class CopyMonitorResult {
      *
      * @param session The next session.
      */
-    public CopyMonitorResult(CopySession session) {
+    public LraMonitorResult(LraSession session) {
         this.session = session;
         this.monitorObject = null;
         this.error = null;
@@ -58,9 +58,9 @@ public class CopyMonitorResult {
     /**
      * Construct result with error.
      *
-     * @param error The error occurred during uploading.
+     * @param error The error occurred during monitor.
      */
-    public CopyMonitorResult(ClientException error) {
+    public LraMonitorResult(ClientException error) {
         this.error = error;
         this.monitorObject = null;
         this.session = null;
@@ -72,7 +72,7 @@ public class CopyMonitorResult {
      *
      * @param seeOtherUtl The new url;
      */
-    public CopyMonitorResult(String seeOtherUtl) {
+    public LraMonitorResult(String seeOtherUtl) {
         this.seeOtherUtl = seeOtherUtl;
         this.monitorObject = null;
         this.session = null;
@@ -82,7 +82,7 @@ public class CopyMonitorResult {
     /**
      * Construct result ok.
      */
-    public CopyMonitorResult() {
+    public LraMonitorResult() {
         this.seeOtherUtl = null;
         this.monitorObject = null;
         this.session = null;
@@ -94,12 +94,12 @@ public class CopyMonitorResult {
      *
      * @param exception The exception received from server.
      */
-    public CopyMonitorResult(GraphServiceException exception) {
+    public LraMonitorResult(GraphServiceException exception) {
         this(new ClientException(exception.getMessage(/* verbose */ true), exception));
     }
 
     /**
-     * Checks the whole upload is completed.
+     * Checks the whole monitor is completed.
      *
      * @return true if the response is an item.
      */
@@ -135,7 +135,7 @@ public class CopyMonitorResult {
     }
 
     /**
-     * Get the uploaded item.
+     * Get the monitor item.
      *
      * @return The item.
      */
@@ -146,9 +146,9 @@ public class CopyMonitorResult {
     /**
      * Get the next session.
      *
-     * @return The next session for uploading.
+     * @return The next session for monitoring.
      */
-    public CopySession getSession() {
+    public LraSession getSession() {
         return this.session;
     }
 

@@ -19,12 +19,12 @@ import com.microsoft.graph.logger.ILogger;
 import com.microsoft.graph.serializer.ISerializer;
 
 /**
- * Handles the stateful response from the OneDrive copy session
+ * Handles the stateful response from the OneDrive LRA session
  *
- * @param <MonitorType> the expected copied item
+ * @param <MonitorType> the expected LRA item
  */
-public class CopyMonitorResponseHandler<MonitorType>
-        implements IStatefulResponseHandler<CopyMonitorResult, MonitorType> {
+public class LraMonitorResponseHandler<MonitorType>
+        implements IStatefulResponseHandler<LraMonitorResult, MonitorType> {
 
     /**
      * Do nothing before getting the response
@@ -37,17 +37,17 @@ public class CopyMonitorResponseHandler<MonitorType>
     }
 
     /**
-     * Generate the copy monitor response result
+     * Generate the LRA monitor response result
      *
-     * @param request    the HTTP request
+     * @param request the HTTP request
      * @param connection the HTTP connection
      * @param serializer the serializer
-     * @param logger     the system logger
-     * @return the copy monitor result, which could be either an copy monitor or error
+     * @param logger the system logger
+     * @return the LRA monitor result, which could be either an LRA monitor or error
      * @throws Exception an exception occurs if the request was unable to complete for any reason
      */
     @Override
-    public CopyMonitorResult generateResult(
+    public LraMonitorResult generateResult(
             final IHttpRequest request,
             final IConnection connection,
             final ISerializer serializer,
@@ -56,25 +56,25 @@ public class CopyMonitorResponseHandler<MonitorType>
 
         try {
             if (connection.getResponseCode() == HttpResponseCode.HTTP_ACCEPTED) {
-logger.logDebug("copy has been accepted by the server.");
-                final CopySession session = new CopySession();
+logger.logDebug("LRA has been accepted by the server.");
+                final LraSession session = new LraSession();
                 session.monitorUrl = connection.getResponseHeaders().get("Location").get(0);
-                return new CopyMonitorResult(session);
+                return new LraMonitorResult(session);
             } else if (connection.getResponseCode() == HttpResponseCode.HTTP_SEE_OTHER) {
 logger.logDebug("see other url.");
                 String seeOtherUrl = connection.getResponseHeaders().get("Location").get(0);
-                return new CopyMonitorResult(seeOtherUrl);
+                return new LraMonitorResult(seeOtherUrl);
             } else if (connection.getResponseCode() == HttpResponseCode.HTTP_CREATED
                     || connection.getResponseCode() == HttpResponseCode.HTTP_OK) {
-logger.logDebug("copy session is completed, drive item returned.");
+logger.logDebug("LRA session is completed, drive item returned.");
                 in = new BufferedInputStream(connection.getInputStream());
                 String rawJson = DefaultHttpProvider.streamToString(in);
-                MonitorObject uploadedItem = serializer.deserializeObject(rawJson, MonitorObject.class);
+                MonitorObject monitoredItem = serializer.deserializeObject(rawJson, MonitorObject.class);
 
-                return new CopyMonitorResult(uploadedItem);
+                return new LraMonitorResult(monitoredItem);
             } else if (connection.getResponseCode() >= HttpResponseCode.HTTP_CLIENT_ERROR) {
-logger.logDebug("copying error during monitor, see detail on result error");
-                return new CopyMonitorResult(
+logger.logDebug("LRA error during monitor, see detail on result error");
+                return new LraMonitorResult(
                         GraphServiceException.createFromConnection(request, null, serializer,
                                 connection, logger));
             } else {

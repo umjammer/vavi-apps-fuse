@@ -17,13 +17,13 @@ import vavi.util.StringUtil;
 
 
 /**
- * CopyMonitorProvider service provider
+ * LraMonitorProvider service provider
  *
  * @see "https://docs.microsoft.com/en-us/onedrive/developer/rest-api/concepts/long-running-actions?view=odsp-graph-online"
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2019/07/08 umjammer initial version <br>
  */
-public class CopyMonitorProvider<MonitorType> {
+public class LraMonitorProvider<MonitorType> {
 
     /**
      * The default retry times for a simple chunk upload if failure happened
@@ -36,14 +36,14 @@ public class CopyMonitorProvider<MonitorType> {
     private final IGraphServiceClient client;
 
     /**
-     * The upload session URL
+     * The LRA session URL
      */
     private String monitorUrl;
 
     /**
-     * The upload response handler
+     * The LRA response handler
      */
-    private final CopyMonitorResponseHandler<MonitorType> responseHandler;
+    private final LraMonitorResponseHandler<MonitorType> responseHandler;
 
     /**
      * The counter for how many bytes have been read from input stream
@@ -53,15 +53,15 @@ public class CopyMonitorProvider<MonitorType> {
     /**
      * Creates the CopyMonitorProvider
      *
-     * @param copySession the initial copy session
+     * @param lraSession the initial LRA session
      * @param client the Graph client
-     * @param uploadTypeClass the upload type class
+     * @param lraTypeClass the monitor type class
      */
-    public CopyMonitorProvider(final CopySession copySession,
+    public LraMonitorProvider(final LraSession lraSession,
             final IGraphServiceClient client,
-            final Class<MonitorType> uploadTypeClass) {
-        if (copySession == null) {
-            throw new InvalidParameterException("Copy session is null.");
+            final Class<MonitorType> lraTypeClass) {
+        if (lraSession == null) {
+            throw new InvalidParameterException("LRA session is null.");
         }
 
         if (client == null) {
@@ -70,18 +70,17 @@ public class CopyMonitorProvider<MonitorType> {
 
         this.client = client;
         this.percentageComplete = 0;
-        this.monitorUrl = copySession.getMonitorURL();
-        this.responseHandler = new CopyMonitorResponseHandler<>();
+        this.monitorUrl = lraSession.getMonitorURL();
+        this.responseHandler = new LraMonitorResponseHandler<>();
     }
 
     /**
-     * Copy content to remote session based on the input stream
+     * monitor content to remote session based on the input stream
      *
      * @param callback the progress callback invoked during uploading
-     * @param configs the optional configurations for the upload options. [0]
-     *            should be the customized chunk size and [1] should be the
-     *            maxRetry for upload retry.
-     * @throws IOException the IO exception that occurred during upload
+     * @param configs the optional configurations for the monitor options. [0]
+     *            should be the customized chunk size.
+     * @throws IOException the IO exception that occurred during monitor
      */
     public void monitor(final IProgressCallback<MonitorType> callback, final int... configs) throws IOException {
 
@@ -101,8 +100,8 @@ public class CopyMonitorProvider<MonitorType> {
             } catch (InterruptedException e) {
             }
 
-            CopyMonitorRequest request = new CopyMonitorRequest(this.monitorUrl, this.client);
-            CopyMonitorResult result = request.monitor(this.responseHandler);
+            LraMonitorRequest request = new LraMonitorRequest(this.monitorUrl, this.client);
+            LraMonitorResult result = request.monitor(this.responseHandler);
 
             if (result.monitorDone()) {
 Debug.println(StringUtil.paramString(result));

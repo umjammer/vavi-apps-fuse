@@ -58,10 +58,10 @@ import com.microsoft.graph.requests.extensions.IDriveItemCopyRequest;
 
 import vavi.nio.file.Cache;
 import vavi.nio.file.Util;
-import vavi.nio.file.onedrive4.graph.CopyMonitorProvider;
-import vavi.nio.file.onedrive4.graph.CopyMonitorResponseHandler;
-import vavi.nio.file.onedrive4.graph.CopyMonitorResult;
-import vavi.nio.file.onedrive4.graph.CopySession;
+import vavi.nio.file.onedrive4.graph.LraMonitorProvider;
+import vavi.nio.file.onedrive4.graph.LraMonitorResponseHandler;
+import vavi.nio.file.onedrive4.graph.LraMonitorResult;
+import vavi.nio.file.onedrive4.graph.LraSession;
 import vavi.util.Debug;
 
 import static vavi.nio.file.Util.toFilenameString;
@@ -433,10 +433,10 @@ System.out.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(
             DriveItemCopyBody body = new DriveItemCopyBody(); // ditto
             body.name = toFilenameString(target); // ditto
             body.parentReference = ir; // ditto
-            CopyMonitorResponseHandler<DriveItem> handler = new CopyMonitorResponseHandler<>();
+            LraMonitorResponseHandler<DriveItem> handler = new LraMonitorResponseHandler<>();
             @SuppressWarnings({ "unchecked", "rawtypes" }) // TODO
-            CopySession copySession = client.getHttpProvider().<CopyMonitorResult, DriveItemCopyBody, CopyMonitorResult>send((IHttpRequest) request, CopyMonitorResult.class, body, (IStatefulResponseHandler) handler).getSession();
-            CopyMonitorProvider<DriveItem> copyMonitorProvider = new CopyMonitorProvider<>(copySession, client, DriveItem.class);
+            LraSession copySession = client.getHttpProvider().<LraMonitorResult, DriveItemCopyBody, LraMonitorResult>send((IHttpRequest) request, LraMonitorResult.class, body, (IStatefulResponseHandler) handler).getSession();
+            LraMonitorProvider<DriveItem> copyMonitorProvider = new LraMonitorProvider<>(copySession, client, DriveItem.class);
             copyMonitorProvider.monitor(new IProgressCallback<DriveItem>() {
                     @Override
                     public void progress(final long current, final long max) {

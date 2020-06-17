@@ -16,7 +16,7 @@ import com.microsoft.graph.serializer.ISerializer;
 import vavi.util.Debug;
 
 /**
- * StatusObject.
+ * MonitorObject.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2019/07/08 umjammer initial version <br>

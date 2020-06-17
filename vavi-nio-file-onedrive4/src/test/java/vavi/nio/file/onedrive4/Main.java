@@ -27,6 +27,10 @@ import static vavi.nio.file.Base.testAll;
  */
 public class Main {
 
+    static {
+        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod", "com\\.microsoft\\.graph\\.logger\\.DefaultLogger#logDebug");
+    }
+
     @Test
     void test01() throws Exception {
         String email = System.getenv("MICROSOFT4_TEST_ACCOUNT");

@@ -36,10 +36,10 @@ import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphOAuth2;
 import vavi.net.auth.web.microsoft.MicrosoftLocalUserCredential;
-import vavi.nio.file.onedrive4.graph.CopyMonitorProvider;
-import vavi.nio.file.onedrive4.graph.CopyMonitorResponseHandler;
-import vavi.nio.file.onedrive4.graph.CopyMonitorResult;
-import vavi.nio.file.onedrive4.graph.CopySession;
+import vavi.nio.file.onedrive4.graph.LraMonitorProvider;
+import vavi.nio.file.onedrive4.graph.LraMonitorResponseHandler;
+import vavi.nio.file.onedrive4.graph.LraMonitorResult;
+import vavi.nio.file.onedrive4.graph.LraSession;
 import vavi.util.properties.annotation.PropsEntity;
 
 
@@ -148,10 +148,10 @@ public class TestGraph {
         DriveItemCopyBody body = new DriveItemCopyBody();
         body.name = "コピー.wav";
         body.parentReference = ir;
-        CopyMonitorResponseHandler<DriveItem> handler = new CopyMonitorResponseHandler<>();
+        LraMonitorResponseHandler<DriveItem> handler = new LraMonitorResponseHandler<>();
         @SuppressWarnings({ "unchecked", "rawtypes" }) // TODO
-        CopySession copySession = client.getHttpProvider().<CopyMonitorResult, DriveItemCopyBody, CopyMonitorResult>send((IHttpRequest) request, CopyMonitorResult.class, body, (IStatefulResponseHandler) handler).getSession();
-        CopyMonitorProvider<DriveItem> copyMonitorProvider = new CopyMonitorProvider<>(copySession, client, DriveItem.class);
+        LraSession copySession = client.getHttpProvider().<LraMonitorResult, DriveItemCopyBody, LraMonitorResult>send((IHttpRequest) request, LraMonitorResult.class, body, (IStatefulResponseHandler) handler).getSession();
+        LraMonitorProvider<DriveItem> copyMonitorProvider = new LraMonitorProvider<>(copySession, client, DriveItem.class);
         copyMonitorProvider.monitor(new IProgressCallback<DriveItem>() {
                 @Override
                 public void progress(final long current, final long max) {

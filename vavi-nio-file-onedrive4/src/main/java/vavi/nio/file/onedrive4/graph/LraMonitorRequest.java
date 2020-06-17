@@ -16,9 +16,9 @@ import com.microsoft.graph.requests.extensions.GraphServiceClient;
 
 
 /**
- * The copy monitor request.
+ * The LRA monitor request.
  */
-public class CopyMonitorRequest {
+public class LraMonitorRequest {
 
     /**
      * The base request.
@@ -26,36 +26,37 @@ public class CopyMonitorRequest {
     private final BaseRequest baseRequest;
 
     /**
-     * Construct the CopyMonitorRequest
+     * Construct the LraMonitorRequest
      * Note: This request does not require authentication, since the URL is short-lived and unique to the original caller.
      * @param requestUrl The upload URL.
      * @param client The Graph client.
      */
-    public CopyMonitorRequest(final String requestUrl, IGraphServiceClient client) {
+    public LraMonitorRequest(final String requestUrl, IGraphServiceClient client) {
         IGraphServiceClient clientWithoutAuth = GraphServiceClient.builder()
                 .authenticationProvider(new IAuthenticationProvider() {
                     @Override
                     public void authenticateRequest(IHttpRequest request) {
                     }
                 })
+                .logger(client.getLogger())
                 .buildClient();
-        this.baseRequest = new BaseRequest(requestUrl, clientWithoutAuth, null, CopyMonitorResult.class) {
+        this.baseRequest = new BaseRequest(requestUrl, clientWithoutAuth, null, LraMonitorResult.class) {
         };
         this.baseRequest.setHttpMethod(HttpMethod.GET);
     }
 
     /**
-     * Monitor a copy.
+     * Monitor a LRA.
      *
      * @param responseHandler The handler to handle the HTTP response.
      * @return The monitor result.
      */
     @SuppressWarnings({ "rawtypes", "unchecked" }) // TODO
-    public CopyMonitorResult monitor(final CopyMonitorResponseHandler responseHandler) {
+    public LraMonitorResult monitor(final LraMonitorResponseHandler responseHandler) {
         return this.baseRequest.getClient()
                 .getHttpProvider()
                 .send((IHttpRequest) baseRequest,
-                      CopyMonitorResult.class,
+                      LraMonitorResult.class,
                       null,
                       (IStatefulResponseHandler) responseHandler);
     }
