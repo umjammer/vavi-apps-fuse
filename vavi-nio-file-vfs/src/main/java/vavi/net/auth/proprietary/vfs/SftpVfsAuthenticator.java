@@ -143,11 +143,13 @@ Debug.println("credential: by uri");
 
         boolean pkc = c.passphrase != null;
         FileSystemOptions options = new FileSystemOptions();
-        SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(options, false);
-        SftpFileSystemConfigBuilder.getInstance().setSessionTimeoutMillis(options, 10000);
-        SftpFileSystemConfigBuilder.getInstance().setUserInfo(options, new SftpUserInfo(pkc ? c.passphrase : c.password, pkc));
+        SftpFileSystemConfigBuilder builder = SftpFileSystemConfigBuilder.getInstance();
+        builder.setUserDirIsRoot(options, false);
+        builder.setConnectTimeoutMillis(options, 30000);
+        builder.setSessionTimeoutMillis(options, 30000);
+        builder.setUserInfo(options, new SftpUserInfo(pkc ? c.passphrase : c.password, pkc));
         if (pkc) {
-            SftpFileSystemConfigBuilder.getInstance().setIdentityProvider(options, new IdentityInfo(new File(c.keyPath)));
+            builder.setIdentityProvider(options, new IdentityInfo(new File(c.keyPath)));
         }
         return options;
     }

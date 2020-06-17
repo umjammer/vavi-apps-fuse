@@ -223,8 +223,9 @@ public final class VfsFileSystemDriver extends ExtendedFileSystemDriverBase {
      *
      * @param path the path to check
      * @param modes the modes to check for, if any
-     * @throws IOException filesystem level error, or a plain I/O error
-     *                     if you use this with javafs (jnr-fuse), you should throw {@link NoSuchFileException} when the file not found.
+     * @throws IOException filesystem level error, or a plain I/O error if you
+     *             use this with javafs (jnr-fuse), you should throw
+     *             {@link NoSuchFileException} when the file not found.
      * @see FileSystemProvider#checkAccess(Path, AccessMode...)
      */
     @Override
@@ -245,11 +246,13 @@ public final class VfsFileSystemDriver extends ExtendedFileSystemDriverBase {
 
     @Override
     public void close() throws IOException {
-        // TODO: what to do here? Commons VFS does not implement Closeable :(
+        // don't close the manager here, it will shutdown whole resources.
+        // https://issues.apache.org/jira/browse/VFS-454
     }
 
     /**
-     * @throws IOException if you use this with javafs (jnr-fuse), you should throw {@link NoSuchFileException} when the file not found.
+     * @throws IOException if you use this with javafs (jnr-fuse), you should
+     *             throw {@link NoSuchFileException} when the file not found.
      */
     @Nonnull
     @Override
