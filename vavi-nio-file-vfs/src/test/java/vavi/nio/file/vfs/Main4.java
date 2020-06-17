@@ -60,6 +60,8 @@ public class Main4 {
         //options.put("noapplexattr", null);
         options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, false);
         options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
+        // vfs io uses thread, so this option must be set
+        options.put(vavi.net.fuse.Fuse.ENV_SINGLE_THREAD, true);
     }
 
     @ParameterizedTest
@@ -94,7 +96,7 @@ public class Main4 {
 
         Map<String, Object> options = new HashMap<>();
         options.put("fsname", "vfs_fs" + "@" + System.currentTimeMillis());
-        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, true);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, false);
         options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
 
         Fuse.getFuse().mount(fs, mountPoint, options);
