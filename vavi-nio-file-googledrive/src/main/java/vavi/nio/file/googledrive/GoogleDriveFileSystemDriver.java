@@ -37,7 +37,6 @@ import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.googleapis.media.MediaHttpUploader;
-import com.google.api.client.googleapis.media.MediaHttpUploader.UploadState;
 import com.google.api.client.http.InputStreamContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.Drive.Files;
@@ -72,8 +71,10 @@ public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverB
         super(fileStore, provider);
         this.drive = drive;
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
-//System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
     }
+
+    /** */
+    private static final String ENTRY_FIELDS = "id, parents, name, size, mimeType, createdTime, modifiedTime";
 
     /** */
     private static final String MIME_TYPE_DIR = "application/vnd.google-apps.folder";
@@ -91,7 +92,6 @@ public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverB
         public File getEntry(Path path) throws IOException {
             try {
                 if (cache.containsFile(path)) {
-//System.err.println("CACHE: path: " + path + ", id: " + cache.get(pathString).getId());
                     return cache.getFile(path);
                 } else {
                     if (ignoreAppleDouble && path.getFileName() != null && Util.isAppleDouble(path)) {
@@ -100,8 +100,7 @@ public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverB
 
                     File entry;
                     if (path.getNameCount() == 0) {
-                        entry = drive.files().get("root").setFields("id, parents, size, mimeType, createdTime, modifiedTime").execute().set("name", "/");
-//System.err.println(path + ", " + entry);
+                        entry = drive.files().get("root").setFields(ENTRY_FIELDS).execute().set("name", "/");
                         cache.putFile(path, entry);
                         return entry;
                     } else {
@@ -114,7 +113,6 @@ public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverB
                         }
                         throw new NoSuchFileException(path.toString());
                     }
-//System.err.println("GOT: path: " + path + ", id: " + entry.getId());
                 }
             } catch (GoogleJsonResponseException e) {
                 if (e.getMessage().startsWith("404")) {
@@ -162,10 +160,7 @@ public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverB
                 throw new FileAlreadyExistsException("path: " + path);
             }
         } catch (NoSuchFileException e) {
-System.out.println("newOutputStream: " + e.getMessage());
-//if (options != null) {
-// options.forEach(o -> { System.err.println("newOutputStream: " + o); });
-//}
+Debug.println("newOutputStream: " + e.getMessage());
         }
 
         // TODO detect automatically?
@@ -181,14 +176,16 @@ System.out.println("newOutputStream: " + e.getMessage());
 Debug.println("upload w/ option: " + source);
             uploadEntry(path, java.nio.file.Files.newInputStream(source), java.nio.file.Files.size(source));
 
-            return new OutputStream() { // TODO redundant
+            return new OutputStream() { // TODO redundant, already uploaded by #uploadEntry()
                 @Override
                 public void write(int b) throws IOException {
+                }
+                @Override
+                public void write(byte[] buf, int ofs, int len) throws IOException {
                 }
             };
         } else {
 Debug.println("upload w/o option");
-            // TODO output directly
             return new Util.OutputStreamForUploading() {
                 @Override
                 protected void onClosed() throws IOException {
@@ -199,7 +196,7 @@ Debug.println("upload w/o option");
         }
     }
 
-    /** */
+    /** TODO use output stream */
     private void uploadEntry(Path path, InputStream content, long size) throws IOException {
         File fileMetadata = new File();
         fileMetadata.setName(toFilenameString(path));
@@ -211,20 +208,10 @@ Debug.println("upload w/o option");
         Drive.Files.Create creator = drive.files().create(fileMetadata, mediaContent);
         MediaHttpUploader uploader = creator.getMediaHttpUploader();
         uploader.setDirectUploadEnabled(true);
-        uploader.setProgressListener(u -> { System.err.println("upload progress: " + u.getProgress()); });
-        final File newEntry = creator.setFields("id, name, size, parents, mimeType, createdTime").execute(); // TODO file is not finished status!
+        uploader.setProgressListener(u -> { Debug.println("upload progress: " + u.getProgress() + ", " + u.getUploadState()); });
+        File newEntry = creator.setFields(ENTRY_FIELDS).execute();
 
-        long timeout = 0;
-        long delay = 100;
-System.err.println("upload: " + uploader.getProgress() + ", " + uploader.getUploadState());
-        while (uploader.getUploadState() != UploadState.MEDIA_COMPLETE && uploader.getProgress() < 1 && timeout < 10 * 1000) {
-System.err.println("upload: " + uploader.getProgress() + ", " + uploader.getUploadState() + ", " + timeout);
-            try { Thread.sleep(delay); } catch (InterruptedException e) { e.printStackTrace(); }
-            timeout += delay;
-            delay *= 2;
-        }
-
-System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.size());
+Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.getSize());
 
         cache.addEntry(path, newEntry);
     }
@@ -244,9 +231,7 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
         if (dir.getParent().getFileName() != null) {
             dirEntry.setParents(Arrays.asList(cache.getEntry(dir.getParent()).getId()));
         }
-        File newEntry = drive.files().create(dirEntry)
-                .setFields("id, parents, name, size, mimeType, createdTime").execute();
-//Debug.println("createDirectory: " + dir + ", " + isFolder(newEntry) + ", " + newEntry.hashCode());
+        File newEntry = drive.files().create(dirEntry).setFields(ENTRY_FIELDS).execute();
         cache.addEntry(dir, newEntry);
     }
 
@@ -350,7 +335,6 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
     private List<Path> getDirectoryEntries(final Path dir) throws IOException {
         final File entry = cache.getEntry(dir);
 
-//Debug.println("getDirectoryEntries: " + dir + ", " + isFolder(entry) + ", " + entry.hashCode());
         if (!isFolder(entry)) {
             throw new NotDirectoryException("dir: " + dir);
         }
@@ -363,20 +347,18 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
             do {
                 FileList files = request
                         .setQ("'" + entry.getId() + "' in parents and trashed=false")
-                        .setFields("nextPageToken, files(id, parents, name, size, mimeType, createdTime, modifiedTime)").execute();
+                        .setFields("nextPageToken, files(" + ENTRY_FIELDS + ")").execute();
                 final List<File> children = files.getFiles();
                 request.setPageToken(files.getNextPageToken());
 
                 for (final File child : children) {
                     Path childPath = dir.resolve(child.getName());
                     list.add(childPath);
-//System.err.println("child: " + childPath + ", " + child.getId() + ", folder: " + isFolder(child));
 
                     cache.putFile(childPath, child);
                 }
             } while (request.getPageToken() != null && request.getPageToken().length() > 0);
 
-//System.out.println("put folderCache: " + pathString);
             cache.putFolder(dir, list);
         }
 
@@ -391,7 +373,7 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
             // TODO use cache ???
             List<File> list = drive.files().list()
                     .setQ("'" + entry.getId() + "' in parents and trashed=false")
-                    .setFields("nextPageToken").execute().getFiles();
+                    .execute().getFiles();
 
             if (list != null && list.size() > 0) {
                 throw new DirectoryNotEmptyException(path.toString());
@@ -414,8 +396,7 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
             if (options != null && options.stream().anyMatch(o -> o.equals(GoogleDriveCopyOption.EXPORT_AS_GDOCS))) {
                 entry.setMimeType(GoogleDriveCopyOption.EXPORT_AS_GDOCS.getValue());
             }
-            File newEntry = drive.files().copy(sourceEntry.getId(), entry)
-                        .setFields("id, parents, name, size, mimeType, createdTime").execute();
+            File newEntry = drive.files().copy(sourceEntry.getId(), entry).setFields(ENTRY_FIELDS).execute();
 
             cache.addEntry(target, newEntry);
         } else {
@@ -440,7 +421,7 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
             File newEntry = drive.files().update(sourceEntry.getId(), entry)
                     .setAddParents(targetParentEntry.getId())
                     .setRemoveParents(previousParents)
-                    .setFields("id, parents, name, size, mimeType, createdTime").execute();
+                    .setFields(ENTRY_FIELDS).execute();
             cache.removeEntry(source);
             if (targetIsParent) {
                 cache.addEntry(target.resolve(source.getFileName()), newEntry);
@@ -458,7 +439,7 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
             File newEntry = drive.files().update(sourceEntry.getId(), dirEntry)
                     .setAddParents(targetParentEntry.getId())
                     .setRemoveParents(previousParents)
-                    .setFields("id, parents, name, size, mimeType, createdTime").execute();
+                    .setFields(ENTRY_FIELDS).execute();
             cache.moveEntry(source, target, newEntry);
         }
     }
@@ -468,8 +449,7 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
         File sourceEntry = cache.getEntry(source);
         File entry = new File();
         entry.setName(toFilenameString(target));
-        File newEntry = drive.files().update(sourceEntry.getId(), entry)
-                .setFields("id, name, size, mimeType, createdTime").execute();
+        File newEntry = drive.files().update(sourceEntry.getId(), entry).setFields(ENTRY_FIELDS).execute();
         cache.removeEntry(source);
         cache.addEntry(target, newEntry);
     }
