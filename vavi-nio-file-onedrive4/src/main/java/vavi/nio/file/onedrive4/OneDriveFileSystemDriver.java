@@ -409,7 +409,7 @@ System.out.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(
     private void removeEntry(Path path) throws IOException {
         DriveItem entry = cache.getEntry(path);
         if (isFolder(entry)) {
-            if (cache.getChildCount(path) > 0) { // TODO check real instead of cache
+            if (getDirectoryEntries(path).size() > 0) {
                 throw new DirectoryNotEmptyException(path.toString());
             }
         }
@@ -438,20 +438,20 @@ System.out.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(
             LraSession copySession = client.getHttpProvider().<LraMonitorResult, DriveItemCopyBody, LraMonitorResult>send((IHttpRequest) request, LraMonitorResult.class, body, (IStatefulResponseHandler) handler).getSession();
             LraMonitorProvider<DriveItem> copyMonitorProvider = new LraMonitorProvider<>(copySession, client, DriveItem.class);
             copyMonitorProvider.monitor(new IProgressCallback<DriveItem>() {
-                    @Override
-                    public void progress(final long current, final long max) {
+                @Override
+                public void progress(final long current, final long max) {
 Debug.println("copy progress: " + current + "/" + max);
-                    }
-                    @Override
-                    public void success(final DriveItem result) {
+                }
+                @Override
+                public void success(final DriveItem result) {
 Debug.println("copy done: " + result.id);
-                        cache.addEntry(target, result);
-                    }
-                    @Override
-                    public void failure(final ClientException ex) {
-                        throw new IllegalStateException(ex);
-                    }
-                });
+                    cache.addEntry(target, result);
+                }
+                @Override
+                public void failure(final ClientException ex) {
+                    throw new IllegalStateException(ex);
+                }
+            });
         } else if (isFolder(sourceEntry)) {
             // TODO java spec. allows empty folder
             throw new IsDirectoryException("source can not be a folder: " + source);
