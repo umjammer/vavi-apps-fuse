@@ -30,22 +30,6 @@ import com.microsoft.graph.requests.extensions.ChunkedUploadResult;
 public class ChunkedUploadProvider<UploadType> {
 
     /**
-     * The default chunk size for upload. Currently set to 5 MiB.
-     */
-    private static final int DEFAULT_CHUNK_SIZE = 5 * 1024 * 1024;
-
-    /**
-     * The required chunk size increment by OneDrive service, which is 320 KiB
-     */
-    private static final int REQUIRED_CHUNK_SIZE_INCREMENT = 320 * 1024;
-
-    /**
-     * The maximum chunk size for a single upload allowed by OneDrive service.
-     * Currently the value is 60 MiB.
-     */
-    private static final int MAXIMUM_CHUNK_SIZE = 60 * 1024 * 1024;
-
-    /**
      * The default retry times for a simple chunk upload if failure happened
      */
     private static final int MAXIMUM_RETRY_TIMES = 3;
@@ -111,29 +95,15 @@ public class ChunkedUploadProvider<UploadType> {
      *
      * @param options  the upload options
      * @param callback the progress callback invoked during uploading
-     * @param configs  the optional configurations for the upload options. [0] should be the customized chunk
-     *                 size and [1] should be the maxRetry for upload retry.
+     * @param configs  the optional configurations for the upload options. [0] should be the maxRetry for upload retry.
      * @throws IOException the IO exception that occurred during upload
      */
     public OutputStream upload(final List<Option> options,
                        final IProgressCallback<UploadType> callback,
                        final int... configs)
             throws IOException {
-        int chunkSize = DEFAULT_CHUNK_SIZE;
 
-        if (configs.length > 0) {
-            chunkSize = configs[0];
-        }
-
-        final int maxRetry = (configs.length > 1) ? configs[1] : MAXIMUM_RETRY_TIMES;
-
-        if (chunkSize % REQUIRED_CHUNK_SIZE_INCREMENT != 0) {
-            throw new IllegalArgumentException("Chunk size must be a multiple of 320 KiB");
-        }
-
-        if (chunkSize > MAXIMUM_CHUNK_SIZE) {
-            throw new IllegalArgumentException("Please set chunk size smaller than 60 MiB");
-        }
+        final int maxRetry = (configs.length > 1) ? configs[0] : MAXIMUM_RETRY_TIMES;
 
         return new OutputStream() {
             @Override
