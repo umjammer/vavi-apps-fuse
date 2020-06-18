@@ -70,7 +70,7 @@ public final class OneDriveOutputStream extends OutputStream {
     @Override
     public void write(final byte[] b, final int off, final int len) throws IOException {
 try {
-        final byte[] content = Arrays.copyOfRange(b, off, len);
+        final byte[] content = Arrays.copyOfRange(b, off, off + len);
         final String header;
         if (length == -1) {
             header = String.format("%d-%d/*", offset, offset + content.length - 1); // TODO got error response, not in spec.?
