@@ -389,16 +389,17 @@ e.printStackTrace();
             OneItem sourceEntry = cache.getEntry(source);
             OneItem targetParentEntry = cache.getEntry(targetIsParent ? target : target.getParent());
             if (sourceEntry.isFile()) {
-                OneFile newEntry = OneFile.class.cast(sourceEntry).move(OneFolder.class.cast(targetParentEntry));
+                OneItem newEntry = OneFile.class.cast(sourceEntry).move(OneFolder.class.cast(targetParentEntry));
                 cache.removeEntry(source);
                 if (targetIsParent) {
-                    cache.addEntry(target.resolve(source.getFileName()), OneItem.class.cast(newEntry));
+                    cache.addEntry(target.resolve(source.getFileName()), newEntry);
                 } else {
-                    cache.addEntry(target, OneItem.class.cast(newEntry));
+                    cache.addEntry(target, newEntry);
                 }
             } else if (sourceEntry.isFolder()) {
-                // TODO engine doesn't have folder move functionality
-                throw new IsDirectoryException("source can not be a folder: " + source);
+                OneItem newEntry = OneFile.class.cast(sourceEntry).move(OneFolder.class.cast(targetParentEntry));
+                cache.removeEntry(source);
+                cache.addEntry(target, newEntry);
             }
         } catch (ParseException | InterruptedException e) {
             throw new IOException(e);
