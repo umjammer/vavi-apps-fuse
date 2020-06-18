@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nonnull;
@@ -111,12 +110,7 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
                     cache.putFile(path, entry);
                     return entry;
                 } else {
-                    List<Path> siblings;
-                    if (!cache.containsFolder(path.getParent())) {
-                        siblings = getDirectoryEntries(path.getParent());
-                    } else {
-                        siblings = cache.getFolder(path.getParent());
-                    }
+                    List<Path> siblings = getDirectoryEntries(path.getParent());
                     Optional<Path> found = siblings.stream().filter(p -> p.getFileName().equals(path.getFileName())).findFirst();
                     if (found.isPresent()) {
                         return cache.getEntry(found.get());
@@ -333,7 +327,7 @@ Debug.println("upload w/o option: " + is.available());
         return list;
     }
 
-    /** */
+    /** for created entry */
     private OneDriveItem.Metadata getEntry(Path path) throws IOException {
         final OneDriveItem.Metadata parentEntry = cache.getEntry(path.getParent());
 
@@ -357,11 +351,7 @@ Debug.println("upload w/o option: " + is.available());
     private void removeEntry(Path path) throws IOException {
         OneDriveItem.Metadata entry = cache.getEntry(path);
         if (entry.isFolder()) {
-            // TODO use cache
-            final List<OneDriveItem> children = StreamSupport.stream(OneDriveFolder.class.cast(entry.getResource()).getChildren().spliterator(), false)
-                    .map(e -> e.getResource()).collect(Collectors.toList());
-
-            if (children.size() > 0) {
+            if (getDirectoryEntries(path).size() > 0) {
                 throw new DirectoryNotEmptyException(path.toString());
             }
         }
