@@ -105,12 +105,7 @@ public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverB
                         cache.putFile(path, entry);
                         return entry;
                     } else {
-                        List<Path> siblings;
-                        if (!cache.containsFolder(path.getParent())) {
-                            siblings = getDirectoryEntries(path.getParent());
-                        } else {
-                            siblings = cache.getFolder(path.getParent());
-                        }
+                        List<Path> siblings = getDirectoryEntries(path.getParent());
                         for (int i = 0; i < siblings.size(); i++) { // avoid ConcurrentModificationException
                             Path p = siblings.get(i);
                             if (p.getFileName().equals(path.getFileName())) {
@@ -339,7 +334,7 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
 
     @Override
     public void close() throws IOException {
-        // TODO: what to do here? GoogleDrive does not implement Closeable :(
+        // GoogleDrive does not implement Closeable :(
     }
 
     /**
@@ -393,7 +388,7 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
         final File entry = cache.getEntry(path);
 
         if (isFolder(entry)) {
-            // TODO use cache
+            // TODO use cache ???
             List<File> list = drive.files().list()
                     .setQ("'" + entry.getId() + "' in parents and trashed=false")
                     .setFields("nextPageToken").execute().getFiles();
@@ -428,7 +423,6 @@ System.out.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), n
             throw new UnsupportedOperationException("source can not be a folder");
         }
     }
-
 
     /**
      * @param targetIsParent if the target is folder
