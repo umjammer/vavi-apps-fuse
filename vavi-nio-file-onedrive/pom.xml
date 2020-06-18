@@ -41,7 +41,7 @@
       <!-- java-fs onedrive (de.tuberlin:onedrivesdk) -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>OneDriveJavaSDK</artifactId>
-      <version>0.0.6v</version>
+      <version>0.0.7v</version>
     </dependency>
 
     <dependency>

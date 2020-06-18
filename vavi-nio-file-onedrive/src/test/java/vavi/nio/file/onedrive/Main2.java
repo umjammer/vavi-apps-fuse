@@ -30,6 +30,6 @@ public class Main2 {
         URI uri = URI.create("onedrive:///?id=" + email);
         FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
 
-        testLargeFile(fs, null);
+        testLargeFile(fs, OneDriveUploadOption.class);
     }
 }

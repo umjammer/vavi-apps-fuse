@@ -21,6 +21,8 @@ public class OneDriveFileSystemOptionsFactory extends FileSystemOptionsFactory {
 
     public OneDriveFileSystemOptionsFactory() {
         addLinkOption(LinkOption.NOFOLLOW_LINKS);
+        addCopyOption(new OneDriveUploadOption(null));
+        addWriteOpenOption(new OneDriveUploadOption(null));
     }
 }
 

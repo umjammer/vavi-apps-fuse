@@ -6,6 +6,7 @@
 
 package vavi.nio.file.onedrive;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -40,6 +41,7 @@ import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import vavi.nio.file.Cache;
 import vavi.nio.file.Util;
+import vavi.util.Debug;
 
 import static vavi.nio.file.Util.toFilenameString;
 import static vavi.nio.file.Util.toPathString;
@@ -50,7 +52,7 @@ import de.tuberlin.onedrivesdk.common.OneItem;
 import de.tuberlin.onedrivesdk.downloadFile.OneDownload;
 import de.tuberlin.onedrivesdk.file.OneFile;
 import de.tuberlin.onedrivesdk.folder.OneFolder;
-import de.tuberlin.onedrivesdk.uploadFile.OneUploadFile;
+import de.tuberlin.onedrivesdk.uploadFile.OneUpload;
 
 
 /**
@@ -143,24 +145,42 @@ System.out.println("newOutputStream: " + e.getMessage());
 //new Exception("*** DUMMY ***").printStackTrace();
         }
 
-        // TODO don't use temporary file
-        OneFolder dirEntry = (OneFolder) cache.getEntry(path.getParent());
-        return new Util.OutputStreamForUploading() {
-            @Override
-            protected void onClosed() throws IOException {
-                try {
+        OneDriveUploadOption uploadOption = Util.getOneOfOptions(OneDriveUploadOption.class, options);
+        if (uploadOption != null) {
+            // java.nio.file is highly abstracted, so here source information is lost.
+            // but onedrive graph api requires content length for upload.
+            // so reluctantly we provide {@link OneDriveUploadOpenOption} for {@link java.nio.file.Files#copy} options.
+            Path source = uploadOption.getSource();
+Debug.println("upload w/ option: " + source);
+
+            return uploadEntry(path, (int) Files.size(source));
+        } else {
+Debug.println("upload w/o option");
+            return new Util.OutputStreamForUploading() { // TODO used for getting file length
+                @Override
+                protected void onClosed() throws IOException {
                     InputStream is = getInputStream();
-                    Path tmp = Files.createTempFile("vavi-apps-fuse-", ".upload");
-                    Files.copy(is, tmp, StandardCopyOption.REPLACE_EXISTING);
-                    final OneUploadFile uploader = dirEntry.uploadFile(tmp.toFile(), toFilenameString(path));
-                    OneFile newEntry = uploader.startUpload();
-                    cache.addEntry(path, OneItem.class.cast(newEntry));
-                } catch (OneDriveException e) {
-e.printStackTrace();
-                    throw new IOException(e);
+Debug.println("upload w/o option: " + is.available());
+                    OutputStream os = uploadEntry(path, is.available());
+                    Util.transfer(is, os);
+                    is.close();
+                    os.close();
                 }
-            }
-        };
+            };
+        }
+    }
+
+    /** OneDriveUploadOption */
+    private OutputStream uploadEntry(Path path, int size) throws IOException {
+        try {
+            OneFolder dirEntry = (OneFolder) cache.getEntry(path.getParent());
+            final OneUpload uploader = dirEntry.upload(toFilenameString(path), size, newEntry -> {
+                cache.addEntry(path, newEntry);
+            });
+            return new BufferedOutputStream(uploader.upload(), Util.BUFFER_SIZE);
+        } catch (OneDriveException e) {
+            throw new IOException(e);
+        }
     }
 
     @Nonnull
@@ -329,7 +349,7 @@ e.printStackTrace();
     private void removeEntry(Path path) throws IOException, OneDriveException {
         OneItem entry = cache.getEntry(path);
         if (entry.isFolder()) {
-            // TODO use cache
+            // TODO use cache ???
             final List<OneItem> children = client.getFolderByPath(toPathString(path)).getChildren();
 
             if (children.size() > 0) {
