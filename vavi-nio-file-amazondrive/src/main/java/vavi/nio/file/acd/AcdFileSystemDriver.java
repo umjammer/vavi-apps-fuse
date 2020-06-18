@@ -331,8 +331,10 @@ System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + "
                 cache.addEntry(target, patchedEntry);
             }
         } else if (sourceEntry.isFolder()) {
-            // TODO java spec. allows empty folder
-            throw new IsDirectoryException("source can not be a folder: " + source);
+            Path actualPath = targetIsParent ? target.resolve(toFilenameString(source)) : target;
+            NodeInfo patchedEntry = drive.renameFolder(sourceEntry.getId(), toPathString(actualPath)); // TODO
+            cache.removeEntry(source);
+            cache.addEntry(target, patchedEntry);
         }
     }
 
