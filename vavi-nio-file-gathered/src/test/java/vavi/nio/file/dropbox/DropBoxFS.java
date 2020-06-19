@@ -17,7 +17,6 @@ import com.github.fge.fs.dropbox.DropBoxFileSystemProvider;
 import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.dropbox.DropBoxLocalAppCredential;
 import vavi.net.fuse.Fuse;
-import vavi.util.properties.annotation.PropsEntity;
 
 
 /**
@@ -42,7 +41,9 @@ public class DropBoxFS {
         URI uri = URI.create("dropbox:///?id=" + email);
 
         OAuth2AppCredential appCredential = new DropBoxLocalAppCredential();
-        PropsEntity.Util.bind(appCredential);
+
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
 
         Map<String, Object> env = new HashMap<>();
         env.put(DropBoxFileSystemProvider.ENV_APP_CREDENTIAL, appCredential);

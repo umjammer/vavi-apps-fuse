@@ -42,6 +42,9 @@ public class GoogleDriveFS {
 
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, env);
 
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
+
         Fuse.getFuse().mount(fs, args[0], Collections.EMPTY_MAP);
     }
 }

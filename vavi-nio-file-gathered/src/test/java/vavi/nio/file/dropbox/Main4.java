@@ -90,6 +90,9 @@ public class Main4 {
 
         FileSystem fs = new DropBoxFileSystemProvider().newFileSystem(uri, env);
 
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
+
         Map<String, String> options = new HashMap<>();
         options.put("fsname", "dropbox_fs" + "@" + System.currentTimeMillis());
 

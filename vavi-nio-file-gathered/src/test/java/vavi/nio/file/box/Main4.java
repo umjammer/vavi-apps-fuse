@@ -92,6 +92,9 @@ public class Main4 {
 
         final FileSystem fs = new BoxFileSystemProvider().newFileSystem(uri, env);
 
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
+
         Map<String, String> options = new HashMap<>();
         options.put("fsname", "box_fs" + "@" + System.currentTimeMillis());
 

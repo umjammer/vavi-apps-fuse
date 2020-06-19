@@ -60,7 +60,7 @@ public class Main4 {
         //options.put("noapplexattr", null);
         options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, false);
         options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
-        // vfs io uses thread, so this option must be set
+        // vfs io uses ThreadLocal to keep internal info when read/write, so this option must be set
         options.put(vavi.net.fuse.Fuse.ENV_SINGLE_THREAD, true);
     }
 
@@ -94,10 +94,15 @@ public class Main4 {
 
         FileSystem fs = new VfsFileSystemProvider().newFileSystem(uri, env);
 
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
+
         Map<String, Object> options = new HashMap<>();
         options.put("fsname", "vfs_fs" + "@" + System.currentTimeMillis());
         options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, false);
         options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
+        // vfs io uses ThreadLocal to keep internal info when read/write, so this option must be set
+        options.put(vavi.net.fuse.Fuse.ENV_SINGLE_THREAD, true);
 
         Fuse.getFuse().mount(fs, mountPoint, options);
     }
