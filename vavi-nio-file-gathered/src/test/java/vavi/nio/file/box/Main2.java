@@ -12,7 +12,7 @@ import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.fge.filesystem.box.provider.BoxFileSystemProvider;
+import com.github.fge.filesystem.box.BoxFileSystemProvider;
 
 import static vavi.nio.file.Base.testLargeFile;
 

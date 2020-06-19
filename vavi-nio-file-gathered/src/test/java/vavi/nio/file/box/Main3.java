@@ -12,7 +12,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.github.fge.filesystem.box.provider.BoxFileSystemProvider;
+import com.github.fge.filesystem.box.BoxFileSystemProvider;
 
 import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.box.BoxLocalAppCredential;

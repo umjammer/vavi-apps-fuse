@@ -19,7 +19,7 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import com.github.fge.filesystem.box.provider.BoxFileSystemProvider;
+import com.github.fge.filesystem.box.BoxFileSystemProvider;
 
 import vavi.net.fuse.Base;
 
