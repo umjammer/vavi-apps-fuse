@@ -6,6 +6,7 @@
 
 package vavi.nio.file.googledrive;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -37,7 +38,7 @@ import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.googleapis.media.MediaHttpUploader;
-import com.google.api.client.http.InputStreamContent;
+import com.google.api.client.http.AbstractInputStreamContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.Drive.Files;
 import com.google.api.services.drive.model.File;
@@ -167,53 +168,51 @@ Debug.println("newOutputStream: " + e.getMessage());
         @SuppressWarnings("unused")
         GoogleDriveOpenOption option = Util.getOneOfOptions(GoogleDriveOpenOption.class, options);
 
-        GoogleDriveUploadOption uploadOption = Util.getOneOfOptions(GoogleDriveUploadOption.class, options);
-        if (uploadOption != null) {
-            // java.nio.file is highly abstracted, so here source information is lost.
-            // but google drive api requires content length for upload.
-            // so reluctantly we provide {@link GoogleDriveUploadOpenOption} for {@link java.nio.file.Files#copy} options.
-            Path source = uploadOption.getSource();
-Debug.println("upload w/ option: " + source);
-            uploadEntry(path, java.nio.file.Files.newInputStream(source), java.nio.file.Files.size(source));
-
-            return new OutputStream() { // TODO redundant, already uploaded by #uploadEntry()
-                @Override
-                public void write(int b) throws IOException {
-                }
-                @Override
-                public void write(byte[] buf, int ofs, int len) throws IOException {
-                }
-            };
-        } else {
-Debug.println("upload w/o option");
-            return new Util.OutputStreamForUploading() {
-                @Override
-                protected void onClosed() throws IOException {
-                    InputStream is = getInputStream();
-                    uploadEntry(path, is, is.available());
-                }
-            };
-        }
+        return uploadEntry(path);
     }
 
-    /** TODO use output stream */
-    private void uploadEntry(Path path, InputStream content, long size) throws IOException {
-        File fileMetadata = new File();
-        fileMetadata.setName(toFilenameString(path));
-        fileMetadata.setParents(Arrays.asList(cache.getEntry(path.getParent()).getId()));
+    /** */
+    private OutputStream uploadEntry(Path path) throws IOException {
+        return new BufferedOutputStream(new Util.StrealingOutputStreamForUploading<File>() {
+            @Override
+            protected File upload() throws IOException {
+                AbstractInputStreamContent mediaContent = new AbstractInputStreamContent(null) { // implements HttpContent
+                    @Override
+                    public InputStream getInputStream() throws IOException {
+                        return null; // never called
+                    }
+                    @Override
+                    public long getLength() throws IOException {
+                        return -1;
+                    }
+                    @Override
+                    public boolean retrySupported() {
+                        return false;
+                    }
+                    @Override
+                    public void writeTo(OutputStream os) throws IOException {
+                        setOutputStream(os); // socket
+                    }
+                };
 
-        InputStreamContent mediaContent = new InputStreamContent(null, content);
-        mediaContent.setLength(size);
+                File fileMetadata = new File();
+                fileMetadata.setName(toFilenameString(path));
+                fileMetadata.setParents(Arrays.asList(cache.getEntry(path.getParent()).getId()));
 
-        Drive.Files.Create creator = drive.files().create(fileMetadata, mediaContent);
-        MediaHttpUploader uploader = creator.getMediaHttpUploader();
-        uploader.setDirectUploadEnabled(true);
-        uploader.setProgressListener(u -> { Debug.println("upload progress: " + u.getProgress() + ", " + u.getUploadState()); });
-        File newEntry = creator.setFields(ENTRY_FIELDS).execute();
+                Drive.Files.Create creator = drive.files().create(fileMetadata, mediaContent); // why not HttpContent ???
+                MediaHttpUploader uploader = creator.getMediaHttpUploader();
+                uploader.setDirectUploadEnabled(true);
+                // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
+                uploader.setProgressListener(u -> { Debug.println("upload progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()); });
+                return creator.setFields(ENTRY_FIELDS).execute();
+            }
 
+            @Override
+            protected void onClosed(File newEntry) {
 Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.getSize());
-
-        cache.addEntry(path, newEntry);
+                cache.addEntry(path, newEntry);
+            }
+        }, Util.BUFFER_SIZE);
     }
 
     @Nonnull

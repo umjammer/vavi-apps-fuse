@@ -33,6 +33,6 @@ public class Main2 {
         URI uri = URI.create("googledrive:///?id=" + email);
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
 
-        testLargeFile(fs, GoogleDriveUploadOption.class);
+        testLargeFile(fs, null);
     }
 }
