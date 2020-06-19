@@ -105,7 +105,7 @@ public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverB
                         cache.putFile(path, entry);
                         return entry;
                     } else {
-                        List<Path> siblings = getDirectoryEntries(path.getParent());
+                        List<Path> siblings = getDirectoryEntries(path.getParent(), false);
                         for (int i = 0; i < siblings.size(); i++) { // avoid ConcurrentModificationException
                             Path p = siblings.get(i);
                             if (p.getFileName().equals(path.getFileName())) {
@@ -219,7 +219,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
     @Override
     public DirectoryStream<Path> newDirectoryStream(final Path dir,
                                                     final DirectoryStream.Filter<? super Path> filter) throws IOException {
-        return Util.newDirectoryStream(getDirectoryEntries(dir), filter);
+        return Util.newDirectoryStream(getDirectoryEntries(dir, true), filter);
     }
 
     @Override
@@ -331,7 +331,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
     }
 
     /** */
-    private List<Path> getDirectoryEntries(final Path dir) throws IOException {
+    private List<Path> getDirectoryEntries(Path dir, boolean useCache) throws IOException {
         final File entry = cache.getEntry(dir);
 
         if (!isFolder(entry)) {
@@ -339,7 +339,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
         }
 
         List<Path> list = new ArrayList<>();
-        if (cache.containsFolder(dir)) {
+        if (useCache && cache.containsFolder(dir)) {
             list = cache.getFolder(dir);
         } else {
             Files.List request = drive.files().list();
