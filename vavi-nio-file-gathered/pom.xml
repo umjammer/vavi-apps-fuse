@@ -5,7 +5,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.4</version>
+    <version>0.1.5</version>
   </parent>
 
   <artifactId>vavi-nio-file-gathered</artifactId>
@@ -70,6 +70,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.rainerhahnekamp</groupId>
+      <artifactId>sneakythrow</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-net-fuse</artifactId>
       <scope>test</scope>
@@ -84,25 +89,25 @@
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-googledrive</artifactId>
-      <version>0.1.4</version>
+      <version>0.1.5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-onedrive4</artifactId>
-      <version>0.1.4</version>
+      <version>0.1.5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.fge</groupId>
+      <groupId>com.github.umjammer</groupId>
       <artifactId>java7-fs-dropbox</artifactId>
-      <version>0.0.17v-SNAPSHOT</version>
+      <version>0.0.17v</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.fge</groupId>
+      <groupId>com.github.umjammer</groupId>
       <artifactId>java7-fs-box</artifactId>
-      <version>0.1.12v-SNAPSHOT</version>
+      <version>0.1.12v</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

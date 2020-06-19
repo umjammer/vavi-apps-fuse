@@ -4,14 +4,14 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.1.4</version>
+  <version>0.1.5</version>
 
   <properties>
     <vavi-net-auth.version>0.1.2</vavi-net-auth.version>
     <vavi-nio-file.groupId>com.github.umjammer</vavi-nio-file.groupId>
-    <vavi-nio-file.version>0.0.11</vavi-nio-file.version>
+    <vavi-nio-file.version>0.0.12</vavi-nio-file.version>
     <java7-fs-base.groupId>com.github.umjammer</java7-fs-base.groupId>
-    <java7-fs-base.version>0.0.9v</java7-fs-base.version>
+    <java7-fs-base.version>0.0.10v</java7-fs-base.version>
   </properties>
 
   <modules>
@@ -156,7 +156,7 @@ TODO
       <dependency>
         <groupId>vavi</groupId>
         <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.4</version>
+        <version>0.1.5</version>
       </dependency>
 
       <dependency>
@@ -195,13 +195,13 @@ TODO
       <dependency>
         <groupId>vavi</groupId>
         <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.4</version>
+        <version>0.1.5</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>vavi</groupId>
         <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.4</version>
+        <version>0.1.5</version>
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>
