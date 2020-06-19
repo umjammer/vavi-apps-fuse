@@ -110,8 +110,8 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
                     cache.putFile(path, entry);
                     return entry;
                 } else {
-                    List<Path> siblings = getDirectoryEntries(path.getParent());
-                    Optional<Path> found = siblings.stream().filter(p -> p.getFileName().equals(path.getFileName())).findFirst();
+                    List<Path> siblings = getDirectoryEntries(path.getParent(), false);
+                    Optional<Path> found = siblings.stream().filter(p -> path.getFileName().equals(p.getFileName())).findFirst();
                     if (found.isPresent()) {
                         return cache.getEntry(found.get());
                     } else {
@@ -190,7 +190,7 @@ Debug.println("upload w/o option: " + is.available());
     @Override
     public DirectoryStream<Path> newDirectoryStream(final Path dir,
                                                     final DirectoryStream.Filter<? super Path> filter) throws IOException {
-        return Util.newDirectoryStream(getDirectoryEntries(dir), filter);
+        return Util.newDirectoryStream(getDirectoryEntries(dir, true), filter);
     }
 
 
@@ -300,7 +300,7 @@ Debug.println("upload w/o option: " + is.available());
     }
 
     /** */
-    private List<Path> getDirectoryEntries(Path dir) throws IOException {
+    private List<Path> getDirectoryEntries(Path dir, boolean useCache) throws IOException {
         final OneDriveItem.Metadata entry = cache.getEntry(dir);
 
         if (!entry.isFolder()) {
@@ -308,7 +308,7 @@ Debug.println("upload w/o option: " + is.available());
         }
 
         List<Path> list = null;
-        if (cache.containsFolder(dir)) {
+        if (useCache && cache.containsFolder(dir)) {
             list = cache.getFolder(dir);
         } else {
             list = new ArrayList<>();
@@ -351,7 +351,7 @@ Debug.println("upload w/o option: " + is.available());
     private void removeEntry(Path path) throws IOException {
         OneDriveItem.Metadata entry = cache.getEntry(path);
         if (entry.isFolder()) {
-            if (getDirectoryEntries(path).size() > 0) {
+            if (getDirectoryEntries(path, false).size() > 0) {
                 throw new DirectoryNotEmptyException(path.toString());
             }
         }
