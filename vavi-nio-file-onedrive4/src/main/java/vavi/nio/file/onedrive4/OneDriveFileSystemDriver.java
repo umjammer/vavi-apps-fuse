@@ -262,7 +262,7 @@ Debug.println("upload done: " + result.name);
     @Override
     public DirectoryStream<Path> newDirectoryStream(final Path dir,
                                                     final DirectoryStream.Filter<? super Path> filter) throws IOException {
-        return Util.newDirectoryStream(getDirectoryEntries(dir), filter);
+        return Util.newDirectoryStream(getDirectoryEntries(dir, true), filter);
     }
 
     @Override
@@ -274,7 +274,7 @@ Debug.println("upload done: " + result.name);
         preEntry.name = toFilenameString(dir);
         preEntry.folder = new Folder();
         DriveItem newEntry = client.drive().items(parentEntry.id).children().buildRequest().post(preEntry);
-System.out.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEntry) + ", " + newEntry.hashCode());
+Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEntry) + ", " + newEntry.hashCode());
         cache.addEntry(dir, newEntry);
     }
 
@@ -374,7 +374,7 @@ System.out.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(
     }
 
     /** */
-    private List<Path> getDirectoryEntries(Path dir) throws IOException {
+    private List<Path> getDirectoryEntries(Path dir, boolean useCache) throws IOException {
         final DriveItem entry = cache.getEntry(dir);
 
         if (!isFolder(entry)) {
@@ -383,7 +383,7 @@ System.out.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(
         }
 
         List<Path> list = null;
-        if (cache.containsFolder(dir)) {
+        if (useCache && cache.containsFolder(dir)) {
             list = cache.getFolder(dir);
         } else {
             list = new ArrayList<>(entry.folder.childCount);
@@ -409,7 +409,7 @@ System.out.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(
     private void removeEntry(Path path) throws IOException {
         DriveItem entry = cache.getEntry(path);
         if (isFolder(entry)) {
-            if (getDirectoryEntries(path).size() > 0) {
+            if (getDirectoryEntries(path, false).size() > 0) {
                 throw new DirectoryNotEmptyException(path.toString());
             }
         }
