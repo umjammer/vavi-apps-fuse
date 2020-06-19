@@ -370,8 +370,8 @@ e.printStackTrace();
             OneItem sourceEntry = cache.getEntry(source);
             OneItem targetParentEntry = cache.getEntry(target.getParent());
             if (sourceEntry.isFile()) {
-                OneFile newEntry = OneFile.class.cast(sourceEntry).copy(OneFolder.class.cast(targetParentEntry));
-
+                OneFile newEntry = OneFile.class.cast(sourceEntry).copy(OneFolder.class.cast(targetParentEntry), toFilenameString(target));
+Debug.println(newEntry.getParentFolder().getName() + "/" + newEntry.getName());
                 cache.addEntry(target, OneItem.class.cast(newEntry));
             } else if (sourceEntry.isFolder()) {
                 throw new IsDirectoryException("source can not be a folder: " + source);
