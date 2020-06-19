@@ -94,9 +94,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.umjammer</groupId>
+      <groupId>com.github.fge</groupId>
       <artifactId>java7-fs-dropbox</artifactId>
-      <version>0.0.16v</version>
+      <version>0.0.17v-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
     <dependency>

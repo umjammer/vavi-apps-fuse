@@ -12,7 +12,7 @@ import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 
-import com.github.fge.fs.dropbox.provider.DropBoxFileSystemProvider;
+import com.github.fge.fs.dropbox.DropBoxFileSystemProvider;
 
 import static vavi.nio.file.Base.testLargeFile;
 

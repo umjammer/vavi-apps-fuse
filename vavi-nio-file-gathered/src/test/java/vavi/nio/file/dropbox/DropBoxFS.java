@@ -12,7 +12,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.github.fge.fs.dropbox.provider.DropBoxFileSystemProvider;
+import com.github.fge.fs.dropbox.DropBoxFileSystemProvider;
 
 import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.dropbox.DropBoxLocalAppCredential;

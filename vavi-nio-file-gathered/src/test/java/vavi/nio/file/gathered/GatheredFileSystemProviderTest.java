@@ -20,8 +20,8 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
-import com.github.fge.fs.dropbox.provider.DropBoxFileSystemProvider;
 import com.github.fge.filesystem.box.BoxFileSystemProvider;
+import com.github.fge.fs.dropbox.DropBoxFileSystemProvider;
 
 import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.box.BoxLocalAppCredential;

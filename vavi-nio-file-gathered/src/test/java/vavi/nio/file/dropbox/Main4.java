@@ -19,7 +19,7 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import com.github.fge.fs.dropbox.provider.DropBoxFileSystemProvider;
+import com.github.fge.fs.dropbox.DropBoxFileSystemProvider;
 
 import vavi.net.fuse.Base;
 
