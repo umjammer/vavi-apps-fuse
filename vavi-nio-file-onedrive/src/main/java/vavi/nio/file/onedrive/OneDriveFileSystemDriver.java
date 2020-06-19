@@ -397,9 +397,9 @@ Debug.println(newEntry.getParentFolder().getName() + "/" + newEntry.getName());
                     cache.addEntry(target, newEntry);
                 }
             } else if (sourceEntry.isFolder()) {
-                OneItem newEntry = OneFile.class.cast(sourceEntry).move(OneFolder.class.cast(targetParentEntry));
-                cache.removeEntry(source);
-                cache.addEntry(target, newEntry);
+                OneItem newEntry = OneFolder.class.cast(sourceEntry).move(OneFolder.class.cast(targetParentEntry));
+Debug.println(newEntry.getParentFolder().getName() + "/" + newEntry.getName());
+                cache.moveEntry(source, target, newEntry);
             }
         } catch (ParseException | InterruptedException e) {
             throw new IOException(e);
