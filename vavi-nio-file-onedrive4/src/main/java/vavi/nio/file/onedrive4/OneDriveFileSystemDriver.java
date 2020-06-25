@@ -123,7 +123,7 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
                     if (pathString.equals("/")) {
                         entry = client.drive().root().buildRequest().get();
                     } else {
-                        entry = client.drive().root().itemWithPath(URLEncoder.encode(pathString.substring(1), "utf-8")).buildRequest().get();
+                        entry = client.drive().root().itemWithPath(toItemPathString(pathString.substring(1))).buildRequest().get();
                     }
                     cache.putFile(path, entry);
                     return entry;
@@ -146,7 +146,6 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
     public InputStream newInputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
         final DriveItem entry = cache.getEntry(path);
 
-        // TODO: metadata driver
         if (isFolder(entry)) {
             throw new IsDirectoryException(path.toString());
         }
@@ -171,7 +170,6 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
             }
         } catch (NoSuchFileException e) {
 Debug.println("newOutputStream: " + e.getMessage());
-//new Exception("*** DUMMY ***").printStackTrace();
         }
 
         OneDriveUploadOption uploadOption = Util.getOneOfOptions(OneDriveUploadOption.class, options);
@@ -201,7 +199,7 @@ Debug.println("upload w/o option");
     /** OneDriveUploadOption */
     private OutputStream uploadEntry(Path path, int size) throws IOException {
         if (size > threshold) {
-            UploadSession uploadSession = client.drive().root().itemWithPath(URLEncoder.encode(toPathString(path), "utf-8")).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
+            UploadSession uploadSession = client.drive().root().itemWithPath(toItemPathString(toPathString(path))).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
             vavi.nio.file.onedrive4.graph.ChunkedUploadProvider<DriveItem> chunkedUploadProvider =
                     new vavi.nio.file.onedrive4.graph.ChunkedUploadProvider<>(uploadSession, client, size, DriveItem.class);
             return new BufferedOutputStream(chunkedUploadProvider.upload(new IProgressCallback<DriveItem>() {
@@ -224,7 +222,7 @@ Debug.println("upload done: " + result.name);
                 @Override
                 protected void onClosed() throws IOException {
                     InputStream is = getInputStream();
-                    DriveItem newEntry = client.drive().root().itemWithPath(URLEncoder.encode(toPathString(path), "utf-8")).content().buildRequest().put(ByteStreams.toByteArray(is)); // TODO depends on guava
+                    DriveItem newEntry = client.drive().root().itemWithPath(toItemPathString(toPathString(path))).content().buildRequest().put(ByteStreams.toByteArray(is)); // TODO depends on guava
                     cache.addEntry(path, newEntry);
                 }
             };
@@ -234,7 +232,7 @@ Debug.println("upload done: " + result.name);
     /** {@link Files#copy(Path, Path, CopyOption...)} */
     private void uploadEntry(Path path, InputStream is, int size) throws IOException {
         if (size > 4 * 1024 * 1024) {
-            UploadSession uploadSession = client.drive().root().itemWithPath(URLEncoder.encode(toPathString(path), "utf-8")).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
+            UploadSession uploadSession = client.drive().root().itemWithPath(toItemPathString(toPathString(path))).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
             ChunkedUploadProvider<DriveItem> chunkedUploadProvider = new ChunkedUploadProvider<>(uploadSession,
                     client, is, size, DriveItem.class);
             chunkedUploadProvider.upload(new IProgressCallback<DriveItem>() {
@@ -253,9 +251,14 @@ Debug.println("upload done: " + result.name);
                     }
                 });
         } else {
-            DriveItem newEntry = client.drive().root().itemWithPath(URLEncoder.encode(toPathString(path), "utf-8")).content().buildRequest().put(ByteStreams.toByteArray(is)); // TODO depends on guava
+            DriveItem newEntry = client.drive().root().itemWithPath(toItemPathString(toPathString(path))).content().buildRequest().put(ByteStreams.toByteArray(is)); // TODO depends on guava
             cache.addEntry(path, newEntry);
         }
+    }
+
+    /** */
+    private String toItemPathString(String pathString) throws IOException {
+        return URLEncoder.encode(pathString, "utf-8").replace("+", "%20");
     }
 
     @Nonnull
