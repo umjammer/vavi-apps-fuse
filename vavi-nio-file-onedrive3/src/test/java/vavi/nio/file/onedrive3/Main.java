@@ -6,18 +6,10 @@
 
 package vavi.nio.file.onedrive3;
 
-import java.io.IOException;
 import java.net.URI;
-import java.nio.file.FileSystem;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.junit.jupiter.api.Test;
-
-import vavi.net.auth.oauth2.OAuth2AppCredential;
-import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
-import vavi.net.fuse.Fuse;
 
 import static vavi.nio.file.Base.testAll;
 
