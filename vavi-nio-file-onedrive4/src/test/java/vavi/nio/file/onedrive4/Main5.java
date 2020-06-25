@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.file.onedrive;
+package vavi.nio.file.onedrive4;
 
 import java.net.URI;
 import java.nio.file.FileSystem;
@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /**
- * OneDrive. (OneDriveJavaSDK engine)
+ * OneDrive. (v2.0 graph api, msgraph engine)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2020/05/31 umjammer initial version <br>

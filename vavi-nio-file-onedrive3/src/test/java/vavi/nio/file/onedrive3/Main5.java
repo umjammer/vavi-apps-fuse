@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.file.onedrive;
+package vavi.nio.file.onedrive3;
 
 import java.net.URI;
 import java.nio.file.FileSystem;
@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /**
- * OneDrive. (OneDriveJavaSDK engine)
+ * OneDrive. (v2.0 graph api, cyberduck engine)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2020/05/31 umjammer initial version <br>
@@ -54,9 +54,9 @@ System.out.println("$ mkdir " + dstDir);
             Files.createDirectory(dstDir);
 
 System.out.println("$ cp " + src + " " + dst);
-            Files.copy(src, dst); // TODO w/o dstDir it's works
+            Files.copy(src, dst);
 System.out.println("$ ls " + dstDir);
-Files.list(dstDir).forEach(System.err::println);
+Files.list(dstDir).forEach(System.out::println);
             a = Util.toFilenameString(Files.list(dstDir).findFirst().get());
         }
 

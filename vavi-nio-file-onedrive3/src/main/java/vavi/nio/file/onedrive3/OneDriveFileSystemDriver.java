@@ -127,7 +127,6 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
     public InputStream newInputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
         final OneDriveItem.Metadata entry = cache.getEntry(path);
 
-        // TODO: metadata driver
         if (entry.isFolder()) {
             throw new IsDirectoryException("path: " + path);
         }
@@ -149,7 +148,6 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
             }
         } catch (NoSuchFileException e) {
 Debug.println("newOutputStream: " + e.getMessage());
-//new Exception("*** DUMMY ***").printStackTrace();
         }
 
         OneDriveUploadOption uploadOption = Util.getOneOfOptions(OneDriveUploadOption.class, options);
@@ -179,11 +177,16 @@ Debug.println("upload w/o option: " + is.available());
     /** */
     private OutputStream uploadEntry(Path path, int size) throws IOException {
         OneDriveFolder folder = OneDriveFolder.class.cast(cache.getEntry(path.getParent()).getResource());
-        OneDriveFile file = new OneDriveFile(client, folder, URLEncoder.encode(toFilenameString(path), "utf-8"), ItemIdentifierType.Path);
+        OneDriveFile file = new OneDriveFile(client, folder, toItemPathString(toFilenameString(path)), ItemIdentifierType.Path);
         final OneDriveUploadSession uploadSession = file.createUploadSession();
         return new BufferedOutputStream(new OneDriveOutputStream(uploadSession, path, size, newEntry -> {
             cache.addEntry(path, newEntry);
         }), Util.BUFFER_SIZE);
+    }
+
+    /** */
+    private String toItemPathString(String pathString) throws IOException {
+        return URLEncoder.encode(pathString, "utf-8").replace("+", "%20");
     }
 
     @Nonnull
@@ -334,7 +337,7 @@ Debug.println("upload w/o option: " + is.available());
         Optional<OneDriveItem.Metadata> found = StreamSupport.stream(OneDriveFolder.class.cast(parentEntry.getResource()).getChildren().spliterator(), false)
             .filter(child -> {
                 try {
-//System.out.println(child.getName() + ", " + toFilenameString(path));
+System.err.println(child.getName() + ", " + toFilenameString(path));
                     return child.getName().equals(toFilenameString(path));
                 } catch (IOException e) {
                     throw new IllegalStateException(e);

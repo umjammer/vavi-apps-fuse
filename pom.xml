@@ -4,7 +4,7 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.1.5</version>
+  <version>0.1.6</version>
 
   <properties>
     <vavi-net-auth.version>0.1.2</vavi-net-auth.version>
@@ -156,7 +156,7 @@ TODO
       <dependency>
         <groupId>vavi</groupId>
         <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.5</version>
+        <version>0.1.6</version>
       </dependency>
 
       <dependency>
@@ -195,13 +195,13 @@ TODO
       <dependency>
         <groupId>vavi</groupId>
         <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.5</version>
+        <version>0.1.6</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>vavi</groupId>
         <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.5</version>
+        <version>0.1.6</version>
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>
