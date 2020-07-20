@@ -26,7 +26,7 @@ public class MyLogger implements ILogger {
 
     /**
      * Sets the logging level of this logger
-     * 
+     *
      * @param level the level to log at
      */
     public void setLoggingLevel(final LoggerLevel level) {
@@ -36,7 +36,7 @@ public class MyLogger implements ILogger {
 
     /**
      * Gets the logging level of this logger
-     * 
+     *
      * @return the level the logger is set to
      */
     public LoggerLevel getLoggingLevel() {
@@ -45,7 +45,7 @@ public class MyLogger implements ILogger {
 
     /**
      * Creates the tag automatically
-     * 
+     *
      * @return the tag for the current method Sourced from
      *         https://gist.github.com/eefret/a9c7ac052854a10a8936
      */
@@ -68,7 +68,7 @@ public class MyLogger implements ILogger {
 
     /**
      * Logs a debug message
-     * 
+     *
      * @param message the message
      */
     @Override
@@ -81,7 +81,7 @@ public class MyLogger implements ILogger {
 
     /**
      * Logs an error message with throwable
-     * 
+     *
      * @param message the message
      * @param throwable the throwable
      */
