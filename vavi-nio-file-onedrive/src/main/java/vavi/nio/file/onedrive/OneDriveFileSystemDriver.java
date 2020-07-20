@@ -173,7 +173,7 @@ Debug.println("upload w/o option: " + is.available());
     /** OneDriveUploadOption */
     private OutputStream uploadEntry(Path path, int size) throws IOException {
         try {
-            OneFolder dirEntry = (OneFolder) cache.getEntry(path.getParent());
+            OneFolder dirEntry = (OneFolder) cache.getEntry(path.toAbsolutePath().getParent());
             final OneUpload uploader = dirEntry.upload(toFilenameString(path), size, newEntry -> {
                 cache.addEntry(path, newEntry);
             });
@@ -197,7 +197,7 @@ Debug.println("upload w/o option: " + is.available());
     @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
         try {
-            OneItem parentEntry = cache.getEntry(dir.getParent());
+            OneItem parentEntry = cache.getEntry(dir.toAbsolutePath().getParent());
 
             // TODO: how to diagnose?
             OneFolder dirEntry = OneFolder.class.cast(parentEntry).createFolder(toFilenameString(dir));
@@ -261,7 +261,7 @@ e.printStackTrace();
                     }
                 }
             } else {
-                if (source.getParent().equals(target.getParent())) {
+                if (source.toAbsolutePath().getParent().equals(target.toAbsolutePath().getParent())) {
                     // rename
                     renameEntry(source, target);
                 } else {
@@ -368,7 +368,7 @@ e.printStackTrace();
     private void copyEntry(final Path source, final Path target) throws IOException, OneDriveException {
         try {
             OneItem sourceEntry = cache.getEntry(source);
-            OneItem targetParentEntry = cache.getEntry(target.getParent());
+            OneItem targetParentEntry = cache.getEntry(target.toAbsolutePath().getParent());
             if (sourceEntry.isFile()) {
                 OneFile newEntry = OneFile.class.cast(sourceEntry).copy(OneFolder.class.cast(targetParentEntry), toFilenameString(target));
 Debug.println(newEntry.getParentFolder().getName() + "/" + newEntry.getName());
@@ -387,7 +387,7 @@ Debug.println(newEntry.getParentFolder().getName() + "/" + newEntry.getName());
     private void moveEntry(final Path source, final Path target, boolean targetIsParent) throws IOException, OneDriveException {
         try {
             OneItem sourceEntry = cache.getEntry(source);
-            OneItem targetParentEntry = cache.getEntry(targetIsParent ? target : target.getParent());
+            OneItem targetParentEntry = cache.getEntry(targetIsParent ? target : target.toAbsolutePath().getParent());
             if (sourceEntry.isFile()) {
                 OneItem newEntry = OneFile.class.cast(sourceEntry).move(OneFolder.class.cast(targetParentEntry));
                 cache.removeEntry(source);
@@ -410,7 +410,7 @@ Debug.println(newEntry.getParentFolder().getName() + "/" + newEntry.getName());
     private void renameEntry(final Path source, final Path target) throws IOException, OneDriveException {
         try {
             OneItem sourceEntry = cache.getEntry(source);
-            OneItem targetEntry = cache.getEntry(target.getParent());
+            OneItem targetEntry = cache.getEntry(target.toAbsolutePath().getParent());
 
             OneItem newEntry = sourceEntry.rename(OneFolder.class.cast(targetEntry), toFilenameString(target));
 

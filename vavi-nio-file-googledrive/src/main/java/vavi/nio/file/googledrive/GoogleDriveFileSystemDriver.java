@@ -82,7 +82,7 @@ public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverB
 
     /** ugly */
     static boolean isFolder(File file) {
-        return file.getMimeType().equals(MIME_TYPE_DIR);
+        return MIME_TYPE_DIR.equals(file.getMimeType());
     }
 
     /** */
@@ -105,7 +105,7 @@ public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverB
                         cache.putFile(path, entry);
                         return entry;
                     } else {
-                        List<Path> siblings = getDirectoryEntries(path.getParent(), false);
+                        List<Path> siblings = getDirectoryEntries(path.toAbsolutePath().getParent(), false);
                         for (int i = 0; i < siblings.size(); i++) { // avoid ConcurrentModificationException
                             Path p = siblings.get(i);
                             if (p.getFileName().equals(path.getFileName())) {
@@ -173,7 +173,7 @@ Debug.println("newOutputStream: " + e.getMessage());
 
     /** */
     private OutputStream uploadEntry(Path path) throws IOException {
-        return new BufferedOutputStream(new Util.StrealingOutputStreamForUploading<File>() {
+        return new BufferedOutputStream(new Util.StealingOutputStreamForUploading<File>() {
             @Override
             protected File upload() throws IOException {
                 AbstractInputStreamContent mediaContent = new AbstractInputStreamContent(null) { // implements HttpContent
@@ -197,7 +197,7 @@ Debug.println("newOutputStream: " + e.getMessage());
 
                 File fileMetadata = new File();
                 fileMetadata.setName(toFilenameString(path));
-                fileMetadata.setParents(Arrays.asList(cache.getEntry(path.getParent()).getId()));
+                fileMetadata.setParents(Arrays.asList(cache.getEntry(path.toAbsolutePath().getParent()).getId()));
 
                 Drive.Files.Create creator = drive.files().create(fileMetadata, mediaContent); // why not HttpContent ???
                 MediaHttpUploader uploader = creator.getMediaHttpUploader();
@@ -227,8 +227,8 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
         File dirEntry = new File();
         dirEntry.setName(toFilenameString(dir));
         dirEntry.setMimeType(MIME_TYPE_DIR);
-        if (dir.getParent().getFileName() != null) {
-            dirEntry.setParents(Arrays.asList(cache.getEntry(dir.getParent()).getId()));
+        if (dir.toAbsolutePath().getParent().getNameCount() != 0) {
+            dirEntry.setParents(Arrays.asList(cache.getEntry(dir.toAbsolutePath().getParent()).getId()));
         }
         File newEntry = drive.files().create(dirEntry).setFields(ENTRY_FIELDS).execute();
         cache.addEntry(dir, newEntry);
@@ -278,7 +278,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
                 }
             }
         } else {
-            if (source.getParent().equals(target.getParent())) {
+            if (source.toAbsolutePath().getParent().equals(target.toAbsolutePath().getParent())) {
                 // rename
                 renameEntry(source, target);
             } else {
@@ -387,7 +387,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
     /** */
     private void copyEntry(final Path source, final Path target, Set<CopyOption> options) throws IOException {
         final File sourceEntry = cache.getEntry(source);
-        File targetParentEntry = cache.getEntry(target.getParent());
+        File targetParentEntry = cache.getEntry(target.toAbsolutePath().getParent());
         if (!isFolder(sourceEntry)) {
             File entry = new File();
             entry.setName(toFilenameString(target));
@@ -409,7 +409,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
      */
     private void moveEntry(final Path source, final Path target, boolean targetIsParent) throws IOException {
         File sourceEntry = cache.getEntry(source);
-        File targetParentEntry = cache.getEntry(targetIsParent ? target : target.getParent());
+        File targetParentEntry = cache.getEntry(targetIsParent ? target : target.toAbsolutePath().getParent());
         if (!isFolder(sourceEntry)) {
             File entry = new File();
             entry.setName(targetIsParent ? toFilenameString(source) : toFilenameString(target));

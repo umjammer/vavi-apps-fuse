@@ -178,7 +178,7 @@ System.out.println("file: " + newEntry.getTitle() + ", " + newEntry.getDateAdded
 
             cache.removeEntry(target);
 
-            targetEntry = cache.getEntry(target.getParent());
+            targetEntry = cache.getEntry(target.toAbsolutePath().getParent());
             targetFilename = Util.toFilenameString(target);
         } catch (FlickrException e) {
 System.err.println(e);
@@ -204,7 +204,7 @@ System.err.println(e);
 
             cache.removeEntry(target);
 
-            targetEntry = cache.getEntry(target.getParent());
+            targetEntry = cache.getEntry(target.toAbsolutePath().getParent());
             targetFilename = Util.toFilenameString(target);
         } catch (FlickrException e) {
 System.err.println(e);

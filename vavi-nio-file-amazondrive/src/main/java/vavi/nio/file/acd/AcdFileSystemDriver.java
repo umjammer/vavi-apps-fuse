@@ -140,7 +140,7 @@ Debug.println("newOutputStream: " + e.getMessage());
 
         java.io.File temp = java.io.File.createTempFile("vavi-apps-fuse-", ".upload");
 
-        return new AcdOutputStream(drive, temp, toFilenameString(path), FolderInfo.class.cast(cache.getEntry(path.getParent())), file -> {
+        return new AcdOutputStream(drive, temp, toFilenameString(path), FolderInfo.class.cast(cache.getEntry(path.toAbsolutePath().getParent())), file -> {
 System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + ", " + file.getContentProperties().getSize());
             cache.addEntry(path, file);
         });
@@ -155,7 +155,7 @@ System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + "
 
     @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
-        NodeInfo parentEntry = cache.getEntry(dir.getParent());
+        NodeInfo parentEntry = cache.getEntry(dir.toAbsolutePath().getParent());
 
         // TODO: how to diagnose?
         NodeInfo newEntry = drive.createFolder(parentEntry.getId(), toFilenameString(dir));
@@ -207,7 +207,7 @@ System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + "
                 }
             }
         } else {
-            if (source.getParent().equals(target.getParent())) {
+            if (source.toAbsolutePath().getParent().equals(target.toAbsolutePath().getParent())) {
                 // rename
                 renameEntry(source, target);
             } else {
@@ -306,7 +306,7 @@ System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + "
     /** */
     private void copyEntry(final Path source, final Path target) throws IOException {
         NodeInfo sourceEntry = cache.getEntry(source);
-        NodeInfo targetParentEntry = cache.getEntry(target.getParent());
+        NodeInfo targetParentEntry = cache.getEntry(target.toAbsolutePath().getParent());
         if (sourceEntry.isFile()) {
             NodeInfo newEntry = null; // TODO
             cache.addEntry(target, newEntry);

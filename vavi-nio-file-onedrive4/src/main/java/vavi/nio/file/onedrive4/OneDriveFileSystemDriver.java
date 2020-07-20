@@ -270,7 +270,7 @@ Debug.println("upload done: " + result.name);
 
     @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
-        DriveItem parentEntry = cache.getEntry(dir.getParent());
+        DriveItem parentEntry = cache.getEntry(dir.toAbsolutePath().getParent());
 
         // TODO: how to diagnose?
         DriveItem preEntry = new DriveItem();
@@ -324,7 +324,7 @@ Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEn
                 }
             }
         } else {
-            if (source.getParent().equals(target.getParent())) {
+            if (source.toAbsolutePath().getParent().equals(target.toAbsolutePath().getParent())) {
                 // rename
                 renameEntry(source, target);
             } else {
@@ -427,7 +427,7 @@ Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEn
     /** */
     private void copyEntry(final Path source, final Path target) throws IOException {
         DriveItem sourceEntry = cache.getEntry(source);
-        DriveItem targetParentEntry = cache.getEntry(target.getParent());
+        DriveItem targetParentEntry = cache.getEntry(target.toAbsolutePath().getParent());
         if (isFile(sourceEntry)) {
             ItemReference ir = new ItemReference();
             ir.id = targetParentEntry.id;
@@ -466,7 +466,7 @@ Debug.println("copy done: " + result.id);
      */
     private void moveEntry(final Path source, final Path target, boolean targetIsParent) throws IOException {
         DriveItem sourceEntry = cache.getEntry(source);
-        DriveItem targetParentEntry = cache.getEntry(targetIsParent ? target : target.getParent());
+        DriveItem targetParentEntry = cache.getEntry(targetIsParent ? target : target.toAbsolutePath().getParent());
         if (isFile(sourceEntry)) {
             DriveItem preEntry = new DriveItem();
             preEntry.name = targetIsParent ? toFilenameString(source) : toFilenameString(target);

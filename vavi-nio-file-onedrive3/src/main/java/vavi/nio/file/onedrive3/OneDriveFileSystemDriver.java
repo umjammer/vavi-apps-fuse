@@ -110,7 +110,7 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
                     cache.putFile(path, entry);
                     return entry;
                 } else {
-                    List<Path> siblings = getDirectoryEntries(path.getParent(), false);
+                    List<Path> siblings = getDirectoryEntries(path.toAbsolutePath().getParent(), false);
                     Optional<Path> found = siblings.stream().filter(p -> path.getFileName().equals(p.getFileName())).findFirst();
                     if (found.isPresent()) {
                         return cache.getEntry(found.get());
@@ -176,7 +176,7 @@ Debug.println("upload w/o option: " + is.available());
 
     /** */
     private OutputStream uploadEntry(Path path, int size) throws IOException {
-        OneDriveFolder folder = OneDriveFolder.class.cast(cache.getEntry(path.getParent()).getResource());
+        OneDriveFolder folder = OneDriveFolder.class.cast(cache.getEntry(path.toAbsolutePath().getParent()).getResource());
         OneDriveFile file = new OneDriveFile(client, folder, toItemPathString(toFilenameString(path)), ItemIdentifierType.Path);
         final OneDriveUploadSession uploadSession = file.createUploadSession();
         return new BufferedOutputStream(new OneDriveOutputStream(uploadSession, path, size, newEntry -> {
@@ -199,7 +199,7 @@ Debug.println("upload w/o option: " + is.available());
 
     @Override
     public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
-        OneDriveItem.Metadata parentEntry = cache.getEntry(dir.getParent());
+        OneDriveItem.Metadata parentEntry = cache.getEntry(dir.toAbsolutePath().getParent());
 
         // TODO: how to diagnose?
         OneDriveFolder.Metadata dirEntry = OneDriveFolder.class.cast(parentEntry.getResource()).create(toFilenameString(dir));
@@ -250,7 +250,7 @@ Debug.println("upload w/o option: " + is.available());
                 }
             }
         } else {
-            if (source.getParent().equals(target.getParent())) {
+            if (source.toAbsolutePath().getParent().equals(target.toAbsolutePath().getParent())) {
                 // rename
                 renameEntry(source, target);
             } else {
@@ -332,7 +332,7 @@ Debug.println("upload w/o option: " + is.available());
 
     /** for created entry */
     private OneDriveItem.Metadata getEntry(Path path) throws IOException {
-        final OneDriveItem.Metadata parentEntry = cache.getEntry(path.getParent());
+        final OneDriveItem.Metadata parentEntry = cache.getEntry(path.toAbsolutePath().getParent());
 
         Optional<OneDriveItem.Metadata> found = StreamSupport.stream(OneDriveFolder.class.cast(parentEntry.getResource()).getChildren().spliterator(), false)
             .filter(child -> {
@@ -369,7 +369,7 @@ System.err.println(child.getName() + ", " + toFilenameString(path));
     /** */
     private void copyEntry(final Path source, final Path target) throws IOException {
         OneDriveItem.Metadata sourceEntry = cache.getEntry(source);
-        OneDriveItem.Metadata targetParentEntry = cache.getEntry(target.getParent());
+        OneDriveItem.Metadata targetParentEntry = cache.getEntry(target.toAbsolutePath().getParent());
         if (sourceEntry.isFile()) {
             OneDriveCopyOperation operation = new OneDriveCopyOperation();
             operation.rename(toFilenameString(target));
@@ -392,7 +392,7 @@ Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",
      */
     private void moveEntry(final Path source, final Path target, boolean targetIsParent) throws IOException {
         OneDriveItem.Metadata sourceEntry = cache.getEntry(source);
-        OneDriveItem.Metadata targetParentEntry = cache.getEntry(targetIsParent ? target : target.getParent());
+        OneDriveItem.Metadata targetParentEntry = cache.getEntry(targetIsParent ? target : target.toAbsolutePath().getParent());
         if (sourceEntry.isFile()) {
             OneDrivePatchOperation operation = new OneDrivePatchOperation();
             operation.rename(targetIsParent ? toFilenameString(source) : toFilenameString(target));
