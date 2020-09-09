@@ -60,7 +60,7 @@ https://github.com/umjammer/vavi-apps-fuse/wiki/Libraries
  * ~~shutdownHook~~
  * ~~https://github.com/unsound/hfsexplorer~~ (wip)
  * ~~virtualbox vdi~~ ([wip](https://github.com/umjammer/vavi-nio-file-discutils))
- * mincraft nbt
+ * ~~mincraft nbt~~ (deal in [tree view](https://github.com/umjammer/vavi-apps-treeview))
  * ~~credential from uri~~
  * ~~https://github.com/cryptomator/fuse-nio-adapter~~
 
