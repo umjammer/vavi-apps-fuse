@@ -37,7 +37,7 @@ public class OneDriveFS {
 
         String email = args[1];
 
-        URI uri = URI.create("onedrive:///?id=" + email);
+        URI uri = URI.create("onedrive1:///?id=" + email);
 
         OAuth2AppCredential appCredential = new MicrosoftLocalAppCredential();
         PropsEntity.Util.bind(appCredential);

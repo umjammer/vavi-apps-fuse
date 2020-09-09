@@ -44,7 +44,7 @@ import de.tuberlin.onedrivesdk.networking.OneDriveAuthenticationException;
 public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase {
 
     public OneDriveFileSystemRepository() {
-        super("onedrive", new OneDriveFileSystemFactoryProvider());
+        super("onedrive1", new OneDriveFileSystemFactoryProvider());
     }
 
     /**

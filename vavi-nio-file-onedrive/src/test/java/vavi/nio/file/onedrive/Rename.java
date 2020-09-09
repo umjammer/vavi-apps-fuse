@@ -41,7 +41,7 @@ public final class Rename {
         // Create the necessary elements to create a filesystem.
         // Note: the URI _must_ have a scheme of "onedrive", and
         // _must_ be hierarchical.
-        URI uri = URI.create("onedrive:///?id=" + email);
+        URI uri = URI.create("onedrive1:///?id=" + email);
 
         OAuth2AppCredential appCredential = new MicrosoftLocalAppCredential();
         PropsEntity.Util.bind(appCredential);

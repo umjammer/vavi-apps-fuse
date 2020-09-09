@@ -27,7 +27,7 @@ public class Main2 {
     void test01() throws Exception {
         String email = System.getenv("MICROSOFT_TEST_ACCOUNT");
 
-        URI uri = URI.create("onedrive:///?id=" + email);
+        URI uri = URI.create("onedrive1:///?id=" + email);
         FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
 
         testLargeFile(fs, OneDriveUploadOption.class);
