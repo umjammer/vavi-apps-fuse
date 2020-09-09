@@ -29,7 +29,7 @@ public final class Renamer {
     /**
      * @param args 0: dir, 1: regex, 2: replacement
      */
-    public static void main(final String... args) throws IOException {
+    public static void main(String[] args) throws IOException {
         String cwd = args[0];
         String regex = args[1];
         String replacement = args[2];

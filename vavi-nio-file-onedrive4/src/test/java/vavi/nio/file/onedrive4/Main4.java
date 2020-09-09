@@ -73,7 +73,7 @@ public class Main4 {
 
     //
 
-    public static void main(final String... args) throws IOException {
+    public static void main(String[] args) throws IOException {
         String email = args[1];
 
         Map<String, Object> env = new HashMap<>();

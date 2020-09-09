@@ -35,7 +35,7 @@ public final class GoogleOCR {
     /**
      * @param args 0: email, 1: zip file, 2: extract to dir, 3: extracted dir, 4: output ocr dir
      */
-    public static void main(final String... args) {
+    public static void main(String[] args) {
         int exitCode = 0;
         try {
             GoogleOCR app = new GoogleOCR();

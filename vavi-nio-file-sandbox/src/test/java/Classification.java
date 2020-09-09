@@ -14,16 +14,11 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import vavi.net.auth.oauth2.OAuth2AppCredential;
-import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
-import vavi.nio.file.onedrive.OneDriveFileSystemProvider;
-import vavi.util.properties.annotation.PropsEntity;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
@@ -39,20 +34,14 @@ public final class Classification {
     /**
      * @param args 0: email, 1: dir
      */
-    public static void main(final String... args) throws IOException {
+    public static void main(String[] args) throws IOException {
         String email = args[0];
         String cwd = args[1];
         boolean dryRun = true;
 
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        OAuth2AppCredential appCredential = new MicrosoftLocalAppCredential();
-        PropsEntity.Util.bind(appCredential);
-
-        Map<String, Object> env = new HashMap<>();
-        env.put(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL, appCredential);
-
-        FileSystem onedrivefs = FileSystems.newFileSystem(uri, env);
+        FileSystem onedrivefs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP);
 
         Path root = onedrivefs.getPath(cwd);
         FileSearcher fileSearcher = new FileSearcher();
@@ -86,8 +75,6 @@ public final class Classification {
                         }
                     });
             });
-
-        System.exit(0);
     }
 
     static class FileSearcher extends SimpleFileVisitor<Path> {

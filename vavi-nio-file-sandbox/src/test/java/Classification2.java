@@ -50,7 +50,7 @@ public final class Classification2 {
     /**
      * @param args 0: dir
      */
-    public static void main(final String... args) throws IOException {
+    public static void main(String[] args) throws IOException {
         String cwd = args[0];
         boolean dryRun = true;
 
