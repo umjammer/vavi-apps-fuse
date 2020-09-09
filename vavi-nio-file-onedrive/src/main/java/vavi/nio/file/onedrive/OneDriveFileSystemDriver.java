@@ -45,6 +45,7 @@ import vavi.util.Debug;
 
 import static vavi.nio.file.Util.toFilenameString;
 import static vavi.nio.file.Util.toPathString;
+import static vavi.nio.file.onedrive.OneDriveFileSystemProvider.ENV_IGNORE_APPLE_DOUBLE;
 
 import de.tuberlin.onedrivesdk.OneDriveException;
 import de.tuberlin.onedrivesdk.OneDriveSDK;
@@ -75,7 +76,7 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
             final Map<String, ?> env) {
         super(fileStore, provider);
         this.client = client;
-        ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
+        ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_IGNORE_APPLE_DOUBLE, false);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
     }
 
