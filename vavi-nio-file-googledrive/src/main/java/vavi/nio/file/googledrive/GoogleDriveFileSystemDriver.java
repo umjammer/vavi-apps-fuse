@@ -46,6 +46,7 @@ import com.google.api.services.drive.model.FileList;
 
 import vavi.nio.file.Cache;
 import vavi.nio.file.Util;
+import vavi.nio.file.googledrive.GoogleDriveFileAttributesFactory.Metadata;
 import vavi.util.Debug;
 
 import static vavi.nio.file.Util.toFilenameString;
@@ -76,7 +77,7 @@ public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverB
     }
 
     /** */
-    private static final String ENTRY_FIELDS = "id, parents, name, size, mimeType, createdTime, modifiedTime";
+    private static final String ENTRY_FIELDS = "id, parents, name, size, mimeType, createdTime, modifiedTime, description";
 
     /** */
     private static final String MIME_TYPE_DIR = "application/vnd.google-apps.folder";
@@ -328,7 +329,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
     @Nonnull
     @Override
     protected Object getPathMetadataImpl(final Path path) throws IOException {
-        return cache.getEntry(path);
+        return new Metadata(this, cache.getEntry(path));
     }
 
     /** */
@@ -452,5 +453,15 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
         File newEntry = drive.files().update(sourceEntry.getId(), entry).setFields(ENTRY_FIELDS).execute();
         cache.removeEntry(source);
         cache.addEntry(target, newEntry);
+    }
+
+    /** attributes user:description */
+    void patchEntryDescription(File sourceEntry, String description) throws IOException {
+        File entry = new File();
+        entry.setDescription(description);
+        File newEntry = drive.files().update(sourceEntry.getId(), entry).setFields(ENTRY_FIELDS).execute();
+        Path path = cache.getEntry(sourceEntry);
+        cache.removeEntry(path);
+        cache.addEntry(path, newEntry);
     }
 }

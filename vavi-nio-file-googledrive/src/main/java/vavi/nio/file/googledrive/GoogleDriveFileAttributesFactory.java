@@ -18,8 +18,18 @@ import com.google.api.services.drive.model.File;
  */
 public final class GoogleDriveFileAttributesFactory extends FileAttributesFactory {
 
+    static class Metadata {
+        GoogleDriveFileSystemDriver driver;
+        File file;
+        Metadata(GoogleDriveFileSystemDriver driver, File file) {
+            this.driver = driver;
+            this.file = file;
+        }
+    }
+
     public GoogleDriveFileAttributesFactory() {
-        setMetadataClass(File.class);
+        setMetadataClass(Metadata.class);
         addImplementation("basic", GoogleDriveBasicFileAttributesProvider.class);
+        addImplementation("user", GoogleDriveUserDefinedFileAttributesProvider.class);
     }
 }

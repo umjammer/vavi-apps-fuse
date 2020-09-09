@@ -22,6 +22,8 @@ import javax.annotation.Nonnull;
 import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider;
 import com.google.api.services.drive.model.File;
 
+import vavi.nio.file.googledrive.GoogleDriveFileAttributesFactory.Metadata;
+
 
 /**
  * {@link BasicFileAttributes} implementation for GoogleDrive
@@ -37,8 +39,8 @@ public final class GoogleDriveBasicFileAttributesProvider extends BasicFileAttri
 
     private final File entry;
 
-    public GoogleDriveBasicFileAttributesProvider(@Nonnull final File entry) throws IOException {
-        this.entry = Objects.requireNonNull(entry);
+    public GoogleDriveBasicFileAttributesProvider(@Nonnull final Metadata entry) throws IOException {
+        this.entry = Objects.requireNonNull(entry).file;
     }
 
     /**
