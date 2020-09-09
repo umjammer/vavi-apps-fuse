@@ -58,6 +58,7 @@ import com.microsoft.graph.requests.extensions.IDriveItemCopyRequest;
 
 import vavi.nio.file.Cache;
 import vavi.nio.file.Util;
+import vavi.nio.file.onedrive4.OneDriveFileAttributesFactory.Metadata;
 import vavi.nio.file.onedrive4.graph.LraMonitorProvider;
 import vavi.nio.file.onedrive4.graph.LraMonitorResponseHandler;
 import vavi.nio.file.onedrive4.graph.LraMonitorResult;
@@ -374,7 +375,7 @@ Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEn
     @Nonnull
     @Override
     protected Object getPathMetadataImpl(final Path path) throws IOException {
-        return cache.getEntry(path);
+        return new Metadata(this, cache.getEntry(path));
     }
 
     /** */
@@ -501,5 +502,15 @@ Debug.println("copy done: " + result.id);
         DriveItem patchedEntry = client.drive().items(sourceEntry.id).buildRequest().patch(preEntry);
         cache.removeEntry(source);
         cache.addEntry(target, patchedEntry);
+    }
+
+    /** attributes user:description */
+    void patchEntryDescription(DriveItem sourceEntry, String description) throws IOException {
+        DriveItem preEntry = new DriveItem();
+        preEntry.description = description;
+        DriveItem patchedEntry = client.drive().items(sourceEntry.id).buildRequest().patch(preEntry);
+        Path path = cache.getEntry(sourceEntry);
+        cache.removeEntry(path);
+        cache.addEntry(path, patchedEntry);
     }
 }

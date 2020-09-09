@@ -18,8 +18,18 @@ import com.microsoft.graph.models.extensions.DriveItem;
  */
 public final class OneDriveFileAttributesFactory extends FileAttributesFactory {
 
+    static class Metadata {
+        OneDriveFileSystemDriver driver;
+        DriveItem driveItem;
+        Metadata(OneDriveFileSystemDriver driver, DriveItem driveItem) {
+            this.driver = driver;
+            this.driveItem = driveItem;
+        }
+    }
+
     public OneDriveFileAttributesFactory() {
-        setMetadataClass(DriveItem.class);
+        setMetadataClass(Metadata.class);
         addImplementation("basic", OneDriveBasicFileAttributesProvider.class);
+        addImplementation("user", OneDriveUserDefinedFileAttributesProvider.class);
     }
 }
