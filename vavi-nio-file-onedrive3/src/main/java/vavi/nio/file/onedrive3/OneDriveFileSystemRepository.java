@@ -44,7 +44,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
 
     /** */
     public OneDriveFileSystemRepository() {
-        super("onedrive", new OneDriveFileSystemFactoryProvider());
+        super("onedrive3", new OneDriveFileSystemFactoryProvider());
     }
 
     /**

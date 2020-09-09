@@ -35,7 +35,7 @@ public class Main5 {
     void test01() throws Exception {
         String email = System.getenv("TEST5_ACCOUNT");
 
-        URI uri = URI.create("onedrive:///?id=" + email);
+        URI uri = URI.create("onedrive3:///?id=" + email);
 
         Path src;
         Path dstDir;

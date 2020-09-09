@@ -77,7 +77,7 @@ public class Main4 {
     public static void main(final String... args) throws IOException {
         String email = args[1];
 
-        URI uri = URI.create("onedrive:///?id=" + email);
+        URI uri = URI.create("onedrive3:///?id=" + email);
 
         OAuth2AppCredential appCredential = new MicrosoftGraphLocalAppCredential();
 

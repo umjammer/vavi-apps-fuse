@@ -27,7 +27,7 @@ public class Main3 {
     void test01() throws Exception {
         String email = System.getenv("MICROSOFT3_TEST_ACCOUNT");
 
-        URI uri = URI.create("onedrive:///?id=" + email);
+        URI uri = URI.create("onedrive3:///?id=" + email);
         FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
 
         testMoveFolder(fs);
