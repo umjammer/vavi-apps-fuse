@@ -49,6 +49,7 @@ import vavi.nio.file.Util;
 import vavi.util.Debug;
 
 import static vavi.nio.file.Util.toFilenameString;
+import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_IGNORE_APPLE_DOUBLE;
 
 
 /**
@@ -71,7 +72,7 @@ public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverB
             final Map<String, ?> env) throws IOException {
         super(fileStore, provider);
         this.drive = drive;
-        ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
+        ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_IGNORE_APPLE_DOUBLE, false);
     }
 
     /** */
