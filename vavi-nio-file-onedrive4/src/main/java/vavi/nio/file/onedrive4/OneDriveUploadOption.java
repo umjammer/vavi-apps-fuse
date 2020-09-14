@@ -14,6 +14,10 @@ import java.nio.file.Path;
 /**
  * OneDriveUploadOption.
  * <p>
+ * in {@link com.github.fge.filesystem.options.FileSystemOptionsFactory},
+ * instances of this class are compared by contains method. so i override
+ * {@link #equals(Object)} and {@link #hashCode()}.
+ * <p>
  * TODO CopyOption doesn't work.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
