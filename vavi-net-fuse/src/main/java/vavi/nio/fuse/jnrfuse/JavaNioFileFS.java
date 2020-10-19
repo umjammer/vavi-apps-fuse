@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.net.fuse.jnrfuse;
+package vavi.nio.fuse.jnrfuse;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

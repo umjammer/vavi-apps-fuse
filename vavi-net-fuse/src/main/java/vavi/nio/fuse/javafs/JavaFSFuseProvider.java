@@ -4,23 +4,23 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.net.fuse.fusejna;
+package vavi.nio.fuse.javafs;
 
-import vavi.net.fuse.Fuse;
-import vavi.net.fuse.FuseProvider;
+import vavi.nio.fuse.Fuse;
+import vavi.nio.fuse.FuseProvider;
 
 
 /**
- * FuseJnaFuseProvider.
+ * JavaFSFuseProvider.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2020/06/03 umjammer initial version <br>
  */
-public class FuseJnaFuseProvider implements FuseProvider {
+public class JavaFSFuseProvider implements FuseProvider {
 
     @Override
     public Fuse getFuse() {
-        return new FuseJnaFuse();
+        return new JavaFSFuse();
     }
 }
 

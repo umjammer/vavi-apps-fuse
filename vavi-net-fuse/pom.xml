@@ -10,7 +10,7 @@
     <version>0.1.6</version>
   </parent>
 
-  <artifactId>vavi-net-fuse</artifactId>
+  <artifactId>vavi-ino-fuse</artifactId>
 
   <name>vavi-net-fuse</name>
   <url>https://github.com/umjammer/vavi-net-fuse</url>

@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.net.fuse;
+package vavi.nio.fuse;
 
 import java.io.Closeable;
 import java.io.IOException;

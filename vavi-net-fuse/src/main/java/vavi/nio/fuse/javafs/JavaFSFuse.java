@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.net.fuse.javafs;
+package vavi.nio.fuse.javafs;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
-import vavi.net.fuse.Fuse;
+import vavi.nio.fuse.Fuse;
 import vavi.util.Debug;
 
 import co.paralleluniverse.javafs.JavaFS;
@@ -68,6 +68,12 @@ Debug.println("umount...");
                 JavaFS.unmount(Paths.get(mountPoint));
                 mountPoint = null;
 Debug.println("umount done");
+            }
+        } catch (IllegalStateException e) {
+            if (e.getMessage().contains("Tried to unmount a filesystem which is not mounted")) {
+Debug.println("already umount");
+            } else {
+                throw e;
             }
         } catch (IOException e) {
 Debug.println(Level.WARNING, "umount: " + e);
