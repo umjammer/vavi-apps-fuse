@@ -21,7 +21,7 @@
   <repositories>
     <repository>
       <id>maven.cyberduck.io-release</id>
-      <url>http://repo.maven.cyberduck.io.s3.amazonaws.com/releases</url>
+      <url>https://repo.maven.cyberduck.io.s3.amazonaws.com/releases</url>
     </repository>
   </repositories>
 
