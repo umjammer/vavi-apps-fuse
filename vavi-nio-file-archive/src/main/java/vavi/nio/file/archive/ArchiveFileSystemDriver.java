@@ -58,10 +58,15 @@ public final class ArchiveFileSystemDriver extends ExtendedFileSystemDriverBase 
         this.archive = archive;
     }
 
+    /** */
+    private Entry<?> getEntry(Path path) {
+        return archive.getEntry(path.toAbsolutePath().toString().substring(1));
+    }
+
     @Nonnull
     @Override
     public InputStream newInputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
-        return archive.getInputStream(archive.getEntry(path.toAbsolutePath().toString()));
+        return archive.getInputStream(getEntry(path));
     }
 
     @Nonnull
@@ -87,7 +92,7 @@ public final class ArchiveFileSystemDriver extends ExtendedFileSystemDriverBase 
                 protected long getLeftOver() throws IOException {
                     long leftover = 0;
                     if (options.contains(StandardOpenOption.APPEND)) {
-                        Entry<?> entry = archive.getEntry(path.toAbsolutePath().toString());
+                        Entry<?> entry = getEntry(path);
                         if (entry != null && entry.getSize() >= 0) {
                             leftover = entry.getSize();
                         }
@@ -96,7 +101,7 @@ public final class ArchiveFileSystemDriver extends ExtendedFileSystemDriverBase 
                 }
             };
         } else {
-            Entry<?> entry = archive.getEntry(path.toAbsolutePath().toString());
+            Entry<?> entry = getEntry(path);
             if (entry.isDirectory()) {
                 throw new NoSuchFileException(path.toString());
             }
@@ -150,12 +155,12 @@ public final class ArchiveFileSystemDriver extends ExtendedFileSystemDriverBase 
     }
 
     /**
+     * @return null when path is root
      * @throws IOException if you use this with javafs (jnr-fuse), you should throw {@link NoSuchFileException} when the file not found.
      */
-    @Nonnull
     @Override
     protected Object getPathMetadataImpl(final Path path) throws IOException {
-        return archive.getEntry(path.getFileName().toString());
+        return getEntry(path);
     }
 
     /** */
