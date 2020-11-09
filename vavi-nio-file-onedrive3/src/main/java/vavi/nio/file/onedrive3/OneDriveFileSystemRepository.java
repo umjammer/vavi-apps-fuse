@@ -84,7 +84,8 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         }
 
         // 3. process
-        String accessToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
+        MicrosoftGraphOAuth2 oAuth2 = new MicrosoftGraphOAuth2(appCredential, true);
+        String accessToken = oAuth2.authorize(userCredential);
 //Debug.println("accessToken: " + accessToken);
 
         RequestExecutor executor = new JavaNetRequestExecutor(accessToken) {
@@ -132,6 +133,6 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
 
         OneDriveDrive drive = OneDriveDrive.getDefaultDrive(client);
         final OneDriveFileStore fileStore = new OneDriveFileStore(drive, factoryProvider.getAttributesFactory());
-        return new OneDriveFileSystemDriver(fileStore, factoryProvider, client, drive, env);
+        return new OneDriveFileSystemDriver(fileStore, factoryProvider, client, () -> oAuth2.close(), drive, env);
     }
 }

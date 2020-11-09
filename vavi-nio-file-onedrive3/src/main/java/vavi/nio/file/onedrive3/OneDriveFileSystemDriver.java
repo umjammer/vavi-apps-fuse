@@ -76,10 +76,12 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
     private final OneDriveDrive drive;
     private boolean ignoreAppleDouble = false;
 
+    private Runnable closer;
     @SuppressWarnings("unchecked")
     public OneDriveFileSystemDriver(final FileStore fileStore,
             final FileSystemFactoryProvider provider,
             final OneDriveAPI client,
+            Runnable closer,
             final OneDriveDrive drive,
             final Map<String, ?> env) {
         super(fileStore, provider);
@@ -291,7 +293,7 @@ Debug.println("upload w/o option: " + is.available());
 
     @Override
     public void close() throws IOException {
-        // TODO: what to do here? OneDriveClient does not implement Closeable :(
+        closer.run();
     }
 
     /**

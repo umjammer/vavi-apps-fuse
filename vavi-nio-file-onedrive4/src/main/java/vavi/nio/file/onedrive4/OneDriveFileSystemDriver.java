@@ -82,13 +82,16 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
     private final IGraphServiceClient client;
     private boolean ignoreAppleDouble = false;
 
+    private Runnable closer;
     @SuppressWarnings("unchecked")
     public OneDriveFileSystemDriver(final FileStore fileStore,
             final FileSystemFactoryProvider provider,
             final IGraphServiceClient client,
             final Map<String, ?> env) {
+            Runnable closer,
         super(fileStore, provider);
         this.client = client;
+        this.closer = closer;
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_IGNORE_APPLE_DOUBLE, false);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
     }
@@ -366,7 +369,7 @@ Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEn
 
     @Override
     public void close() throws IOException {
-        // TODO: what to do here? OneDriveClient does not implement Closeable :(
+        closer.run();
     }
 
     /**

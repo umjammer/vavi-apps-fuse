@@ -305,7 +305,7 @@ e.printStackTrace();
 
     @Override
     public void close() throws IOException {
-        // TODO: what to do here? OneDriveClient does not implement Closeable :(
+        client.disconnect();
     }
 
     /**
