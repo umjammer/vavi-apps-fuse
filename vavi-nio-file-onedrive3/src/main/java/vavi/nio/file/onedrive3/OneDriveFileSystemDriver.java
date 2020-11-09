@@ -86,6 +86,7 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
             final Map<String, ?> env) {
         super(fileStore, provider);
         this.client = client;
+        this.closer = closer;
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_IGNORE_APPLE_DOUBLE, false);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
         this.drive = drive;
@@ -113,6 +114,7 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
                     cache.putFile(path, entry);
                     return entry;
                 } else {
+                    // TODO make this like google drive
                     List<Path> siblings = getDirectoryEntries(path.toAbsolutePath().getParent(), false);
                     Optional<Path> found = siblings.stream().filter(p -> path.getFileName().equals(p.getFileName())).findFirst();
                     if (found.isPresent()) {
@@ -187,7 +189,7 @@ Debug.println("upload w/o option: " + is.available());
         }), Util.BUFFER_SIZE);
     }
 
-    /** */
+    /** ms-graph doesn't accept '+' in a path string */
     private String toItemPathString(String pathString) throws IOException {
         return URLEncoder.encode(pathString, "utf-8").replace("+", "%20");
     }
