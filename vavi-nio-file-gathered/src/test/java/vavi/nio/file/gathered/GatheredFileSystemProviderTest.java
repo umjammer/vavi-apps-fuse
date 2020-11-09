@@ -86,7 +86,7 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
     /** */
     private OAuth2AppCredential microsoftAppCredential = new MicrosoftGraphLocalAppCredential();
     /** */
-    private OAuth2AppCredential googleAppCredential = new GoogleLocalAppCredential();
+    private OAuth2AppCredential googleAppCredential = new GoogleLocalAppCredential("googledrive");
     /** */
     private OAuth2AppCredential boxAppCredential = new BoxLocalAppCredential();
     /** */

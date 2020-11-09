@@ -71,7 +71,7 @@ public final class GoogleDriveFileSystemRepository extends FileSystemRepositoryB
         }
 
         if (appCredential == null) {
-            appCredential = new GoogleLocalAppCredential(); // TODO use props
+            appCredential = new GoogleLocalAppCredential("googledrive"); // TODO use props
         }
 
         // 3. process
