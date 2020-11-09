@@ -107,14 +107,8 @@ public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverB
                         cache.putFile(path, entry);
                         return entry;
                     } else {
-                        List<Path> siblings = getDirectoryEntries(path.toAbsolutePath().getParent(), false);
-                        for (int i = 0; i < siblings.size(); i++) { // avoid ConcurrentModificationException
-                            Path p = siblings.get(i);
-                            if (p.getFileName().equals(path.getFileName())) {
-                                return cache.getEntry(p);
-                            }
-                        }
-                        throw new NoSuchFileException(path.toString());
+                        cacheEntry(path);
+                        return cache.getFile(path);
                     }
                 }
             } catch (GoogleJsonResponseException e) {
@@ -333,6 +327,31 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
     }
 
     /** */
+    private void cacheEntry(Path path) throws IOException {
+        try {
+            File dir = cache.getEntry(path.toAbsolutePath().getParent());
+
+            String q = "'" + dir.getId() + "' in parents and name = '" + path.getFileName() + "' and trashed=false";
+//System.out.println("q: " + q);
+            FileList files = drive.files().list()
+                    .setQ(q)
+                    .setSpaces("drive")
+                    .setFields("nextPageToken, files(" + ENTRY_FIELDS + ")")
+                    .execute();
+
+            if (files.getFiles().size() > 0) {
+                File child = files.getFiles().get(0);
+                cache.addEntry(path, child);
+                return;
+            }
+        } catch (NoSuchFileException e) {
+            getDirectoryEntries(path.toAbsolutePath().getParent(), false);
+            return;
+        }
+        throw new NoSuchFileException(path.toString());
+    }
+
+    /** */
     private List<Path> getDirectoryEntries(Path dir, boolean useCache) throws IOException {
         final File entry = cache.getEntry(dir);
 
@@ -344,21 +363,30 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
         if (useCache && cache.containsFolder(dir)) {
             list = cache.getFolder(dir);
         } else {
-            Files.List request = drive.files().list();
+            String pageToken = null;
             do {
-                FileList files = request
+                FileList files = drive.files().list()
                         .setQ("'" + entry.getId() + "' in parents and trashed=false")
-                        .setFields("nextPageToken, files(" + ENTRY_FIELDS + ")").execute();
-                final List<File> children = files.getFiles();
-                request.setPageToken(files.getNextPageToken());
+                        .setSpaces("drive")
+                        .setPageSize(1000)
+                        .setFields("nextPageToken, files(" + ENTRY_FIELDS + ")")
+                        .setPageToken(pageToken)
+                        .setOrderBy("name_natural")
+                        .execute();
 
+                final List<File> children = files.getFiles();
+//long t = System.currentTimeMillis();
                 for (final File child : children) {
-                    Path childPath = dir.resolve(child.getName());
+                    Path childPath = dir.resolve(Util.toNormalizedString(child.getName()));
+//System.out.println("p: " + childPath);
                     list.add(childPath);
 
                     cache.putFile(childPath, child);
                 }
-            } while (request.getPageToken() != null && request.getPageToken().length() > 0);
+
+                pageToken = files.getNextPageToken();
+//System.out.println("t: " + (System.currentTimeMillis() - t) + ", " + children.size() + ", " + (pageToken != null));
+            } while (pageToken != null);
 
             cache.putFolder(dir, list);
         }
