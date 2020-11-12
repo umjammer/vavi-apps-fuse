@@ -7,7 +7,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.6</version>
+    <version>0.1.7-SNAPSHOT</version>
   </parent>
 
   <artifactId>vavi-nio-file-sandbox</artifactId>
@@ -51,7 +51,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
-      <version>1.1.0</version>
+      <version>1.1.4</version>
     </dependency>
 
     <dependency>
@@ -71,21 +71,27 @@
     </dependency>
 
     <dependency>
+      <groupId>com.rainerhahnekamp</groupId>
+      <artifactId>sneakythrow</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-onedrive</artifactId>
-      <version>0.1.6</version>
+      <version>0.1.7-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-onedrive4</artifactId>
-      <version>0.1.6</version>
+      <version>0.1.7-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-googledrive</artifactId>
-      <version>0.1.6</version>
+      <version>0.1.7-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
 
@@ -118,16 +124,28 @@
     </dependency>
 
     <dependency>
-      <groupId>com.github.Querz</groupId>
-      <artifactId>NBT</artifactId>
-      <version>4.0</version>
+      <groupId>org.cryptomator</groupId>
+      <artifactId>fuse-nio-adapter</artifactId>
+      <version>1.2.3</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.cryptomator</groupId>
-      <artifactId>fuse-nio-adapter</artifactId>
+      <groupId>vavi</groupId>
+      <artifactId>vavi-util-screenscraping</artifactId>
+      <version>1.0.10-SNAPSHOT</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
       <version>1.2.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>${vavi-nio-file.groupId}</groupId>
+      <artifactId>vavi-nio-file</artifactId>
+      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
   </dependencies>

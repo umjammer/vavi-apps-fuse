@@ -4,7 +4,7 @@
   <parent>
     <artifactId>vavi-apps-fuse</artifactId>
     <groupId>vavi</groupId>
-    <version>0.1.6</version>
+    <version>0.1.7-SNAPSHOT</version>
   </parent>
 
   <artifactId>vavi-nio-file-onedrive3</artifactId>
@@ -38,7 +38,7 @@
     </dependency>
 
     <dependency>
-      <groupId>com.github.umjammer.vavi-net-auth</groupId>
+      <groupId>${vavi-net-auth.groupId}</groupId>
       <artifactId>vavi-net-auth-microsoft</artifactId>
       <version>${vavi-net-auth.version}</version>
     </dependency>
@@ -48,6 +48,11 @@
       <groupId>ch.iterate.onedrive</groupId>
       <artifactId>onedrive-java-client</artifactId>
       <version>2.0.16</version>
+    </dependency>
+
+    <dependency>
+      <groupId>vavi</groupId>
+      <artifactId>vavi-nio-file-commons</artifactId>
     </dependency>
 
     <dependency>
