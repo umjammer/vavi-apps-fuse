@@ -43,7 +43,8 @@ public class Main6 {
         URI uri = URI.create("googledrive:///?id=" + email);
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
 
-        Files.setAttribute(fs.getPath("tmp/amazon_parchase_history.txt"), "user:description", ("説明テスト " + System.currentTimeMillis()).getBytes());
+        String description = "説明テスト " + System.currentTimeMillis() + "\n\n" + "あーだこーだ";
+        Files.setAttribute(fs.getPath("tmp/amazon_parchase_history.txt"), "user:description", description.getBytes());
 
         fs.close();
     }

@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -94,7 +93,7 @@ public class Main4 {
         options.put("noappledouble", null);
 //        options.put("noapplexattr", null);
 
-        Fuse.getFuse().mount(fs, args[0], Collections.EMPTY_MAP);
+        Fuse.getFuse().mount(fs, args[0], options);
     }
 }
 
