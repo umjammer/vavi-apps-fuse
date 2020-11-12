@@ -23,11 +23,14 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.WatchEvent.Kind;
+import java.nio.file.WatchService;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -43,9 +46,11 @@ import vavi.nio.file.Cache;
 import vavi.nio.file.Util;
 import vavi.util.Debug;
 
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static vavi.nio.file.Util.toFilenameString;
 import static vavi.nio.file.Util.toPathString;
 import static vavi.nio.file.onedrive.OneDriveFileSystemProvider.ENV_IGNORE_APPLE_DOUBLE;
+import static vavi.nio.file.onedrive.OneDriveFileSystemProvider.ENV_USE_SYSTEM_WATCHER;
 
 import de.tuberlin.onedrivesdk.OneDriveException;
 import de.tuberlin.onedrivesdk.OneDriveSDK;
@@ -69,15 +74,54 @@ public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase
 
     private boolean ignoreAppleDouble = false;
 
+    private OneDriveWatchService systemWatcher;
+
     @SuppressWarnings("unchecked")
     public OneDriveFileSystemDriver(final FileStore fileStore,
             final FileSystemFactoryProvider provider,
             final OneDriveSDK client,
-            final Map<String, ?> env) {
+            final Map<String, ?> env) throws IOException {
         super(fileStore, provider);
         this.client = client;
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_IGNORE_APPLE_DOUBLE, false);
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
+        boolean useSystemWatcher = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_USE_SYSTEM_WATCHER, false);
+
+        if (useSystemWatcher) {
+            systemWatcher = new OneDriveWatchService(client);
+            systemWatcher.setNotificationListener(this::processNotification);
+        }
+    }
+
+    /** for system watcher */
+    private void processNotification(String id, Kind<?> kind) {
+        if (ENTRY_DELETE == kind) {
+            try {
+                Path path = cache.getEntry(e -> id.equals(e.getId()));
+                cache.removeEntry(path);
+            } catch (NoSuchElementException e) {
+Debug.println("NOTIFICATION: already deleted: " + id);
+            }
+        } else {
+            try {
+                try {
+                    Path path = cache.getEntry(e -> id.equals(e.getId()));
+Debug.println("NOTIFICATION: maybe updated: " + path);
+                    cache.removeEntry(path);
+                    cache.getEntry(path);
+                } catch (NoSuchElementException e) {
+                    OneFile entry = client.getFileById(id);
+                    Path parent = cache.getEntry(f -> { try { return entry.getParentFolder().getId().equals(f.getId()); } catch (IOException | OneDriveException g) { g.printStackTrace(); return false; }});
+                    Path path = parent.resolve(entry.getName());
+Debug.println("NOTIFICATION: maybe created: " + path);
+                    cache.addEntry(path, OneItem.class.cast(entry));
+                }
+            } catch (NoSuchElementException e) {
+Debug.println("NOTIFICATION: parent not found: " + e);
+            } catch (IOException | OneDriveException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /** */
@@ -315,6 +359,16 @@ e.printStackTrace();
     @Override
     protected Object getPathMetadataImpl(final Path path) throws IOException {
         return cache.getEntry(path);
+    }
+
+    @Nonnull
+    @Override
+    public WatchService newWatchService() {
+        try {
+            return new OneDriveWatchService(client);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /** */
