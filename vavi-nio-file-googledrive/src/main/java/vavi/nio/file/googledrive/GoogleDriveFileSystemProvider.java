@@ -25,6 +25,8 @@ public final class GoogleDriveFileSystemProvider extends FileSystemProviderBase 
 
     public static final String ENV_IGNORE_APPLE_DOUBLE = "ignoreAppleDouble";
 
+    public static final String ENV_USE_SYSTEM_WATCHER = "use_system_watcher";
+
     public GoogleDriveFileSystemProvider() {
         super(new GoogleDriveFileSystemRepository());
     }

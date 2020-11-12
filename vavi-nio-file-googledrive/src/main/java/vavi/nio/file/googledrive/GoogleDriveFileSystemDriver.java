@@ -22,12 +22,15 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.WatchEvent.Kind;
+import java.nio.file.WatchService;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -40,7 +43,6 @@ import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.googleapis.media.MediaHttpUploader;
 import com.google.api.client.http.AbstractInputStreamContent;
 import com.google.api.services.drive.Drive;
-import com.google.api.services.drive.Drive.Files;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
@@ -49,8 +51,10 @@ import vavi.nio.file.Util;
 import vavi.nio.file.googledrive.GoogleDriveFileAttributesFactory.Metadata;
 import vavi.util.Debug;
 
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static vavi.nio.file.Util.toFilenameString;
 import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_IGNORE_APPLE_DOUBLE;
+import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_USE_SYSTEM_WATCHER;
 
 
 /**
@@ -66,6 +70,8 @@ public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverB
 
     private boolean ignoreAppleDouble = false;
 
+    private GoogleDriveWatchService systemWatcher;
+
     @SuppressWarnings("unchecked")
     public GoogleDriveFileSystemDriver(final FileStore fileStore,
             final FileSystemFactoryProvider provider,
@@ -74,6 +80,43 @@ public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverB
         super(fileStore, provider);
         this.drive = drive;
         ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_IGNORE_APPLE_DOUBLE, false);
+        boolean useSystemWatcher = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_USE_SYSTEM_WATCHER, false);
+
+        if (useSystemWatcher) {
+            systemWatcher = new GoogleDriveWatchService(drive);
+            systemWatcher.setNotificationListener(this::processNotification);
+        }
+    }
+
+    /** for system watcher */
+    private void processNotification(String id, Kind<?> kind) {
+        if (ENTRY_DELETE == kind) {
+            try {
+                Path path = cache.getEntry(e -> id.equals(e.getId()));
+                cache.removeEntry(path);
+            } catch (NoSuchElementException e) {
+Debug.println("NOTIFICATION: already deleted: " + id);
+            }
+        } else {
+            try {
+                try {
+                    Path path = cache.getEntry(e -> id.equals(e.getId()));
+Debug.println("NOTIFICATION: maybe updated: " + path);
+                    cache.removeEntry(path);
+                    cache.getEntry(path);
+                } catch (NoSuchElementException e) {
+                    File entry = drive.files().get(id).execute();
+                    Path parent = cache.getEntry(f -> entry.getParents().get(0).equals(f.getId()));
+                    Path path = parent.resolve(entry.getName());
+Debug.println("NOTIFICATION: maybe created: " + path);
+                    cache.addEntry(path, entry);
+                }
+            } catch (NoSuchElementException e) {
+Debug.println("NOTIFICATION: parent not found: " + e);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /** */
@@ -324,6 +367,15 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
     @Override
     protected Object getPathMetadataImpl(final Path path) throws IOException {
         return new Metadata(this, cache.getEntry(path));
+    }
+
+    @Override
+    public WatchService newWatchService() {
+        try {
+            return new GoogleDriveWatchService(drive);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /** */
