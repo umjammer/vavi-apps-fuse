@@ -16,6 +16,9 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.services.drive.Drive;
 
 import vavi.net.auth.WithTotpUserCredential;
@@ -75,7 +78,18 @@ public final class GoogleDriveFileSystemRepository extends FileSystemRepositoryB
         }
 
         // 3. process
-        Drive drive = new GoogleOAuth2(appCredential).authorize(userCredential);
+        Credential credential = new GoogleOAuth2(appCredential).authorize(userCredential);
+        Drive drive = new Drive.Builder(appCredential.getHttpTransport(), appCredential.getJsonFactory(), credential)
+                .setHttpRequestInitializer(new HttpRequestInitializer() {
+                    @Override
+                    public void initialize(HttpRequest httpRequest) throws IOException {
+                        credential.initialize(httpRequest);
+                        httpRequest.setConnectTimeout(30 * 1000);
+                        httpRequest.setReadTimeout(30 * 1000);
+                    }
+                })
+                .setApplicationName(appCredential.getClientId())
+                .build();
         GoogleDriveFileStore fileStore = new GoogleDriveFileStore(drive, factoryProvider.getAttributesFactory());
         return new GoogleDriveFileSystemDriver(fileStore, factoryProvider, drive, env);
     }
