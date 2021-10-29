@@ -6,7 +6,7 @@
 
 package vavi.nio.file.onedrive3;
 
-import org.nuxeo.onedrive.client.OneDriveItem;
+import org.nuxeo.onedrive.client.types.DriveItem;
 
 import com.github.fge.filesystem.attributes.FileAttributesFactory;
 
@@ -20,7 +20,7 @@ import com.github.fge.filesystem.attributes.FileAttributesFactory;
 public final class OneDriveFileAttributesFactory extends FileAttributesFactory {
 
     public OneDriveFileAttributesFactory() {
-        setMetadataClass(OneDriveItem.Metadata.class);
+        setMetadataClass(DriveItem.Metadata.class);
         addImplementation("basic", OneDriveBasicFileAttributesProvider.class);
     }
 }

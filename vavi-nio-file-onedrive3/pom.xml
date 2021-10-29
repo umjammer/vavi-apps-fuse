@@ -20,8 +20,8 @@
 
   <repositories>
     <repository>
-      <id>maven.cyberduck.io-release</id>
-      <url>https://repo.maven.cyberduck.io.s3.amazonaws.com/releases</url>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
     </repository>
   </repositories>
 
@@ -45,9 +45,9 @@
 
     <dependency>
       <!-- java-fs onedrive (cyberduck) -->
-      <groupId>ch.iterate.onedrive</groupId>
+      <groupId>com.github.iterate-ch</groupId>
       <artifactId>onedrive-java-client</artifactId>
-      <version>2.0.16</version>
+      <version>onedrive-java-client-3.1.8</version>
     </dependency>
 
     <dependency>

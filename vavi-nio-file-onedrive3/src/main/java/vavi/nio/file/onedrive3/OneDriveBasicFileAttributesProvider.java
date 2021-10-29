@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 
-import org.nuxeo.onedrive.client.OneDriveItem;
+import org.nuxeo.onedrive.client.types.DriveItem;
 
 import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider;
 
@@ -37,9 +37,9 @@ import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider
  */
 public final class OneDriveBasicFileAttributesProvider extends BasicFileAttributesProvider implements PosixFileAttributes {
 
-    private final OneDriveItem.Metadata entry;
+    private final DriveItem.Metadata entry;
 
-    public OneDriveBasicFileAttributesProvider(@Nonnull final OneDriveItem.Metadata entry) throws IOException {
+    public OneDriveBasicFileAttributesProvider(@Nonnull final DriveItem.Metadata entry) throws IOException {
         this.entry = Objects.requireNonNull(entry);
     }
 

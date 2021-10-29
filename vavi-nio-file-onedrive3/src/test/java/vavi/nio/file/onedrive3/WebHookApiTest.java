@@ -9,14 +9,16 @@ package vavi.nio.file.onedrive3;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Iterator;
 import java.util.Set;
 
+import org.nuxeo.onedrive.client.Drives;
+import org.nuxeo.onedrive.client.Files;
 import org.nuxeo.onedrive.client.JavaNetRequestExecutor;
 import org.nuxeo.onedrive.client.OneDriveAPI;
 import org.nuxeo.onedrive.client.OneDriveBasicAPI;
-import org.nuxeo.onedrive.client.OneDriveDrive;
-import org.nuxeo.onedrive.client.OneDriveFolder;
-import org.nuxeo.onedrive.client.OneDriveItem;
+import org.nuxeo.onedrive.client.types.Drive;
+import org.nuxeo.onedrive.client.types.DriveItem;
 import org.nuxeo.onedrive.client.RequestExecutor;
 import org.nuxeo.onedrive.client.RequestHeader;
 
@@ -93,20 +95,22 @@ public class WebHookApiTest {
             }
         };
 
-        OneDriveDrive drive = OneDriveDrive.getDefaultDrive(client);
+        Drive.Metadata drive = Drives.getDrives(client).next();
 
         // create
         URI uri = URI.create(websocketBaseUrl + websocketPath);
         // Listen for file upload events in the specified folder
-        OneDriveFolder rootFolder = drive.getRoot();
-        for (OneDriveItem.Metadata i : rootFolder.getChildren()) {
-            if (i.getName().equals("TEST_WEBHOOK")) {
-System.out.println("rmdir " + i.getName());
-                i.getResource().delete();
+        DriveItem rootFolder = new Drive(client, drive.getId()).getRoot();
+        Iterator<DriveItem.Metadata> i = Files.getFiles(rootFolder);
+        while (i.hasNext()) {
+        	DriveItem.Metadata child = i.next();
+            if (child.getName().equals("TEST_WEBHOOK")) {
+System.out.println("rmdir " + child.getName());
+				Files.delete(DriveItem.class.cast(child.getItem()));
             }
         }
 System.out.println("mkdir " + "TEST_WEBHOOK");
-        OneDriveFolder newFolder = rootFolder.create("TEST_WEBHOOK").getResource();
+        DriveItem.Metadata newFolder = Files.createFolder(rootFolder, "TEST_WEBHOOK");
 
 System.out.println("[create] webhook");
 //        Subscription preSubscription = new Subscription();
@@ -125,7 +129,7 @@ System.out.println("[ls] webhook");
 //        }
 
 System.out.println("mkdir " + "TEST_WEBHOOK/" + "NEW FOLDER");
-        OneDriveFolder subFolder = newFolder.create("NEW FOLDER").getResource();
+        DriveItem.Metadata subFolder = Files.createFolder(DriveItem.class.cast(newFolder), "NEW FOLDER");
 
         // update
 System.out.println("[update] webhook");
@@ -136,10 +140,10 @@ System.out.println("[update] webhook");
 System.out.println("[delete] webhook");
 //        drive.subscriptions(subscription.id).buildRequest().delete();
 
-System.out.println("rmdir " + subFolder.getMetadata().getName());
-        subFolder.delete();
-System.out.println("rmdir " + newFolder.getMetadata().getName());
-        newFolder.delete();
+System.out.println("rmdir " + subFolder.getName());
+        Files.delete(DriveItem.class.cast(subFolder));
+System.out.println("rmdir " + newFolder.getName());
+        Files.delete(DriveItem.class.cast(newFolder));
     }
 }
 
