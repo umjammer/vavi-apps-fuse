@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.fuse.jnrfuse;
+package vavi.net.fuse.fusejna;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -13,64 +13,75 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 
-import vavi.nio.fuse.Fuse;
+import vavi.net.fuse.Fuse;
 import vavi.util.Debug;
 
 import co.paralleluniverse.fuse.TypeMode;
-import ru.serce.jnrfuse.FuseStubFS;
+import net.fusejna.FuseException;
+import net.fusejna.FuseFilesystem;
 
 
 /**
- * JnrFuseFuse. (jnr-fuse engine)
+ * JnaFuseFuse. (jna-fuse engine)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2020/05/29 umjammer initial version <br>
  */
-public class JnrFuseFuse implements Fuse {
+public class FuseJnaFuse implements Fuse {
 
     /** */
     public static final String ENV_NO_APPLE_DOUBLE = JavaNioFileFS.ENV_NO_APPLE_DOUBLE;
 
     /** */
-    private FuseStubFS fuse;
+    private FuseFilesystem fuse;
 
     @Override
     public void mount(FileSystem fs, String mountPoint, Map<String, Object> env) throws IOException {
-        if (env.containsKey(ENV_SINGLE_THREAD) && Boolean.class.cast(env.get(ENV_SINGLE_THREAD))) {
-            fuse = new SingleThreadJavaNioFileFS(fs, env);
+        try {
+            if (env.containsKey(ENV_SINGLE_THREAD) && Boolean.class.cast(env.get(ENV_SINGLE_THREAD))) {
+                fuse = new SingleThreadJavaNioFileFS(fs, env);
 Debug.println("use single thread");
-        } else {
-            fuse = new JavaNioFileFS(fs, env);
+            } else {
+                fuse = new JavaNioFileFS(fs, env);
+            }
+            fuse.mount(Paths.get(mountPoint).toFile(), false);
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> { try { close(); } catch (Exception e) { e.printStackTrace(); }}));
+        } catch (FuseException e) {
+            throw new IOException(e);
         }
-        fuse.mount(Paths.get(mountPoint));
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> { try { close(); } catch (IOException e) { e.printStackTrace(); }}));
     }
 
     @Override
     public void close() throws IOException {
-        if (fuse != null) {
+        try {
+            if (fuse != null) {
 Debug.println("unmount...");
-            fuse.umount();
-            fuse = null;
+                fuse.unmount();
+                fuse = null;
 Debug.println("unmount done");
+            }
+        } catch (FuseException e) {
+Debug.println(Level.WARNING, "unmount: " + e);
+            throw new IOException(e);
         }
     }
 
     /** */
-    static long permissionsToMode(Set<PosixFilePermission> permissions) {
-        long mode = 0;
+    static boolean[] permissionsToMode(Set<PosixFilePermission> permissions) {
+        boolean[] mode = new boolean[9];
         for (PosixFilePermission px : permissions) {
             switch (px) {
-            case OWNER_READ: mode |= TypeMode.S_IRUSR; break;
-            case OWNER_WRITE: mode |= TypeMode.S_IWUSR; break;
-            case OWNER_EXECUTE: mode |= TypeMode.S_IXUSR; break;
-            case GROUP_READ: mode |= TypeMode.S_IRGRP; break;
-            case GROUP_WRITE: mode |= TypeMode.S_IWGRP; break;
-            case GROUP_EXECUTE: mode |= TypeMode.S_IXGRP; break;
-            case OTHERS_READ: mode |= TypeMode.S_IROTH; break;
-            case OTHERS_WRITE: mode |= TypeMode.S_IWOTH; break;
-            case OTHERS_EXECUTE: mode |= TypeMode.S_IXOTH; break;
+            case OWNER_READ: mode[0] = true; break;
+            case OWNER_WRITE: mode[1] = true; break;
+            case OWNER_EXECUTE: mode[2] = true; break;
+            case GROUP_READ: mode[3] = true; break;
+            case GROUP_WRITE: mode[4] = true; break;
+            case GROUP_EXECUTE: mode[5] = true; break;
+            case OTHERS_READ: mode[6] = true; break;
+            case OTHERS_WRITE: mode[7] = true; break;
+            case OTHERS_EXECUTE: mode[8] = true; break;
             }
         }
         return mode;
@@ -78,7 +89,7 @@ Debug.println("unmount done");
 
     /** */
     static Set<PosixFilePermission> modeToPermissions(long mode) {
-        EnumSet<PosixFilePermission> permissions = EnumSet.noneOf(PosixFilePermission.class);
+        final EnumSet<PosixFilePermission> permissions = EnumSet.noneOf(PosixFilePermission.class);
         if ((mode & TypeMode.S_IRUSR) != 0)
             permissions.add(PosixFilePermission.OWNER_READ);
         if ((mode & TypeMode.S_IWUSR) != 0)

@@ -10,7 +10,7 @@
     <version>0.1.7-SNAPSHOT</version>
   </parent>
 
-  <artifactId>vavi-nio-fuse</artifactId>
+  <artifactId>vavi-net-fuse</artifactId>
 
   <name>vavi-net-fuse</name>
   <url>https://github.com/umjammer/vavi-net-fuse</url>

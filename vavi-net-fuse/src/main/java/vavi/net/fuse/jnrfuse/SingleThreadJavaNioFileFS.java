@@ -4,10 +4,9 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.fuse.fusejna;
+package vavi.net.fuse.jnrfuse;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.file.FileSystem;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -15,14 +14,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import net.fusejna.DirectoryFiller;
-import net.fusejna.StructFuseFileInfo.FileInfoWrapper;
-import net.fusejna.StructStat.StatWrapper;
-import net.fusejna.types.TypeMode.ModeWrapper;
+import jnr.ffi.Pointer;
+import jnr.ffi.types.off_t;
+import ru.serce.jnrfuse.FuseFillDir;
+import ru.serce.jnrfuse.struct.FileStat;
+import ru.serce.jnrfuse.struct.FuseFileInfo;
 
 
 /**
- * OneThreadJavaNioFileFS. (fuse-jna)
+ * OneThreadJavaNioFileFS. (jnr-fuse)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/02/29 umjammer initial version <br>
@@ -55,7 +55,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
     }
 
     @Override
-    public int getattr(final String path, final StatWrapper stat) {
+    public int getattr(final String path, final FileStat stat) {
         Future<Integer> f = multiService.submit(() -> {
             return super.getattr(path, stat);
         });
@@ -67,7 +67,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
     }
 
     @Override
-    public int create(final String path, final ModeWrapper mode, final FileInfoWrapper info) {
+    public int create(final String path, final long mode, final FuseFileInfo info) {
         Future<Integer> f = singleService.submit(() -> {
             return super.create(path, mode, info);
         });
@@ -79,7 +79,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
     }
 
     @Override
-    public int open(final String path, final FileInfoWrapper info) {
+    public int open(final String path, final FuseFileInfo info) {
         Future<Integer> f = singleService.submit(() -> {
             return super.open(path, info);
         });
@@ -91,7 +91,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
     }
 
     @Override
-    public int read(final String path, final ByteBuffer buf, final long size, final long offset, final FileInfoWrapper info) {
+    public int read(final String path, final Pointer buf, final long size, final long offset, final FuseFileInfo info) {
         Future<Integer> f = singleService.submit(() -> {
             return super.read(path, buf, size, offset, info);
         });
@@ -104,10 +104,10 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
 
     @Override
     public int write(final String path,
-                     final ByteBuffer buf,
+                     final Pointer buf,
                      final long size,
                      final long offset,
-                     final FileInfoWrapper info) {
+                     final FuseFileInfo info) {
         Future<Integer> f = singleService.submit(() -> {
             return super.write(path, buf, size, offset, info);
         });
@@ -119,7 +119,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
     }
 
     @Override
-    public int release(final String path, final FileInfoWrapper info) {
+    public int release(final String path, final FuseFileInfo info) {
         Future<Integer> f = singleService.submit(() -> {
             return super.release(path, info);
         });
@@ -131,7 +131,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
     }
 
     @Override
-    public int chmod(String path, ModeWrapper mode) {
+    public int chmod(String path, long mode) {
         Future<Integer> f = singleService.submit(() -> {
             return super.chmod(path, mode);
         });
@@ -143,7 +143,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
     }
 
     @Override
-    public int mkdir(final String path, final ModeWrapper mode) {
+    public int mkdir(final String path, final long mode) {
         Future<Integer> f = singleService.submit(() -> {
             return super.mkdir(path, mode);
         });
@@ -167,9 +167,9 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
     }
 
     @Override
-    public int readdir(final String path, final DirectoryFiller filler) {
+    public int readdir(final String path, Pointer buf, final FuseFillDir filler, @off_t long offset, FuseFileInfo info) {
         Future<Integer> f = singleService.submit(() -> {
-            return super.readdir(path, filler);
+            return super.readdir(path, buf, filler, offset, info);
         });
         try {
             return f.get();

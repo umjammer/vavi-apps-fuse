@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.fuse.javafs;
+package vavi.net.fuse.javafs;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 
-import vavi.nio.fuse.Fuse;
+import vavi.net.fuse.Fuse;
 import vavi.util.Debug;
 
 import co.paralleluniverse.javafs.JavaFS;

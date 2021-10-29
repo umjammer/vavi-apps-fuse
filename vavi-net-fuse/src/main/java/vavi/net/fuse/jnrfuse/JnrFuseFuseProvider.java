@@ -4,10 +4,10 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.fuse.jnrfuse;
+package vavi.net.fuse.jnrfuse;
 
-import vavi.nio.fuse.Fuse;
-import vavi.nio.fuse.FuseProvider;
+import vavi.net.fuse.Fuse;
+import vavi.net.fuse.FuseProvider;
 
 
 /**

@@ -18,7 +18,7 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 
 import vavi.net.fuse.Base;
-import vavi.nio.fuse.Fuse;
+import vavi.net.fuse.Fuse;
 import vavi.util.Debug;
 
 
@@ -70,8 +70,8 @@ Debug.println("mountPoint: " + mountPoint);
         options.put("fsname", "jimfs_fs" + "@" + System.currentTimeMillis());
         options.put("noappledouble", null);
         //options.put("noapplexattr", null);
-        options.put(vavi.nio.fuse.javafs.JavaFSFuse.ENV_DEBUG, false);
-        options.put(vavi.nio.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, false);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
     }
 
     @ParameterizedTest

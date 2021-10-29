@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.fuse.fusejna;
+package vavi.net.fuse.fusejna;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

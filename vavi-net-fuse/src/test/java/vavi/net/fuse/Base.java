@@ -14,7 +14,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Random;
 
-import vavi.nio.fuse.Fuse;
+import vavi.net.fuse.Fuse;
 import vavi.util.Debug;
 
 import vavix.util.Checksum;
