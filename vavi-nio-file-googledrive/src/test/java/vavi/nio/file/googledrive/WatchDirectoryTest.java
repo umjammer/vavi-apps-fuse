@@ -54,7 +54,7 @@ public class WatchDirectoryTest {
         String email = System.getenv("GOOGLE_TEST_ACCOUNT");
 
         URI uri = URI.create("googledrive:///?id=" + email);
-        fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
+        fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
         basePath = Files.createTempDirectory(fs.getRootDirectories().iterator().next(), "VAVIFUSE-TEST-WATCHSERVICE-");
         dir1Path = basePath.resolve("dir1");
@@ -132,7 +132,8 @@ public class WatchDirectoryTest {
         int count = 0;
         while (count < 2) {
             WatchKey watchKey = watchService.poll(20, TimeUnit.SECONDS);
-            Path watchedPath = (Path) watchKey.watchable();
+            @SuppressWarnings("unused")
+			Path watchedPath = (Path) watchKey.watchable();
             assertNotNull(watchKey);
             List<WatchEvent<?>> eventList = watchKey.pollEvents();
             WatchEvent<?> event = eventList.get(0);

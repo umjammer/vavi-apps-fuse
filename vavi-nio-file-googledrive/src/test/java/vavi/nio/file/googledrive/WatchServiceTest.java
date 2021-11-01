@@ -67,7 +67,7 @@ public class WatchServiceTest {
         String email = System.getenv("GOOGLE_TEST_ACCOUNT");
 
         URI uri = URI.create("googledrive:///?id=" + email);
-        fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
+        fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
         watcher = (AbstractWatchService) fs.newWatchService();
     }

@@ -14,6 +14,7 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.Change;
 import com.google.api.services.drive.model.ChangeList;
 import com.google.api.services.drive.model.Channel;
+import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.StartPageToken;
 
 import vavi.nio.file.watch.webhook.WebHookBaseWatchService;
@@ -122,7 +123,7 @@ Debug.println(">> synched");
                 ChangeList changes = drive.changes().list(pageToken).execute();
                 for (Change change : changes.getChanges()) {
                     // Process change
-Debug.println(">> " + (change.getFile() == null ? "id" : GoogleDriveFileSystemDriver.isFolder(change.getFile()) ? "folder" : "file") +
+Debug.println(">> " + (change.getFile() == null ? "id" : isFolder(change.getFile()) ? "folder" : "file") +
               "[" + (change.getFile() != null ? change.getFile().getName() : change.getFileId()) + "] " + (change.getRemoved() ? "deleted" : "updated?"));
 
                     listener.accept(change.getFileId(), change.getRemoved() ? ENTRY_DELETE : ENTRY_MODIFY);
@@ -150,5 +151,10 @@ Debug.println(">> notification: done");
             drive.channels().stop(channel).execute();
 Debug.println("GOOGLE: channel deleted: " + channel);
         }
+    }
+
+    /** TODO duplicated */
+    private static boolean isFolder(File file) {
+        return GoogleDriveFileSystemDriver.MIME_TYPE_DIR.equals(file.getMimeType());
     }
 }

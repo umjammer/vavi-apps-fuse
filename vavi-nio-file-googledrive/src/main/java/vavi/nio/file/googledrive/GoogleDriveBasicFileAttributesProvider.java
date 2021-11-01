@@ -37,9 +37,11 @@ import vavi.nio.file.googledrive.GoogleDriveFileAttributesFactory.Metadata;
  */
 public final class GoogleDriveBasicFileAttributesProvider extends BasicFileAttributesProvider implements PosixFileAttributes {
 
+    private final GoogleDriveFileSystemDriver driver;
     private final File entry;
 
     public GoogleDriveBasicFileAttributesProvider(@Nonnull final Metadata entry) throws IOException {
+        this.driver = Objects.requireNonNull(entry).driver;
         this.entry = Objects.requireNonNull(entry).file;
     }
 
@@ -64,7 +66,7 @@ public final class GoogleDriveBasicFileAttributesProvider extends BasicFileAttri
      */
     @Override
     public boolean isRegularFile() {
-        return !GoogleDriveFileSystemDriver.isFolder(entry);
+        return !driver.isFolder(entry);
     }
 
     /**
@@ -72,7 +74,7 @@ public final class GoogleDriveBasicFileAttributesProvider extends BasicFileAttri
      */
     @Override
     public boolean isDirectory() {
-        return GoogleDriveFileSystemDriver.isFolder(entry);
+        return driver.isFolder(entry);
     }
 
     /**

@@ -10,33 +10,23 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.AccessDeniedException;
-import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
-import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchService;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.logging.Level;
 
-import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase;
+import com.github.fge.filesystem.driver.CachedFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -46,7 +36,6 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 
-import vavi.nio.file.Cache;
 import vavi.nio.file.Util;
 import vavi.nio.file.googledrive.GoogleDriveFileAttributesFactory.Metadata;
 import vavi.util.Debug;
@@ -64,11 +53,9 @@ import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_USE_SY
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class GoogleDriveFileSystemDriver extends ExtendedFileSystemDriverBase {
+public final class GoogleDriveFileSystemDriver extends CachedFileSystemDriverBase<File> {
 
     private final Drive drive;
-
-    private boolean ignoreAppleDouble = false;
 
     private GoogleDriveWatchService systemWatcher;
 
@@ -123,61 +110,49 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     private static final String ENTRY_FIELDS = "id, parents, name, size, mimeType, createdTime, modifiedTime, description";
 
     /** */
-    private static final String MIME_TYPE_DIR = "application/vnd.google-apps.folder";
+    public static final String MIME_TYPE_DIR = "application/vnd.google-apps.folder";
 
-    /** ugly */
-    static boolean isFolder(File file) {
-        return MIME_TYPE_DIR.equals(file.getMimeType());
+    @Override
+    protected String getFilenameString(File entry) throws IOException {
+    	return Util.toNormalizedString(entry.getName());
     }
 
-    /** */
-    private Cache<File> cache = new Cache<File>() {
-        /**
-         * @see #ignoreAppleDouble
-         */
-        public File getEntry(Path path) throws IOException {
-            try {
-                if (cache.containsFile(path)) {
-                    return cache.getFile(path);
-                } else {
-                    if (ignoreAppleDouble && path.getFileName() != null && Util.isAppleDouble(path)) {
-                        throw new NoSuchFileException("ignore apple double file: " + path);
-                    }
-
-                    File entry;
-                    if (path.getNameCount() == 0) {
-                        entry = drive.files().get("root").setFields(ENTRY_FIELDS).execute().set("name", "/");
-                        cache.putFile(path, entry);
-                        return entry;
-                    } else {
-                        cacheEntry(path);
-                        return cache.getFile(path);
-                    }
-                }
-            } catch (GoogleJsonResponseException e) {
-                if (e.getMessage().startsWith("404")) {
-                    // cache
-                    if (cache.containsFile(path)) {
-                        cache.removeEntry(path);
-                    }
-
-                    throw (IOException) new NoSuchFileException("path: " + path).initCause(e);
-                } else {
-                    throw e;
-                }
-            }
-        }
-    };
-
-    @Nonnull
     @Override
-    public InputStream newInputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
-        final File entry = cache.getEntry(path);
+    protected boolean isFolder(File entry) {
+        return MIME_TYPE_DIR.equals(entry.getMimeType());
+    }
 
-        if (isFolder(entry)) {
-            throw new IsDirectoryException("path: " + path);
-        }
+    @Override
+    protected File getRootEntry() throws IOException {
+    	return drive.files().get("root").setFields(ENTRY_FIELDS).execute().set("name", "/");
+    }
 
+    @Override
+    protected File getEntry(File dirEntry, Path path) throws IOException {
+        try {
+    		String q = "'" + dirEntry.getId() + "' in parents and name = '" + path.getFileName() + "' and trashed=false";
+//System.out.println("q: " + q);
+	        FileList files = drive.files().list()
+	                .setQ(q)
+	                .setSpaces("drive")
+	                .setFields("nextPageToken, files(" + ENTRY_FIELDS + ")")
+	                .execute();
+	        if (files.getFiles().size() > 0) {
+	        	return files.getFiles().get(0);
+	        } else {
+	        	return null;
+	        }
+	    } catch (GoogleJsonResponseException e) {
+	        if (e.getMessage().startsWith("404")) {
+	        	return null;
+	        } else {
+	            throw e;
+	        }
+	    }
+    }
+
+    @Override
+    protected InputStream downloadEntry(File entry, Path path, Set<? extends OpenOption> options) throws IOException {
         // TODO detect automatically?
         GoogleDriveOpenOption option = Util.getOneOfOptions(GoogleDriveOpenOption.class, options);
         if (option != null) {
@@ -187,31 +162,13 @@ Debug.println("NOTIFICATION: parent not found: " + e);
         }
     }
 
-    @Nonnull
     @Override
-    public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
-        final File entry;
-        try {
-            entry = cache.getEntry(path);
-
-            if (isFolder(entry)) {
-                throw new IsDirectoryException("path: " + path);
-            } else {
-                throw new FileAlreadyExistsException("path: " + path);
-            }
-        } catch (NoSuchFileException e) {
-Debug.println("newOutputStream: " + e.getMessage());
-        }
-
+    protected OutputStream uploadEntry(File parentEntry, Path path, Set<? extends OpenOption> options) throws IOException {
         // TODO detect automatically?
         @SuppressWarnings("unused")
         GoogleDriveOpenOption option = Util.getOneOfOptions(GoogleDriveOpenOption.class, options);
 
-        return uploadEntry(path);
-    }
-
-    /** */
-    private OutputStream uploadEntry(Path path) throws IOException {
+        //
         return new BufferedOutputStream(new Util.StealingOutputStreamForUploading<File>() {
             @Override
             protected File upload() throws IOException {
@@ -230,13 +187,13 @@ Debug.println("newOutputStream: " + e.getMessage());
                     }
                     @Override
                     public void writeTo(OutputStream os) throws IOException {
-                        setOutputStream(os); // socket
+                    	setOutputStream(os); // socket
                     }
                 };
 
                 File fileMetadata = new File();
                 fileMetadata.setName(toFilenameString(path));
-                fileMetadata.setParents(Arrays.asList(cache.getEntry(path.toAbsolutePath().getParent()).getId()));
+                fileMetadata.setParents(Arrays.asList(parentEntry.getId()));
 
                 Drive.Files.Create creator = drive.files().create(fileMetadata, mediaContent); // why not HttpContent ???
                 MediaHttpUploader uploader = creator.getMediaHttpUploader();
@@ -254,119 +211,20 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
         }, Util.BUFFER_SIZE);
     }
 
-    @Nonnull
     @Override
-    public DirectoryStream<Path> newDirectoryStream(final Path dir,
-                                                    final DirectoryStream.Filter<? super Path> filter) throws IOException {
-        return Util.newDirectoryStream(getDirectoryEntries(dir, true), filter);
-    }
-
-    @Override
-    public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
+    protected File createDirectoryEntry(Path dir) throws IOException {
         File dirEntry = new File();
         dirEntry.setName(toFilenameString(dir));
         dirEntry.setMimeType(MIME_TYPE_DIR);
         if (dir.toAbsolutePath().getParent().getNameCount() != 0) {
             dirEntry.setParents(Arrays.asList(cache.getEntry(dir.toAbsolutePath().getParent()).getId()));
         }
-        File newEntry = drive.files().create(dirEntry).setFields(ENTRY_FIELDS).execute();
-        cache.addEntry(dir, newEntry);
+        return drive.files().create(dirEntry).setFields(ENTRY_FIELDS).execute();
     }
 
     @Override
-    public void delete(final Path path) throws IOException {
-        removeEntry(path);
-    }
-
-    @Override
-    public void copy(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
-        if (cache.existsEntry(target)) {
-            if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
-                removeEntry(target);
-            } else {
-                throw new FileAlreadyExistsException(target.toString());
-            }
-        }
-
-        copyEntry(source, target, options);
-    }
-
-    @Override
-    public void move(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
-        if (cache.existsEntry(target)) {
-            if (isFolder(cache.getEntry(target))) {
-                if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
-                    // replace the target
-                    if (cache.getChildCount(target) > 0) {
-                        throw new DirectoryNotEmptyException(target.toString());
-                    } else {
-                        removeEntry(target);
-                        moveEntry(source, target, false);
-                    }
-                } else {
-                    // move into the target
-                    // TODO SPEC is FileAlreadyExistsException ?
-                    moveEntry(source, target, true);
-                }
-            } else {
-                if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
-                    removeEntry(target);
-                    moveEntry(source, target, false);
-                } else {
-                    throw new FileAlreadyExistsException(target.toString());
-                }
-            }
-        } else {
-            if (source.toAbsolutePath().getParent().equals(target.toAbsolutePath().getParent())) {
-                // rename
-                renameEntry(source, target);
-            } else {
-                moveEntry(source, target, false);
-            }
-        }
-    }
-
-    /**
-     * Check access modes for a path on this filesystem
-     * <p>
-     * If no modes are provided to check for, this simply checks for the
-     * existence of the path.
-     * </p>
-     *
-     * @param path the path to check
-     * @param modes the modes to check for, if any
-     * @throws IOException filesystem level error, or a plain I/O error
-     *                     if you use this with fuse, you should throw {@link NoSuchFileException} when the file not found.
-     * @see FileSystemProvider#checkAccess(Path, AccessMode...)
-     */
-    @Override
-    protected void checkAccessImpl(final Path path, final AccessMode... modes) throws IOException {
-        final File entry = cache.getEntry(path);
-
-        if (isFolder(entry)) {
-            return;
-        }
-
-        // TODO: assumed; not a file == directory
-        for (final AccessMode mode : modes) {
-            if (mode == AccessMode.EXECUTE) {
-                throw new AccessDeniedException(path.toString());
-            }
-        }
-    }
-
-    @Override
-    public void close() throws IOException {
-        // GoogleDrive does not implement Closeable :(
-    }
-
-    /**
-     * @throws IOException if you use this with fuse, you should throw {@link NoSuchFileException} when the file not found.
-     */
-    @Nonnull
-    @Override
-    protected Object getPathMetadataImpl(final Path path) throws IOException {
-        return new Metadata(this, cache.getEntry(path));
+    protected Object getMetadata(File entry) throws IOException {
+        return new Metadata(this, entry);
     }
 
     @Override
@@ -378,161 +236,90 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
         }
     }
 
-    /** */
-    private void cacheEntry(Path path) throws IOException {
-        try {
-            File dir = cache.getEntry(path.toAbsolutePath().getParent());
-
-            String q = "'" + dir.getId() + "' in parents and name = '" + path.getFileName() + "' and trashed=false";
-//System.out.println("q: " + q);
+    @Override
+    protected List<File> getDirectoryEntries(File dirEntry, Path dir) throws IOException {
+    	List<File> list = new ArrayList<>();
+        String pageToken = null;
+        do {
             FileList files = drive.files().list()
-                    .setQ(q)
+                    .setQ("'" + dirEntry.getId() + "' in parents and trashed=false")
                     .setSpaces("drive")
+                    .setPageSize(1000)
                     .setFields("nextPageToken, files(" + ENTRY_FIELDS + ")")
+                    .setPageToken(pageToken)
+                    .setOrderBy("name_natural")
                     .execute();
 
-            if (files.getFiles().size() > 0) {
-                File child = files.getFiles().get(0);
-                cache.addEntry(path, child);
-                return;
+            for (File child : files.getFiles()) {
+            	list.add(child);
             }
-        } catch (NoSuchFileException e) {
-            getDirectoryEntries(path.toAbsolutePath().getParent(), false);
-            return;
-        }
-        throw new NoSuchFileException(path.toString());
-    }
 
-    /** */
-    private List<Path> getDirectoryEntries(Path dir, boolean useCache) throws IOException {
-        final File entry = cache.getEntry(dir);
-
-        if (!isFolder(entry)) {
-            throw new NotDirectoryException("dir: " + dir);
-        }
-
-        List<Path> list = new ArrayList<>();
-        if (useCache && cache.containsFolder(dir)) {
-            list = cache.getFolder(dir);
-        } else {
-            String pageToken = null;
-            do {
-                FileList files = drive.files().list()
-                        .setQ("'" + entry.getId() + "' in parents and trashed=false")
-                        .setSpaces("drive")
-                        .setPageSize(1000)
-                        .setFields("nextPageToken, files(" + ENTRY_FIELDS + ")")
-                        .setPageToken(pageToken)
-                        .setOrderBy("name_natural")
-                        .execute();
-
-                final List<File> children = files.getFiles();
-//long t = System.currentTimeMillis();
-                for (final File child : children) {
-                    Path childPath = dir.resolve(Util.toNormalizedString(child.getName()));
-//System.out.println("p: " + childPath);
-                    list.add(childPath);
-
-                    cache.putFile(childPath, child);
-                }
-
-                pageToken = files.getNextPageToken();
+            pageToken = files.getNextPageToken();
 //System.out.println("t: " + (System.currentTimeMillis() - t) + ", " + children.size() + ", " + (pageToken != null));
-            } while (pageToken != null);
-
-            cache.putFolder(dir, list);
-        }
+        } while (pageToken != null);
 
         return list;
     }
 
-    /** */
-    private void removeEntry(Path path) throws IOException {
-        final File entry = cache.getEntry(path);
+    @Override
+    protected boolean hasChildren(File dirEntry, Path dir) throws IOException {
+        // TODO use cache ???
+    	List<File> files = drive.files().list()
+                .setQ("'" + dirEntry.getId() + "' in parents and trashed=false")
+                .execute().getFiles();
+    	return files != null && files.size() > 0;
+    }
 
-        if (isFolder(entry)) {
-            // TODO use cache ???
-            List<File> list = drive.files().list()
-                    .setQ("'" + entry.getId() + "' in parents and trashed=false")
-                    .execute().getFiles();
-
-            if (list != null && list.size() > 0) {
-                throw new DirectoryNotEmptyException(path.toString());
-            }
-        }
-
+    @Override
+    protected void removeEntry(File entry, Path path) throws IOException {
         drive.files().delete(entry.getId()).execute();
-
-        cache.removeEntry(path);
     }
 
-    /** */
-    private void copyEntry(final Path source, final Path target, Set<CopyOption> options) throws IOException {
-        final File sourceEntry = cache.getEntry(source);
-        File targetParentEntry = cache.getEntry(target.toAbsolutePath().getParent());
-        if (!isFolder(sourceEntry)) {
-            File entry = new File();
-            entry.setName(toFilenameString(target));
-            entry.setParents(Arrays.asList(targetParentEntry.getId()));
-            if (options != null && options.stream().anyMatch(o -> o.equals(GoogleDriveCopyOption.EXPORT_AS_GDOCS))) {
-                entry.setMimeType(GoogleDriveCopyOption.EXPORT_AS_GDOCS.getValue());
-            }
-            File newEntry = drive.files().copy(sourceEntry.getId(), entry).setFields(ENTRY_FIELDS).execute();
-
-            cache.addEntry(target, newEntry);
-        } else {
-            // TODO java spec. allows empty folder
-            throw new UnsupportedOperationException("source can not be a folder");
-        }
-    }
-
-    /**
-     * @param targetIsParent if the target is folder
-     */
-    private void moveEntry(final Path source, final Path target, boolean targetIsParent) throws IOException {
-        File sourceEntry = cache.getEntry(source);
-        File targetParentEntry = cache.getEntry(targetIsParent ? target : target.toAbsolutePath().getParent());
-        if (!isFolder(sourceEntry)) {
-            File entry = new File();
-            entry.setName(targetIsParent ? toFilenameString(source) : toFilenameString(target));
-            String previousParents = null;
-            if (sourceEntry.getParents() != null) {
-                previousParents = String.join(",", sourceEntry.getParents());
-            }
-            File newEntry = drive.files().update(sourceEntry.getId(), entry)
-                    .setAddParents(targetParentEntry.getId())
-                    .setRemoveParents(previousParents)
-                    .setFields(ENTRY_FIELDS).execute();
-            cache.removeEntry(source);
-            if (targetIsParent) {
-                cache.addEntry(target.resolve(source.getFileName()), newEntry);
-            } else {
-                cache.addEntry(target, newEntry);
-            }
-        } else if (isFolder(sourceEntry)) {
-            File dirEntry = new File();
-            dirEntry.setName(toFilenameString(target));
-            dirEntry.setMimeType(MIME_TYPE_DIR);
-            String previousParents = null;
-            if (sourceEntry.getParents() != null) {
-                previousParents = String.join(",", sourceEntry.getParents());
-            }
-            File newEntry = drive.files().update(sourceEntry.getId(), dirEntry)
-                    .setAddParents(targetParentEntry.getId())
-                    .setRemoveParents(previousParents)
-                    .setFields(ENTRY_FIELDS).execute();
-            cache.moveEntry(source, target, newEntry);
-        }
-    }
-
-    /** */
-    private void renameEntry(final Path source, final Path target) throws IOException {
-        File sourceEntry = cache.getEntry(source);
+    @Override
+    protected File copyEntry(File sourceEntry, File targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
         File entry = new File();
         entry.setName(toFilenameString(target));
-        File newEntry = drive.files().update(sourceEntry.getId(), entry).setFields(ENTRY_FIELDS).execute();
-        cache.removeEntry(source);
-        cache.addEntry(target, newEntry);
+        entry.setParents(Arrays.asList(targetParentEntry.getId()));
+        if (options != null && options.stream().anyMatch(o -> o.equals(GoogleDriveCopyOption.EXPORT_AS_GDOCS))) {
+            entry.setMimeType(GoogleDriveCopyOption.EXPORT_AS_GDOCS.getValue());
+        }
+        return drive.files().copy(sourceEntry.getId(), entry).setFields(ENTRY_FIELDS).execute();
+    }
+
+    @Override
+    protected File moveEntry(File sourceEntry, File targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
+        File entry = new File();
+        entry.setName(toFilenameString(target));
+        String previousParents = null;
+        if (sourceEntry.getParents() != null) {
+            previousParents = String.join(",", sourceEntry.getParents());
+        }
+        return drive.files().update(sourceEntry.getId(), entry)
+                .setAddParents(targetParentEntry.getId())
+                .setRemoveParents(previousParents)
+                .setFields(ENTRY_FIELDS).execute();
+    }
+
+    @Override
+    protected File moveFolderEntry(File sourceEntry, File targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
+        File dirEntry = new File();
+        dirEntry.setName(toFilenameString(target));
+        dirEntry.setMimeType(MIME_TYPE_DIR);
+        String previousParents = null;
+        if (sourceEntry.getParents() != null) {
+            previousParents = String.join(",", sourceEntry.getParents());
+        }
+        return drive.files().update(sourceEntry.getId(), dirEntry)
+                .setAddParents(targetParentEntry.getId())
+                .setRemoveParents(previousParents)
+                .setFields(ENTRY_FIELDS).execute();
+    }
+
+    @Override
+    protected File renameEntry(File sourceEntry, File targetParentEntry, Path source, Path target) throws IOException {
+        File entry = new File();
+        entry.setName(toFilenameString(target));
+        return drive.files().update(sourceEntry.getId(), entry).setFields(ENTRY_FIELDS).execute();
     }
 
     /** attributes user:description */

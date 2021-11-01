@@ -30,7 +30,7 @@ public class Main6 {
         String email = System.getenv("GOOGLE_TEST_ACCOUNT");
 
         URI uri = URI.create("googledrive:///?id=" + email);
-        FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
+        FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
         testDescription(fs);
     }
@@ -41,7 +41,7 @@ public class Main6 {
         String email = System.getenv("GOOGLE_TEST_ACCOUNT");
 
         URI uri = URI.create("googledrive:///?id=" + email);
-        FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
+        FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
         String description = "説明テスト " + System.currentTimeMillis() + "\n\n" + "あーだこーだ";
         Files.setAttribute(fs.getPath("tmp/amazon_parchase_history.txt"), "user:description", description.getBytes());

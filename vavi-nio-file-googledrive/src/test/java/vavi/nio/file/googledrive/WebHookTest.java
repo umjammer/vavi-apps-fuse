@@ -216,7 +216,7 @@ Debug.println("Start");
             service.start();
 
             URI uri = URI.create("googledrive:///?id=" + email);
-            FileSystem fs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP);
+            FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
 
             Path tmpDir = fs.getPath("tmp");
             if (!Files.exists(tmpDir)) {

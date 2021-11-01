@@ -11,7 +11,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.util.Collections;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static vavi.nio.file.Base.testAll;
@@ -35,17 +34,16 @@ public class Main {
 
         URI uri = URI.create("googledrive:///?id=" + email);
 
-        testAll(new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
+        testAll(new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap()));
     }
 
-    @Test
-    @Disabled
-    void test02() throws Exception {
-        String email = System.getenv("GOOGLE_TEST_ACCOUNT2");
+    /** */
+    public static void main(String[] args) throws Exception {
+        String email = System.getenv("GOOGLE_TEST_ACCOUNT");
 
         URI uri = URI.create("googledrive:///?id=" + email);
 
-        FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
+        FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
         Files.list(fs.getPath("/")).forEach(System.out::println);
     }
 }
