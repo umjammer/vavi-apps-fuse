@@ -11,11 +11,9 @@ import java.nio.file.FileStore;
 
 import com.github.fge.filesystem.attributes.FileAttributesFactory;
 import com.github.fge.filesystem.filestore.FileStoreBase;
-import com.microsoft.graph.concurrency.ICallback;
-import com.microsoft.graph.core.ClientException;
-import com.microsoft.graph.models.extensions.Drive;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
-import com.microsoft.graph.models.extensions.Quota;
+import com.microsoft.graph.models.Drive;
+import com.microsoft.graph.models.Quota;
+import com.microsoft.graph.requests.GraphServiceClient;
 
 
 /**
@@ -28,14 +26,14 @@ import com.microsoft.graph.models.extensions.Quota;
  */
 public final class OneDriveFileStore extends FileStoreBase {
 
-    private final IGraphServiceClient client;
+    private final GraphServiceClient<?> client;
 
     /**
      * Constructor
      *
      * @param client the (valid) OneDrive client to use
      */
-    public OneDriveFileStore(final IGraphServiceClient client, final FileAttributesFactory factory) {
+    public OneDriveFileStore(final GraphServiceClient<?> client, final FileAttributesFactory factory) {
         super("onedrive", factory, false);
         this.client = client;
     }
@@ -111,15 +109,8 @@ public final class OneDriveFileStore extends FileStoreBase {
         if (cache != null) {
             return cache;
         } else {
-            client.drive().buildRequest().get(new ICallback<Drive>() {
-                @Override
-                public void success(final Drive result) {
-                    cache = result.quota;
-                }
-                @Override
-                public void failure(ClientException ex) {
-                }
-            });
+            Drive drive = client.drive().buildRequest().get();
+            cache = drive.quota;
             return cache;
         }
     }

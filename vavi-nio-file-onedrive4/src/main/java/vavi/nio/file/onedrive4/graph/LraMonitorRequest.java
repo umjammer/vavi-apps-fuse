@@ -6,13 +6,18 @@
 
 package vavi.nio.file.onedrive4.graph;
 
-import com.microsoft.graph.authentication.IAuthenticationProvider;
+import java.net.URL;
+import java.util.concurrent.CompletableFuture;
+
+import com.microsoft.graph.authentication.BaseAuthenticationProvider;
 import com.microsoft.graph.http.BaseRequest;
 import com.microsoft.graph.http.HttpMethod;
 import com.microsoft.graph.http.IHttpRequest;
 import com.microsoft.graph.http.IStatefulResponseHandler;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
-import com.microsoft.graph.requests.extensions.GraphServiceClient;
+import com.microsoft.graph.httpcore.HttpClients;
+import com.microsoft.graph.requests.GraphServiceClient;
+
+import okhttp3.OkHttpClient;
 
 
 /**
@@ -23,7 +28,7 @@ public class LraMonitorRequest {
     /**
      * The base request.
      */
-    private final BaseRequest baseRequest;
+    private final BaseRequest<?> baseRequest;
 
     /**
      * Construct the LraMonitorRequest
@@ -31,16 +36,19 @@ public class LraMonitorRequest {
      * @param requestUrl The upload URL.
      * @param client The Graph client.
      */
-    public LraMonitorRequest(final String requestUrl, IGraphServiceClient client) {
-        IGraphServiceClient clientWithoutAuth = GraphServiceClient.builder()
-                .authenticationProvider(new IAuthenticationProvider() {
-                    @Override
-                    public void authenticateRequest(IHttpRequest request) {
-                    }
-                })
+    public LraMonitorRequest(final String requestUrl, GraphServiceClient<?> client) {
+    	BaseAuthenticationProvider authenticationProvider = new BaseAuthenticationProvider() {
+            @Override
+            public CompletableFuture<String> getAuthorizationTokenAsync(final URL requestUrl) {
+                return CompletableFuture.completedFuture((String)null);
+            }
+        };
+        OkHttpClient httpClient = HttpClients.createDefault(authenticationProvider);
+        GraphServiceClient<?> clientWithoutAuth = GraphServiceClient.builder()
+                .httpClient(httpClient)
                 .logger(client.getLogger())
                 .buildClient();
-        this.baseRequest = new BaseRequest(requestUrl, clientWithoutAuth, null, LraMonitorResult.class) {
+        this.baseRequest = new BaseRequest<LraMonitorResult>(requestUrl, clientWithoutAuth, null, LraMonitorResult.class) {
         };
         this.baseRequest.setHttpMethod(HttpMethod.GET);
     }

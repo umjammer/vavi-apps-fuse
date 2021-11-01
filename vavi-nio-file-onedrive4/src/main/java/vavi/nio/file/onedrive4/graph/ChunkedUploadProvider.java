@@ -13,13 +13,13 @@ import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.List;
 
-import com.microsoft.graph.concurrency.ChunkedUploadResponseHandler;
-import com.microsoft.graph.concurrency.IProgressCallback;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
-import com.microsoft.graph.models.extensions.UploadSession;
+import com.microsoft.graph.models.DriveItem;
+import com.microsoft.graph.models.UploadSession;
 import com.microsoft.graph.options.Option;
-import com.microsoft.graph.requests.extensions.ChunkedUploadRequest;
-import com.microsoft.graph.requests.extensions.ChunkedUploadResult;
+import com.microsoft.graph.requests.GraphServiceClient;
+import com.microsoft.graph.tasks.IProgressCallback;
+import com.microsoft.graph.tasks.LargeFileUploadResult;
+import com.microsoft.graph.tasks.LargeFileUploadTask;
 
 
 /**
@@ -37,7 +37,7 @@ public class ChunkedUploadProvider<UploadType> {
     /**
      * The client
      */
-    private final IGraphServiceClient client;
+    private final GraphServiceClient<?> client;
 
     /**
      * The upload session URL
@@ -52,7 +52,7 @@ public class ChunkedUploadProvider<UploadType> {
     /**
      * The upload response handler
      */
-    private final ChunkedUploadResponseHandler<UploadType> responseHandler;
+    private LargeFileUploadTask<DriveItem> chunkedUploadProvider;
 
     /**
      * The counter for how many bytes have been read from input stream
@@ -68,7 +68,7 @@ public class ChunkedUploadProvider<UploadType> {
      * @param uploadTypeClass the upload type class
      */
     public ChunkedUploadProvider(final UploadSession uploadSession,
-                                 final IGraphServiceClient client,
+                                 final GraphServiceClient<?> client,
                                  final int streamSize,
                                  final Class<UploadType> uploadTypeClass) {
         if (uploadSession == null) {
@@ -87,7 +87,13 @@ public class ChunkedUploadProvider<UploadType> {
         this.readSoFar = 0;
         this.streamSize = streamSize;
         this.uploadUrl = uploadSession.uploadUrl;
-        this.responseHandler = new ChunkedUploadResponseHandler<>(uploadTypeClass);
+
+        LargeFileUploadTask<DriveItem> chunkedUploadProvider = new LargeFileUploadTask<DriveItem>(
+				uploadSession,
+				client,
+				null,
+				streamSize,
+				DriveItem.class);
     }
 
     /**
@@ -99,7 +105,7 @@ public class ChunkedUploadProvider<UploadType> {
      * @throws IOException the IO exception that occurred during upload
      */
     public OutputStream upload(final List<Option> options,
-                       final IProgressCallback<UploadType> callback,
+                       final IProgressCallback callback,
                        final int... configs)
             throws IOException {
 
@@ -113,19 +119,16 @@ public class ChunkedUploadProvider<UploadType> {
             @Override
             public void write(byte[] b, int ofs, int len) throws IOException {
                 byte[] buffer = Arrays.copyOfRange(b, ofs, ofs + len);
-                ChunkedUploadRequest request =
-                        new ChunkedUploadRequest(uploadUrl, client, options, buffer, len,
-                                maxRetry, readSoFar, streamSize);
-                ChunkedUploadResult<UploadType> result = request.upload(responseHandler);
+                LargeFileUploadResult<DriveItem> result = chunkedUploadProvider.upload(0, null, callback);
 
-                if (result.uploadCompleted()) {
-                    callback.progress(streamSize, streamSize);
-                    callback.success(result.getItem());
-                } else if (result.chunkCompleted()) {
-                    callback.progress(readSoFar, streamSize);
-                } else if (result.hasError()) {
-                    throw new IOException(result.getError());
-                }
+//                if (result.uploadCompleted()) {
+//                    callback.progress(streamSize, streamSize);
+//                    callback.success(result.getItem());
+//                } else if (result.chunkCompleted()) {
+//                    callback.progress(readSoFar, streamSize);
+//                } else if (result.hasError()) {
+//                    throw new IOException(result.getError());
+//                }
 
                 readSoFar += len;
             }
@@ -140,7 +143,7 @@ public class ChunkedUploadProvider<UploadType> {
      *                 size and [1] should be the maxRetry for upload retry.
      * @throws IOException the IO exception that occurred during upload
      */
-    public OutputStream upload(final IProgressCallback<UploadType> callback, final int... configs) throws IOException {
+    public OutputStream upload(final IProgressCallback callback, final int... configs) throws IOException {
         return upload(null, callback, configs);
     }
 }

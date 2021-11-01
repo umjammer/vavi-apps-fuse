@@ -7,23 +7,27 @@
 package vavi.nio.file.onedrive4;
 
 import java.net.URI;
-import java.util.Calendar;
+import java.net.URL;
+import java.time.OffsetDateTime;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
-import com.microsoft.graph.authentication.IAuthenticationProvider;
-import com.microsoft.graph.http.IHttpRequest;
-import com.microsoft.graph.models.extensions.DriveItem;
-import com.microsoft.graph.models.extensions.Folder;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
-import com.microsoft.graph.models.extensions.Subscription;
-import com.microsoft.graph.requests.extensions.GraphServiceClient;
-import com.microsoft.graph.requests.extensions.IDriveItemCollectionPage;
-import com.microsoft.graph.requests.extensions.ISubscriptionCollectionPage;
+import com.microsoft.graph.authentication.BaseAuthenticationProvider;
+import com.microsoft.graph.httpcore.HttpClients;
+import com.microsoft.graph.models.DriveItem;
+import com.microsoft.graph.models.Folder;
+import com.microsoft.graph.models.Subscription;
+import com.microsoft.graph.requests.DriveItemCollectionPage;
+import com.microsoft.graph.requests.GraphServiceClient;
+import com.microsoft.graph.requests.SubscriptionCollectionPage;
 
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphOAuth2;
 import vavi.net.auth.web.microsoft.MicrosoftLocalUserCredential;
 import vavi.nio.file.onedrive4.graph.MyLogger;
 import vavi.util.Debug;
+
+import okhttp3.OkHttpClient;
 
 
 /**
@@ -52,23 +56,28 @@ public class WebHookApiTest {
 		String accessToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
 //Debug.println("accessToken: " + accessToken);
 
-        IAuthenticationProvider authenticationProvider = new IAuthenticationProvider() {
+        BaseAuthenticationProvider authenticationProvider = new BaseAuthenticationProvider() {
             @Override
-            public void authenticateRequest(IHttpRequest request) {
-                request.addHeader("Authorization", "Bearer " + accessToken);
+            public CompletableFuture<String> getAuthorizationTokenAsync(URL requestUrl) {
+                if (this.shouldAuthenticateRequestWithUrl(requestUrl)) {
+                    return CompletableFuture.completedFuture(accessToken);
+                } else {
+                    return CompletableFuture.completedFuture(null);
+                }
             }
         };
-        IGraphServiceClient graphClient = GraphServiceClient.builder()
-            .authenticationProvider(authenticationProvider)
+        OkHttpClient httpClient = HttpClients.createDefault(authenticationProvider);
+        httpClient = httpClient.newBuilder().readTimeout(30, TimeUnit.SECONDS).build();
+        GraphServiceClient<?> graphClient = GraphServiceClient.builder()
+            .httpClient(httpClient)
             .logger(new MyLogger())
             .buildClient();
-        graphClient.getHttpProvider().getConnectionConfig().setReadTimeout(30 * 1000);
 
         // create
         URI uri = URI.create(websocketBaseUrl + websocketPath);
         // Listen for file upload events in the specified folder
         DriveItem rootFolder = graphClient.drive().root().buildRequest().get();
-        IDriveItemCollectionPage pages = graphClient.drive().items(rootFolder.id).children().buildRequest().get();
+        DriveItemCollectionPage pages = graphClient.drive().items(rootFolder.id).children().buildRequest().get();
         for (DriveItem i : pages.getCurrentPage()) {
             if (i.name.equals("TEST_WEBHOOK")) {
 System.out.println("rmdir " + i.name);
@@ -88,8 +97,8 @@ System.out.println("[create] webhook");
         preSubscription.changeType = "updated";
         preSubscription.notificationUrl = uri.toString();
         preSubscription.resource = "me/drive/root";
-        Calendar calendar = Calendar.getInstance();
-        calendar.roll(Calendar.DATE, true);
+        OffsetDateTime calendar = OffsetDateTime.now();
+        calendar.plusDays(1);
         preSubscription.expirationDateTime = calendar;
         preSubscription.clientState = VAVI_APPS_WEBHOOK_SECRET;
 //        Subscription subscription = graphClient.subscriptions().buildRequest().post(preSubscription);
@@ -97,7 +106,7 @@ System.out.println("[create] webhook");
 Debug.println(subscription.id);
 
 System.out.println("[ls] webhook");
-        ISubscriptionCollectionPage subscPages = graphClient.subscriptions().buildRequest().get();
+        SubscriptionCollectionPage subscPages = graphClient.subscriptions().buildRequest().get();
         for (Subscription s : subscPages.getCurrentPage()) {
 System.out.println(s);
         }
@@ -112,7 +121,7 @@ System.out.println("mkdir " + "TEST_WEBHOOK/" + "NEW FOLDER");
 
         // update
 System.out.println("[update] webhook");
-        calendar.roll(Calendar.DATE, true);
+        calendar.plusDays(1);
         subscription.expirationDateTime = calendar;
         subscription = graphClient.subscriptions(subscription.id).buildRequest().patch(subscription);
 

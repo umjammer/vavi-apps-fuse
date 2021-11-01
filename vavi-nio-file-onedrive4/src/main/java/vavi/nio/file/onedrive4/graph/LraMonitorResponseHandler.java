@@ -6,19 +6,14 @@
 
 package vavi.nio.file.onedrive4.graph;
 
-import java.io.BufferedInputStream;
 import java.io.InputStream;
 
-import com.microsoft.graph.http.DefaultHttpProvider;
 import com.microsoft.graph.http.GraphServiceException;
 import com.microsoft.graph.http.HttpResponseCode;
-import com.microsoft.graph.http.IConnection;
 import com.microsoft.graph.http.IHttpRequest;
 import com.microsoft.graph.http.IStatefulResponseHandler;
 import com.microsoft.graph.logger.ILogger;
 import com.microsoft.graph.serializer.ISerializer;
-
-import okhttp3.Response; // TODO WTF??? why not be encapsulated in IConnection??? who did this??? crazy!
 
 
 /**
@@ -28,53 +23,6 @@ import okhttp3.Response; // TODO WTF??? why not be encapsulated in IConnection??
  */
 public class LraMonitorResponseHandler<MonitorType>
         implements IStatefulResponseHandler<LraMonitorResult, MonitorType> {
-
-    /**
-     * Do nothing before getting the response
-     *
-     * @param connection the connection
-     */
-    @Override
-    public void configConnection(final IConnection connection) {
-    }
-
-    @Override
-    public void configConnection(Response response) {
-    }
-
-    @Override
-    public LraMonitorResult generateResult(IHttpRequest request,
-                                           Response response,
-                                           ISerializer serializer,
-                                           ILogger logger) throws Exception {
-        // TODO all about response can be encapsulated into IConnection!
-        // why i need to write twice...
-        if (response.code() == HttpResponseCode.HTTP_ACCEPTED) {
-logger.logDebug("LRA has been accepted by the server.");
-            final LraSession session = new LraSession();
-            session.monitorUrl = response.header("Location");
-            return new LraMonitorResult(session);
-        } else if (response.code() == HttpResponseCode.HTTP_SEE_OTHER) {
-logger.logDebug("see other url.");
-            String seeOtherUrl = response.header("Location");
-            return new LraMonitorResult(seeOtherUrl);
-        } else if (response.code() == HttpResponseCode.HTTP_CREATED
-                || response.code() == HttpResponseCode.HTTP_OK) {
-logger.logDebug("LRA session is completed, drive item returned.");
-            String rawJson = response.body().string();
-            MonitorObject monitoredItem = serializer.deserializeObject(rawJson, MonitorObject.class);
-
-            return new LraMonitorResult(monitoredItem);
-        } else if (response.code() >= HttpResponseCode.HTTP_CLIENT_ERROR) {
-logger.logDebug("LRA error during monitor, see detail on result error");
-            return new LraMonitorResult(
-                    GraphServiceException.createFromConnection(request, null, serializer,
-                                                               response, logger));
-        } else {
-logger.logDebug("unhandled response code: " + response.code());
-            return null;
-        }
-    }
 
     /**
      * Generate the LRA monitor response result
@@ -87,40 +35,44 @@ logger.logDebug("unhandled response code: " + response.code());
      * @throws Exception an exception occurs if the request was unable to complete for any reason
      */
     @Override
-    public LraMonitorResult generateResult(
+    public <Response> LraMonitorResult generateResult(
             final IHttpRequest request,
-            final IConnection connection,
+            final Response connection,
             final ISerializer serializer,
             final ILogger logger) throws Exception {
         InputStream in = null;
 
         try {
-            if (connection.getResponseCode() == HttpResponseCode.HTTP_ACCEPTED) {
-logger.logDebug("LRA has been accepted by the server.");
-                final LraSession session = new LraSession();
-                session.monitorUrl = connection.getResponseHeaders().get("Location").get(0);
-                return new LraMonitorResult(session);
-            } else if (connection.getResponseCode() == HttpResponseCode.HTTP_SEE_OTHER) {
-logger.logDebug("see other url.");
-                String seeOtherUrl = connection.getResponseHeaders().get("Location").get(0);
-                return new LraMonitorResult(seeOtherUrl);
-            } else if (connection.getResponseCode() == HttpResponseCode.HTTP_CREATED
-                    || connection.getResponseCode() == HttpResponseCode.HTTP_OK) {
-logger.logDebug("LRA session is completed, drive item returned.");
-                in = new BufferedInputStream(connection.getInputStream());
-                String rawJson = DefaultHttpProvider.streamToString(in);
-                MonitorObject monitoredItem = serializer.deserializeObject(rawJson, MonitorObject.class);
+        	if (connection instanceof okhttp3.Response) {
+        		// TODO WTF??? why not be encapsulated in IConnection??? who did this??? crazy!
+        		okhttp3.Response response = (okhttp3.Response) connection;
 
-                return new LraMonitorResult(monitoredItem);
-            } else if (connection.getResponseCode() >= HttpResponseCode.HTTP_CLIENT_ERROR) {
+	        	if (response.code() == HttpResponseCode.HTTP_ACCEPTED) {
+logger.logDebug("LRA has been accepted by the server.");
+	                final LraSession session = new LraSession();
+	                session.monitorUrl = response.headers().get("Location");
+	                return new LraMonitorResult(session);
+	            } else if (response.code() == HttpResponseCode.HTTP_SEE_OTHER) {
+logger.logDebug("see other url.");
+	                String seeOtherUrl = response.headers().get("Location");
+	                return new LraMonitorResult(seeOtherUrl);
+	            } else if (response.code() == HttpResponseCode.HTTP_CREATED
+	                    || response.code() == HttpResponseCode.HTTP_OK) {
+logger.logDebug("LRA session is completed, drive item returned.");
+	                String rawJson = response.body().string();
+	                MonitorObject monitoredItem = serializer.deserializeObject(rawJson, MonitorObject.class);
+	
+	                return new LraMonitorResult(monitoredItem);
+	            } else if (response.code() >= HttpResponseCode.HTTP_CLIENT_ERROR) {
 logger.logDebug("LRA error during monitor, see detail on result error");
-                return new LraMonitorResult(
-                        GraphServiceException.createFromConnection(request, null, serializer,
-                                connection, logger));
-            } else {
-logger.logDebug("unhandled response code: " + connection.getResponseCode());
-                return null;
-            }
+	                return new LraMonitorResult(
+	                        GraphServiceException.createFromResponse(request, null, serializer,
+	                                response, logger));
+	            } else {
+logger.logDebug("unhandled response code: " + response.code());
+	            }
+        	}
+			return null;
         } finally {
             if (in != null) {
                 in.close();

@@ -6,41 +6,36 @@
 
 package vavi.nio.file.onedrive4;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.CompletableFuture;
 
-import com.microsoft.graph.authentication.IAuthenticationProvider;
-import com.microsoft.graph.concurrency.ChunkedUploadProvider;
-import com.microsoft.graph.concurrency.IProgressCallback;
-import com.microsoft.graph.core.ClientException;
-import com.microsoft.graph.http.BaseRequest;
+import com.microsoft.graph.authentication.BaseAuthenticationProvider;
 import com.microsoft.graph.http.GraphServiceException;
-import com.microsoft.graph.http.HttpMethod;
-import com.microsoft.graph.http.IHttpRequest;
-import com.microsoft.graph.http.IStatefulResponseHandler;
-import com.microsoft.graph.models.extensions.DriveItem;
-import com.microsoft.graph.models.extensions.DriveItemCopyBody;
-import com.microsoft.graph.models.extensions.DriveItemUploadableProperties;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
-import com.microsoft.graph.models.extensions.ItemReference;
-import com.microsoft.graph.models.extensions.UploadSession;
-import com.microsoft.graph.requests.extensions.GraphServiceClient;
-import com.microsoft.graph.requests.extensions.IDriveItemCopyRequest;
+import com.microsoft.graph.httpcore.HttpClients;
+import com.microsoft.graph.models.DriveItem;
+import com.microsoft.graph.models.DriveItemCopyParameterSet;
+import com.microsoft.graph.models.DriveItemCreateUploadSessionParameterSet;
+import com.microsoft.graph.models.DriveItemUploadableProperties;
+import com.microsoft.graph.models.ItemReference;
+import com.microsoft.graph.models.UploadSession;
+import com.microsoft.graph.requests.GraphServiceClient;
+import com.microsoft.graph.tasks.LargeFileUploadResult;
+import com.microsoft.graph.tasks.LargeFileUploadTask;
 
 import vavi.net.auth.WithTotpUserCredential;
 import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphOAuth2;
 import vavi.net.auth.web.microsoft.MicrosoftLocalUserCredential;
-import vavi.nio.file.onedrive4.graph.LraMonitorProvider;
-import vavi.nio.file.onedrive4.graph.LraMonitorResponseHandler;
-import vavi.nio.file.onedrive4.graph.LraMonitorResult;
-import vavi.nio.file.onedrive4.graph.LraSession;
+import vavi.nio.file.onedrive4.graph.MyLogger;
 import vavi.util.properties.annotation.PropsEntity;
+
+import okhttp3.OkHttpClient;
 
 
 /**
@@ -59,6 +54,7 @@ public class TestGraph {
 
         TestGraph app = new TestGraph();
         app.auth(email);
+        app.testUpload();
         app.testCopy();
     }
 
@@ -68,24 +64,29 @@ public class TestGraph {
         OAuth2AppCredential appCredential = new MicrosoftGraphLocalAppCredential();
         PropsEntity.Util.bind(appCredential);
 
-        PropsEntity.Util.bind(this);
-
         WithTotpUserCredential userCredential = new MicrosoftLocalUserCredential(email);
         @SuppressWarnings("resource")
-		String accesssToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
+		String accessToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
 
+        BaseAuthenticationProvider authenticationProvider = new BaseAuthenticationProvider() {
+            @Override
+            public CompletableFuture<String> getAuthorizationTokenAsync(URL requestUrl) {
+                if (this.shouldAuthenticateRequestWithUrl(requestUrl)) {
+                    return CompletableFuture.completedFuture(accessToken);
+                } else {
+                    return CompletableFuture.completedFuture(null);
+                }
+            }
+        };
+        OkHttpClient httpClient = HttpClients.createDefault(authenticationProvider);
         client = GraphServiceClient.builder()
-                .authenticationProvider(new IAuthenticationProvider() {
-                    @Override
-                    public void authenticateRequest(IHttpRequest request) {
-                        request.addHeader("Authorization", "Bearer " + accesssToken);
-                        }
-                })
-                .buildClient();
+            .httpClient(httpClient)
+            .logger(new MyLogger())
+            .buildClient();
     }
 
     /** */
-    private IGraphServiceClient client;
+    private GraphServiceClient<?> client;
 
     /** */
     void testList() throws IOException {
@@ -98,33 +99,31 @@ public class TestGraph {
 
     /** */
     void testUpload() throws IOException {
-        testDelete("test/テスト.wav");
+        testDelete("tmp/テスト.aiff");
 
-        Path path = Paths.get(System.getenv("HOME"), "Music/0/rc.wav");
-        InputStream is = new FileInputStream(path.toFile());
-        UploadSession uploadSession = client.drive().root().itemWithPath(URLEncoder.encode("test/テスト.wav", "utf-8")).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
-        ChunkedUploadProvider<DriveItem> chunkedUploadProvider = new ChunkedUploadProvider<>(uploadSession,
-                client, is, is.available(), DriveItem.class);
-        chunkedUploadProvider.upload(new IProgressCallback<DriveItem>() {
-                @Override
-                public void progress(final long current, final long max) {
-                    System.err.println(current + "/" + max);
-                }
-                @Override
-                public void success(final DriveItem result) {
-                    System.err.println("done");
-                }
-                @Override
-                public void failure(final ClientException ex) {
-                    throw new IllegalStateException(ex);
-                }
-            });
+        Path path = Paths.get("/System/Library/Sounds/Frog.aiff");
+
+        UploadSession uploadSession = client.drive().root()
+        		.itemWithPath("tmp/テスト.aiff")
+        		.createUploadSession(DriveItemCreateUploadSessionParameterSet.newBuilder().withItem(new DriveItemUploadableProperties()).build())
+        		.buildRequest()
+        		.post();
+        LargeFileUploadTask<DriveItem> chunkedUploadProvider = new LargeFileUploadTask<DriveItem>(
+				uploadSession,
+				client,
+				Files.newInputStream(path),
+				Files.size(path),
+				DriveItem.class);
+        LargeFileUploadResult<DriveItem> result = chunkedUploadProvider.upload(0, null, (current, max) -> {
+            System.err.println(current + "/" + max);
+        });
+		System.err.println("done: " + result.responseBody);
     }
 
     /** */
     void testDelete(String name) throws IOException {
         try {
-            client.drive().root().itemWithPath(URLEncoder.encode(name, "utf-8")).buildRequest().delete();
+            client.drive().root().itemWithPath(name).buildRequest().delete();
         } catch (GraphServiceException e) {
             if (!e.getMessage().startsWith("Error code: itemNotFound")) {
                 throw e;
@@ -136,37 +135,26 @@ public class TestGraph {
 
     /** */
     void testCopy() throws IOException {
-        testDelete("test/フォルダー/コピー.wav");
+        testDelete("tmp/フォルダー/コピー.aiff");
 
-        DriveItem src = client.drive().root().itemWithPath(URLEncoder.encode("test/テスト.wav", "utf-8")).buildRequest().get();
-        DriveItem dst = client.drive().root().itemWithPath(URLEncoder.encode("test/フォルダー", "utf-8")).buildRequest().get();
-
+        DriveItem src = client.drive().root().itemWithPath("tmp/テスト.aiff").buildRequest().get();
+        DriveItem dst = client.drive().root().itemWithPath("tmp/フォルダー").buildRequest().get();
 
         ItemReference ir = new ItemReference();
         ir.id = dst.id;
-        IDriveItemCopyRequest request = client.drive().items(src.id).copy("コピー.wav", ir).buildRequest();
-        BaseRequest.class.cast(request).setHttpMethod(HttpMethod.POST);
-        DriveItemCopyBody body = new DriveItemCopyBody();
-        body.name = "コピー.wav";
-        body.parentReference = ir;
-        LraMonitorResponseHandler<DriveItem> handler = new LraMonitorResponseHandler<>();
-        @SuppressWarnings({ "unchecked", "rawtypes" }) // TODO
-        LraSession copySession = client.getHttpProvider().<LraMonitorResult, DriveItemCopyBody, LraMonitorResult>send((IHttpRequest) request, LraMonitorResult.class, body, (IStatefulResponseHandler) handler).getSession();
-        LraMonitorProvider<DriveItem> copyMonitorProvider = new LraMonitorProvider<>(copySession, client, DriveItem.class);
-        copyMonitorProvider.monitor(new IProgressCallback<DriveItem>() {
-                @Override
-                public void progress(final long current, final long max) {
-                    System.err.println(current + "/" + max);
-                }
-                @Override
-                public void success(final DriveItem result) {
-                    System.err.println("done: " + result.getRawObject());
-                }
-                @Override
-                public void failure(final ClientException ex) {
-                    ex.printStackTrace();
-                }
-            });
+        client.drive()
+			.items(src.id)
+			.copy(DriveItemCopyParameterSet.newBuilder()
+					.withName("コピー.aiff")
+						.withParentReference(ir)
+						.build())
+				.buildRequest()
+				.postAsync()
+				.thenAccept(result -> {
+					System.err.println("done: " + result);
+				});
+// progress
+//        System.err.println(current + "/" + max);
     }
 }
 

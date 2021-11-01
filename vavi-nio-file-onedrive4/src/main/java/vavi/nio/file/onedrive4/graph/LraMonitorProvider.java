@@ -9,8 +9,8 @@ package vavi.nio.file.onedrive4.graph;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 
-import com.microsoft.graph.concurrency.IProgressCallback;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
+import com.microsoft.graph.requests.GraphServiceClient;
+import com.microsoft.graph.tasks.IProgressCallback;
 
 import vavi.util.Debug;
 import vavi.util.StringUtil;
@@ -33,7 +33,7 @@ public class LraMonitorProvider<MonitorType> {
     /**
      * The client
      */
-    private final IGraphServiceClient client;
+    private final GraphServiceClient<?> client;
 
     /**
      * The LRA session URL
@@ -58,7 +58,7 @@ public class LraMonitorProvider<MonitorType> {
      * @param lraTypeClass the monitor type class
      */
     public LraMonitorProvider(final LraSession lraSession,
-            final IGraphServiceClient client,
+            final GraphServiceClient<?> client,
             final Class<MonitorType> lraTypeClass) {
         if (lraSession == null) {
             throw new InvalidParameterException("LRA session is null.");
@@ -82,7 +82,7 @@ public class LraMonitorProvider<MonitorType> {
      *            should be the customized chunk size.
      * @throws IOException the IO exception that occurred during monitor
      */
-    public void monitor(final IProgressCallback<MonitorType> callback, final int... configs) throws IOException {
+    public void monitor(final IProgressCallback callback, final int... configs) throws IOException {
 
         int timeout = DEFAULT_TIMEOUT;
 
@@ -111,7 +111,7 @@ Debug.println(StringUtil.paramString(result));
                     callback.progress(this.percentageComplete, 100);
                     @SuppressWarnings("unchecked")
                     MonitorType driveItem = (MonitorType) client.drive().items(monitor.resourceId).buildRequest().get();
-                    callback.success(driveItem);
+//                    callback.success(driveItem);
                     break;
                 } else {
                     callback.progress(this.percentageComplete, 100);
@@ -120,7 +120,7 @@ Debug.println(StringUtil.paramString(result));
                 this.monitorUrl = result.getSeeOtherUrl();
             } else if (result.hasError()) {
                 finished = true;
-                callback.failure(result.getError());
+//                callback.failure(result.getError());
                 break;
             }
 

@@ -6,11 +6,9 @@
 
 package vavi.nio.file.onedrive4;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URLEncoder;
 import java.nio.file.CopyOption;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -30,30 +28,21 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import com.github.fge.filesystem.driver.CachedFileSystemDriverBase;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import com.google.common.io.ByteStreams;
-import com.microsoft.graph.concurrency.ChunkedUploadProvider;
-import com.microsoft.graph.concurrency.IProgressCallback;
 import com.microsoft.graph.core.ClientException;
-import com.microsoft.graph.http.BaseRequest;
 import com.microsoft.graph.http.GraphServiceException;
-import com.microsoft.graph.http.HttpMethod;
-import com.microsoft.graph.http.IHttpRequest;
-import com.microsoft.graph.http.IStatefulResponseHandler;
-import com.microsoft.graph.models.extensions.DriveItem;
-import com.microsoft.graph.models.extensions.DriveItemCopyBody;
-import com.microsoft.graph.models.extensions.DriveItemUploadableProperties;
-import com.microsoft.graph.models.extensions.Folder;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
-import com.microsoft.graph.models.extensions.ItemReference;
-import com.microsoft.graph.models.extensions.UploadSession;
-import com.microsoft.graph.requests.extensions.IDriveItemCollectionPage;
-import com.microsoft.graph.requests.extensions.IDriveItemCopyRequest;
+import com.microsoft.graph.models.DriveItem;
+import com.microsoft.graph.models.DriveItemCopyParameterSet;
+import com.microsoft.graph.models.DriveItemCreateUploadSessionParameterSet;
+import com.microsoft.graph.models.DriveItemUploadableProperties;
+import com.microsoft.graph.models.Folder;
+import com.microsoft.graph.models.ItemReference;
+import com.microsoft.graph.models.UploadSession;
+import com.microsoft.graph.requests.DriveItemCollectionPage;
+import com.microsoft.graph.requests.GraphServiceClient;
+import com.microsoft.graph.tasks.LargeFileUploadTask;
 
 import vavi.nio.file.Util;
 import vavi.nio.file.onedrive4.OneDriveFileAttributesFactory.Metadata;
-import vavi.nio.file.onedrive4.graph.LraMonitorProvider;
-import vavi.nio.file.onedrive4.graph.LraMonitorResponseHandler;
-import vavi.nio.file.onedrive4.graph.LraMonitorResult;
-import vavi.nio.file.onedrive4.graph.LraSession;
 import vavi.util.Debug;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
@@ -72,7 +61,7 @@ import static vavi.nio.file.onedrive4.OneDriveFileSystemProvider.ENV_USE_SYSTEM_
 @ParametersAreNonnullByDefault
 public final class OneDriveFileSystemDriver extends CachedFileSystemDriverBase<DriveItem> {
 
-    private final IGraphServiceClient client;
+    private final GraphServiceClient<?> client;
 
     private Runnable closer;
     private OneDriveWatchService systemWatcher;
@@ -80,7 +69,7 @@ public final class OneDriveFileSystemDriver extends CachedFileSystemDriverBase<D
     @SuppressWarnings("unchecked")
     public OneDriveFileSystemDriver(final FileStore fileStore,
             final FileSystemFactoryProvider provider,
-            final IGraphServiceClient client,
+            final GraphServiceClient<?> client,
             Runnable closer,
             final Map<String, ?> env) throws IOException {
         super(fileStore, provider);
@@ -174,10 +163,11 @@ Debug.println("NOTIFICATION: parent not found: " + e);
 	        Path source = uploadOption.getSource();
 Debug.println("upload w/ option: " + source);
 	
-	        return uploadEntry(path, (int) Files.size(source));
+	        return uploadEntryWithOption(path, Files.newInputStream(source), (int) Files.size(source));
 	    } else {
 Debug.println("upload w/o option");
-	        return new Util.OutputStreamForUploading() { // TODO used for getting file length
+	        return new Util.OutputStreamForUploading() {
+	        	// TODO this output stream is used for getting file length
 	            @Override
 	            protected void onClosed() throws IOException {
 	                InputStream is = getInputStream();
@@ -190,60 +180,79 @@ Debug.println("upload w/o option");
     /** */
     private static final int threshold = 4 * 1024 * 1024;
 
-    /** OneDriveUploadOption */
-    private OutputStream uploadEntry(Path path, int size) throws IOException {
+    /**
+     * @see Files#copy(Path, Path, CopyOption...)
+     * @see OneDriveUploadOption
+     */
+    private OutputStream uploadEntryWithOption(Path path, InputStream is, int size) throws IOException {
         if (size > threshold) {
-            UploadSession uploadSession = client.drive().root().itemWithPath(toItemPathString(toPathString(path))).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
-            vavi.nio.file.onedrive4.graph.ChunkedUploadProvider<DriveItem> chunkedUploadProvider =
-                    new vavi.nio.file.onedrive4.graph.ChunkedUploadProvider<>(uploadSession, client, size, DriveItem.class);
-            return new BufferedOutputStream(chunkedUploadProvider.upload(new IProgressCallback<DriveItem>() {
-                    @Override
-                    public void progress(final long current, final long max) {
-Debug.println(current + "/" + max);
-                    }
-                    @Override
-                    public void success(final DriveItem result) {
-                        cache.addEntry(path, result);
-Debug.println("upload done: " + result.name);
-                    }
-                    @Override
-                    public void failure(final ClientException ex) {
-                        // never called
-                    }
-                }), threshold);
+            UploadSession uploadSession = client.drive().root()
+            		.itemWithPath(toItemPathString(toPathString(path)))
+            		.createUploadSession(DriveItemCreateUploadSessionParameterSet.newBuilder().withItem(new DriveItemUploadableProperties()).build())
+            		.buildRequest()
+            		.post();
+            LargeFileUploadTask<DriveItem> chunkedUploadProvider = new LargeFileUploadTask<DriveItem>(
+    				uploadSession,
+    				client,
+    				is,
+    				size,
+    				DriveItem.class);
+            chunkedUploadProvider.uploadAsync()
+            	.thenAccept(result -> {
+                    cache.addEntry(path, result.responseBody);
+Debug.println("upload done: " + result.responseBody.name);
+            	});
+            return new OutputStream() {
+            	// TODO sync with upload provider
+            	// currently this class is wasted. 
+            	int l = 0;
+            	public void write(int b) throws IOException {
+            		throw new UnsupportedOperationException("don't use");
+            	}
+            	public void write(byte[] b, int off, int len) throws IOException {
+            		l += len;
+Debug.println(l + "/" + size);
+            	}
+            	public void close() throws IOException {
+Debug.println("stream closed");
+            	}
+            };
         } else {
             return new Util.OutputStreamForUploading() {
                 @Override
                 protected void onClosed() throws IOException {
                     InputStream is = getInputStream();
-                    DriveItem newEntry = client.drive().root().itemWithPath(toItemPathString(toPathString(path))).content().buildRequest().put(ByteStreams.toByteArray(is)); // TODO depends on guava
+                    DriveItem newEntry = client.drive().root()
+                    		.itemWithPath(toItemPathString(toPathString(path)))
+                    		.content()
+                    		.buildRequest()
+                    		.put(ByteStreams.toByteArray(is)); // TODO depends on guava
                     cache.addEntry(path, newEntry);
                 }
             };
         }
     }
 
-    /** {@link Files#copy(Path, Path, CopyOption...)} */
+    /** w/o option */
     private void uploadEntry(Path path, InputStream is, int size) throws IOException {
         if (size > 4 * 1024 * 1024) {
-            UploadSession uploadSession = client.drive().root().itemWithPath(toItemPathString(toPathString(path))).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
-            ChunkedUploadProvider<DriveItem> chunkedUploadProvider = new ChunkedUploadProvider<>(uploadSession,
-                    client, is, size, DriveItem.class);
-            chunkedUploadProvider.upload(new IProgressCallback<DriveItem>() {
-                    @Override
-                    public void progress(final long current, final long max) {
-Debug.println(current + "/" + max);
-                    }
-                    @Override
-                    public void success(final DriveItem result) {
-                        cache.addEntry(path, result);
-Debug.println("upload done: " + result.name);
-                    }
-                    @Override
-                    public void failure(final ClientException ex) {
-                        throw ex;
-                    }
-                });
+            UploadSession uploadSession = client.drive().root()
+            		.itemWithPath(toItemPathString(toPathString(path)))
+            		.createUploadSession(DriveItemCreateUploadSessionParameterSet.newBuilder().withItem(new DriveItemUploadableProperties()).build())
+            		.buildRequest()
+            		.post();
+            LargeFileUploadTask<DriveItem> chunkedUploadProvider = new LargeFileUploadTask<DriveItem>(
+    				uploadSession,
+    				client,
+    				is,
+    				size,
+    				DriveItem.class);
+            chunkedUploadProvider.uploadAsync()
+            	.thenAccept(result -> {
+                    cache.addEntry(path, result.responseBody);
+Debug.println("upload done: " + result.responseBody.name);
+            	});
+// System.err.println(current + "/" + max);
         } else {
             DriveItem newEntry = client.drive().root().itemWithPath(toItemPathString(toPathString(path))).content().buildRequest().put(ByteStreams.toByteArray(is)); // TODO depends on guava
             cache.addEntry(path, newEntry);
@@ -252,7 +261,7 @@ Debug.println("upload done: " + result.name);
 
     /** ms-graph doesn't accept '+' in a path string */
     private String toItemPathString(String pathString) throws IOException {
-        return URLEncoder.encode(pathString.replaceFirst("^\\/", ""), "utf-8").replace("+", "%20");
+        return pathString.replaceFirst("^\\/", "").replace("+", "%20");
     }
 
     @Override
@@ -292,7 +301,7 @@ Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEn
     protected List<DriveItem> getDirectoryEntries(DriveItem dirEntry, Path dir) throws IOException {
     	List<DriveItem> list = new ArrayList<>(dirEntry.folder.childCount);
 
-        IDriveItemCollectionPage pages = client.drive().items(dirEntry.id).children().buildRequest().get();
+        DriveItemCollectionPage pages = client.drive().items(dirEntry.id).children().buildRequest().get();
         while (pages != null) {
             for (final DriveItem child : pages.getCurrentPage()) {
                 list.add(child);
@@ -306,7 +315,7 @@ Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEn
 
     @Override
     protected boolean hasChildren(DriveItem dirEntry, Path path) throws IOException {
-        IDriveItemCollectionPage pages = client.drive().items(dirEntry.id).children().buildRequest().get();
+        DriveItemCollectionPage pages = client.drive().items(dirEntry.id).children().buildRequest().get();
     	return pages.getCurrentPage().size() > 0;
     }
 
@@ -321,33 +330,16 @@ Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEn
     protected DriveItem copyEntry(DriveItem sourceEntry, DriveItem targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
         ItemReference ir = new ItemReference();
         ir.id = targetParentEntry.id;
-        IDriveItemCopyRequest request = client.drive().items(sourceEntry.id).copy(toFilenameString(target), ir).buildRequest();
-        BaseRequest.class.cast(request).setHttpMethod(HttpMethod.POST); // #send() hides IDriveItemCopyRequest fields already set above.
-        DriveItemCopyBody body = new DriveItemCopyBody(); // ditto
-        body.name = toFilenameString(target); // ditto
-        body.parentReference = ir; // ditto
-        LraMonitorResponseHandler<DriveItem> handler = new LraMonitorResponseHandler<>();
-        @SuppressWarnings({ "unchecked", "rawtypes" }) // TODO
-        LraSession copySession = client.getHttpProvider().<LraMonitorResult, DriveItemCopyBody, LraMonitorResult>send((IHttpRequest) request, LraMonitorResult.class, body, (IStatefulResponseHandler) handler).getSession();
-        LraMonitorProvider<DriveItem> copyMonitorProvider = new LraMonitorProvider<>(copySession, client, DriveItem.class);
-        copyMonitorProvider.monitor(new IProgressCallback<DriveItem>() {
-            @Override
-            public void progress(final long current, final long max) {
-Debug.println("copy progress: " + current + "/" + max);
-            }
-            @Override
-            public void success(final DriveItem result) {
-Debug.println("copy done: " + result.id);
-                cache.addEntry(target, result);
-            }
-            @Override
-            public void failure(final ClientException ex) {
-                throw new IllegalStateException(ex);
-            }
-        });
-        // null means that copy is async, cache by your self
-        // @see IProgressCallback#success()
-        return null;
+        DriveItem newEntry = client.drive()
+	    		.items(sourceEntry.id)
+	    		.copy(DriveItemCopyParameterSet.newBuilder()
+	    				.withName(toFilenameString(target))
+	    				.withParentReference(ir)
+	    				.build())
+	    		.buildRequest()
+	    		.post();
+Debug.println("copy done: " + newEntry.id);
+        return newEntry;
     }
 
     @Override

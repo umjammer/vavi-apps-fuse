@@ -8,18 +8,19 @@ package vavi.nio.file.onedrive4;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.CompletableFuture;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
-import com.microsoft.graph.authentication.IAuthenticationProvider;
-import com.microsoft.graph.http.IHttpRequest;
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
-import com.microsoft.graph.requests.extensions.GraphServiceClient;
+import com.microsoft.graph.authentication.BaseAuthenticationProvider;
+import com.microsoft.graph.httpcore.HttpClients;
+import com.microsoft.graph.requests.GraphServiceClient;
 
 import vavi.net.auth.WithTotpUserCredential;
 import vavi.net.auth.oauth2.OAuth2AppCredential;
@@ -27,6 +28,8 @@ import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphOAuth2;
 import vavi.net.auth.web.microsoft.MicrosoftLocalUserCredential;
 import vavi.nio.file.onedrive4.graph.MyLogger;
+
+import okhttp3.OkHttpClient;
 
 
 /**
@@ -84,14 +87,19 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         String accessToken = oAuth2.authorize(userCredential);
 //Debug.println("accessToken: " + accessToken);
 
-        IAuthenticationProvider authenticationProvider = new IAuthenticationProvider() {
+        BaseAuthenticationProvider authenticationProvider = new BaseAuthenticationProvider() {
             @Override
-            public void authenticateRequest(IHttpRequest request) {
-                request.addHeader("Authorization", "Bearer " + accessToken);
+            public CompletableFuture<String> getAuthorizationTokenAsync(URL requestUrl) {
+                if (this.shouldAuthenticateRequestWithUrl(requestUrl)) {
+                    return CompletableFuture.completedFuture(accessToken);
+                } else {
+                    return CompletableFuture.completedFuture(null);
+                }
             }
         };
-        IGraphServiceClient graphClient = GraphServiceClient.builder()
-            .authenticationProvider(authenticationProvider)
+        OkHttpClient httpClient = HttpClients.createDefault(authenticationProvider);
+        GraphServiceClient<?> graphClient = GraphServiceClient.builder()
+            .httpClient(httpClient)
             .logger(new MyLogger())
             .buildClient();
 

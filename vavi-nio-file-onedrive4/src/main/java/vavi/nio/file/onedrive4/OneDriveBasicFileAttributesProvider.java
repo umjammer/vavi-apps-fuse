@@ -20,7 +20,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 
 import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider;
-import com.microsoft.graph.models.extensions.DriveItem;
+import com.microsoft.graph.models.DriveItem;
 
 import vavi.nio.file.onedrive4.OneDriveFileAttributesFactory.Metadata;
 

@@ -7,7 +7,7 @@
 package vavi.nio.file.onedrive4;
 
 import com.github.fge.filesystem.attributes.FileAttributesFactory;
-import com.microsoft.graph.models.extensions.DriveItem;
+import com.microsoft.graph.models.DriveItem;
 
 
 /**

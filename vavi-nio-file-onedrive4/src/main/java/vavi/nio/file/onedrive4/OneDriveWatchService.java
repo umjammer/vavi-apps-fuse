@@ -8,7 +8,7 @@ package vavi.nio.file.onedrive4;
 
 import java.io.IOException;
 
-import com.microsoft.graph.models.extensions.IGraphServiceClient;
+import com.microsoft.graph.requests.GraphServiceClient;
 
 import vavi.nio.file.watch.webhook.WebHookBaseWatchService;
 import vavi.util.Debug;
@@ -36,7 +36,7 @@ public class OneDriveWatchService extends WebHookBaseWatchService<String> {
 //    private String savedStartPageToken;
 
     /** */
-    public OneDriveWatchService(IGraphServiceClient client) throws IOException {
+    public OneDriveWatchService(GraphServiceClient client) throws IOException {
 //        this.client = client;
 
         setupNotification(this, WEBHOOK_NOTIFICATION_PROVIDER);
