@@ -88,7 +88,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
             OneDriveSDK client = OneDriveFactory.createOneDriveSDK(appCredential.getClientId(),
                                                                    appCredential.getClientSecret(),
                                                                    appCredential.getRedirectUrl(),
-                                                                   OneDriveScope.valueOf(appCredential.getScope()));
+                                                                   OneDriveScope.valueOfByMicrosoftScopeString(appCredential.getScope()));
             String url = client.getAuthenticationURL();
 
             MicrosoftOAuth2 oauth2 = new MicrosoftOAuth2(wrap(appCredential, url), userCredential.getId());
