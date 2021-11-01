@@ -376,7 +376,7 @@ Debug.println("upload w/o option: " + is.available());
         } else {
             list = new ArrayList<>();
 
-            Iterator<DriveItem.Metadata> iterator = Files.getFiles(DriveItem.class.cast(entry));
+            Iterator<DriveItem.Metadata> iterator = Files.getFiles(DriveItem.class.cast(entry.getItem()));
             Spliterator<DriveItem.Metadata> spliterator = Spliterators.spliteratorUnknownSize(iterator, 0);
             StreamSupport.stream(spliterator, false).forEach(child -> {
                 Path childPath = dir.resolve(child.getName());
@@ -396,7 +396,7 @@ Debug.println("upload w/o option: " + is.available());
     private DriveItem.Metadata getEntry(Path path) throws IOException {
         final DriveItem.Metadata parentEntry = cache.getEntry(path.toAbsolutePath().getParent());
 
-        Iterator<DriveItem.Metadata> iterator = Files.getFiles(DriveItem.class.cast(parentEntry));
+        Iterator<DriveItem.Metadata> iterator = Files.getFiles(DriveItem.class.cast(parentEntry.getItem()));
         Spliterator<DriveItem.Metadata> spliterator = Spliterators.spliteratorUnknownSize(iterator, 0);
         Optional<DriveItem.Metadata> found = StreamSupport.stream(spliterator, false)
             .filter(child -> {
@@ -425,7 +425,7 @@ System.err.println(child.getName() + ", " + toFilenameString(path));
 
         // TODO: unknown what happens when a move operation is performed
         // and the target already exists
-        Files.delete(DriveItem.class.cast(entry));
+        Files.delete(DriveItem.class.cast(entry.getItem()));
 
         cache.removeEntry(path);
     }
@@ -437,8 +437,8 @@ System.err.println(child.getName() + ", " + toFilenameString(path));
         if (sourceEntry.isFile()) {
             CopyOperation operation = new CopyOperation();
             operation.rename(toFilenameString(target));
-            Files.copy(DriveItem.class.cast(targetParentEntry), operation);
-            OneDriveLongRunningAction action = Files.copy(DriveItem.class.cast(sourceEntry), operation);
+            Files.copy(DriveItem.class.cast(targetParentEntry.getItem()), operation);
+            OneDriveLongRunningAction action = Files.copy(DriveItem.class.cast(sourceEntry.getItem()), operation);
             action.await(statusObject -> {
 Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",
  statusObject.getOperation(),
@@ -460,11 +460,11 @@ Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",
         if (sourceEntry.isFile()) {
             PatchOperation operation = new PatchOperation();
             operation.rename(targetIsParent ? toFilenameString(source) : toFilenameString(target));
-            operation.move(DriveItem.class.cast(targetParentEntry));
+            operation.move(DriveItem.class.cast(targetParentEntry.getItem()));
             final FileSystemInfo info = new FileSystemInfo();
             info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
             operation.facet("fileSystemInfo", info);
-            Files.patch(DriveItem.class.cast(sourceEntry), operation);
+            Files.patch(DriveItem.class.cast(sourceEntry.getItem()), operation);
             cache.removeEntry(source);
             if (targetIsParent) {
                 cache.addEntry(target.resolve(source.getFileName()), getEntry(target.resolve(source.getFileName())));
@@ -474,11 +474,11 @@ Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",
         } else if (sourceEntry.isFolder()) {
             PatchOperation operation = new PatchOperation();
             operation.rename(toFilenameString(target));
-            operation.move(DriveItem.class.cast(targetParentEntry));
+            operation.move(DriveItem.class.cast(targetParentEntry.getItem()));
             final FileSystemInfo info = new FileSystemInfo();
             info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
             operation.facet("fileSystemInfo", info);
-            Files.patch(DriveItem.class.cast(sourceEntry), operation);
+            Files.patch(DriveItem.class.cast(sourceEntry.getItem()), operation);
             cache.moveEntry(source, target, getEntry(target));
         }
     }
@@ -489,7 +489,7 @@ Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",
 
         PatchOperation operation = new PatchOperation();
         operation.rename(toFilenameString(target));
-        Files.patch(DriveItem.class.cast(sourceEntry), operation);
+        Files.patch(DriveItem.class.cast(sourceEntry.getItem()), operation);
         cache.removeEntry(source);
         cache.addEntry(target, getEntry(target));
     }

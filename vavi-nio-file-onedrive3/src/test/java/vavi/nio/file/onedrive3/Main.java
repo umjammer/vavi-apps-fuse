@@ -24,10 +24,10 @@ public class Main {
 
     @Test
     void test01() throws Exception {
-        String email = System.getenv("MICROSOFT3_TEST_ACCOUNT");
+        String email = System.getenv("MICROSOFT_TEST_ACCOUNT");
 
         URI uri = URI.create("onedrive3:///?id=" + email);
 
-        testAll(new OneDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
+        testAll(new OneDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap()));
     }
 }

@@ -43,12 +43,13 @@ public class WebHookApiTest {
     /**
      * @param args
      */
-    public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception {
         String email = System.getenv("MICROSOFT3_TEST_ACCOUNT");
 
         MicrosoftLocalUserCredential userCredential = new MicrosoftLocalUserCredential(email);
         MicrosoftGraphLocalAppCredential appCredential = new MicrosoftGraphLocalAppCredential();
 
+        @SuppressWarnings("resource")
         String accessToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
 //Debug.println("accessToken: " + accessToken);
 
