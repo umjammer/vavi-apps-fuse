@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.github.fge.filesystem.attributes.provider.UserDefinedFileAttributesProvider;
 
@@ -33,11 +34,7 @@ public class OneDriveUserDefinedFileAttributesProvider extends UserDefinedFileAt
         this.entry = entry;
     }
 
-    /** */
-    public static final String ATTRIBUTE_DESCRIPTION = "description";
-
-    /** */
-    private static final List<String> list = Arrays.asList(ATTRIBUTE_DESCRIPTION);
+    private static final List<String> list = Arrays.stream(UserAttributes.values()).map(e -> e.name()).collect(Collectors.toList());
 
     @Override
     public List<String> list() throws IOException {
@@ -46,57 +43,47 @@ public class OneDriveUserDefinedFileAttributesProvider extends UserDefinedFileAt
 
     @Override
     public int size(String name) throws IOException {
-        switch (name) {
-        case ATTRIBUTE_DESCRIPTION:
-            return sizeDescription();
-        default:
-            return 0;
-        }
+    	return UserAttributes.valueOf(name).size(entry);
     }
 
     @Override
     public int read(String name, ByteBuffer dst) throws IOException {
-        switch (name) {
-        case ATTRIBUTE_DESCRIPTION:
-            return readDescription(dst);
-        default:
-            return 0;
-        }
+    	return UserAttributes.valueOf(name).read(entry, dst);
     }
 
     @Override
     public int write(final String name, final ByteBuffer src) throws IOException {
-        switch (name) {
-        case ATTRIBUTE_DESCRIPTION:
-            return writeDescription(src);
-        default:
-            return 0;
-        }
+    	return UserAttributes.valueOf(name).write(entry, src);
     }
 
-    /** description */
-    private int sizeDescription() throws IOException {
-        String description = entry.driveItem.description;
-Debug.println("size description: " + description);
-        return description == null ? 0 : description.getBytes().length;
+    private interface UserAttribute<T> {
+    	int size(T entry) throws IOException;
+        int read(T entry, ByteBuffer dst) throws IOException;
+        int write(T entry, ByteBuffer src) throws IOException;
     }
 
-    /** description */
-    private int readDescription(ByteBuffer dst) throws IOException {
-        String description = entry.driveItem.description;
-Debug.println("read description: " + description);
-        if (description != null) {
-            dst.put(description.getBytes());
-        }
-        return dst.array().length;
-    }
-
-    /** description */
-    private int writeDescription(final ByteBuffer src) throws IOException {
-        String description = new String(src.array());
-Debug.println("write description: " + description);
-        entry.driver.patchEntryDescription(entry.driveItem, description);
-        return description.getBytes().length;
+    private enum UserAttributes implements UserAttribute<Metadata> {
+    	description {
+    	    public int size(Metadata entry) throws IOException {
+    	        String description = entry.driveItem.description;
+Debug.println("size " + name() + ": " + description);
+    	        return description == null ? 0 : description.getBytes().length;
+    	    }
+    	    public int read(Metadata entry, ByteBuffer dst) throws IOException {
+    	        String description = entry.driveItem.description;
+Debug.println("read " + name() + ": " + description);
+    	        if (description != null) {
+    	            dst.put(description.getBytes());
+    	        }
+    	        return dst.array().length;
+    	    }
+    	    public int write(Metadata entry, ByteBuffer src) throws IOException {
+    	        String description = new String(src.array());
+Debug.println("write " + name() + ": " + description);
+				entry.driver.patchEntryDescription(entry.driveItem, description);
+    	        return description.getBytes().length;
+    	    }
+    	};
     }
 }
 

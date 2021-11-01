@@ -375,6 +375,10 @@ Debug.println("copy done: " + result.id);
         return client.drive().items(sourceEntry.id).buildRequest().patch(preEntry);
     }
 
+    //
+    // user:attributes
+    //
+
     /** attributes user:description */
     void patchEntryDescription(DriveItem sourceEntry, String description) throws IOException {
         DriveItem preEntry = new DriveItem();
