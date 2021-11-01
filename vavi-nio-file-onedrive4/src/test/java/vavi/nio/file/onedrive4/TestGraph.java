@@ -71,7 +71,8 @@ public class TestGraph {
         PropsEntity.Util.bind(this);
 
         WithTotpUserCredential userCredential = new MicrosoftLocalUserCredential(email);
-        String accesssToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
+        @SuppressWarnings("resource")
+		String accesssToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
 
         client = GraphServiceClient.builder()
                 .authenticationProvider(new IAuthenticationProvider() {

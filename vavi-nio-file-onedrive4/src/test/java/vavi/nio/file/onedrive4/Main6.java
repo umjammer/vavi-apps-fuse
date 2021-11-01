@@ -30,7 +30,7 @@ public class Main6 {
         String email = System.getenv("MICROSOFT4_TEST_ACCOUNT");
 
         URI uri = URI.create("onedrive:///?id=" + email);
-        FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
+        FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
         testDescription(fs);
     }
@@ -41,7 +41,7 @@ public class Main6 {
         String email = System.getenv("MICROSOFT4_TEST_ACCOUNT");
 
         URI uri = URI.create("onedrive:///?id=" + email);
-        FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
+        FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
         Files.setAttribute(fs.getPath("tmp/Cyberduck.jpg"), "user:description", ("説明テスト " + System.currentTimeMillis()).getBytes());
 

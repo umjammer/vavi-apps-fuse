@@ -56,7 +56,7 @@ public final class OneDriveBasicFileAttributesProvider extends BasicFileAttribut
      */
     @Override
     public FileTime lastModifiedTime() {
-        return FileTime.fromMillis(entry.lastModifiedDateTime.getTimeInMillis());
+        return FileTime.fromMillis(entry.lastModifiedDateTime.toInstant().toEpochMilli());
     }
 
     /**

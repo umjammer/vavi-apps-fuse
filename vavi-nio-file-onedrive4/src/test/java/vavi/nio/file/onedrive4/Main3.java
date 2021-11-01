@@ -28,7 +28,7 @@ public class Main3 {
         String email = System.getenv("MICROSOFT4_TEST_ACCOUNT");
 
         URI uri = URI.create("onedrive:///?id=" + email);
-        FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
+        FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
         testMoveFolder(fs);
     }
