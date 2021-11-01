@@ -12,25 +12,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
-import java.nio.file.AccessDeniedException;
-import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
-import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchService;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.spi.FileSystemProvider;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -39,14 +28,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import org.nuxeo.onedrive.client.OneDriveAPI;
 import org.nuxeo.onedrive.client.CopyOperation;
 import org.nuxeo.onedrive.client.Files;
+import org.nuxeo.onedrive.client.OneDriveAPI;
 import org.nuxeo.onedrive.client.OneDriveLongRunningAction;
 import org.nuxeo.onedrive.client.PatchOperation;
 import org.nuxeo.onedrive.client.UploadSession;
@@ -54,11 +44,9 @@ import org.nuxeo.onedrive.client.types.Drive;
 import org.nuxeo.onedrive.client.types.DriveItem;
 import org.nuxeo.onedrive.client.types.FileSystemInfo;
 
-import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase;
-import com.github.fge.filesystem.exceptions.IsDirectoryException;
+import com.github.fge.filesystem.driver.CachedFileSystemDriverBase;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
-import vavi.nio.file.Cache;
 import vavi.nio.file.Util;
 import vavi.util.Debug;
 
@@ -75,11 +63,10 @@ import static vavi.nio.file.onedrive3.OneDriveFileSystemProvider.ENV_USE_SYSTEM_
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase {
+public final class OneDriveFileSystemDriver extends CachedFileSystemDriverBase<DriveItem.Metadata> {
 
     private final OneDriveAPI client;
     private final Drive.Metadata drive;
-    private boolean ignoreAppleDouble = false;
 
     private Runnable closer;
     private OneDriveWatchService systemWatcher;
@@ -138,68 +125,43 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     }
 
     /** */
-    private Cache<DriveItem.Metadata> cache = new Cache<DriveItem.Metadata>() {
-        /**
-         * @see #ignoreAppleDouble
-         * @throws NoSuchFileException must be thrown when the path is not found in this cache
-         */
-        public DriveItem.Metadata getEntry(Path path) throws IOException {
-            if (cache.containsFile(path)) {
-                return cache.getFile(path);
-            } else {
-                if (ignoreAppleDouble && path.getFileName() != null && Util.isAppleDouble(path)) {
-                    throw new NoSuchFileException("ignore apple double file: " + path);
-                }
-
-//                String pathString = toPathString(path);
-//Debug.println("path: " + pathString);
-                DriveItem.Metadata entry;
-                if (path.getNameCount() == 0) {
-                    entry = new Drive(client, drive.getId()).getRoot().getMetadata();
-                    cache.putFile(path, entry);
-                    return entry;
-                } else {
-                    // TODO make this like google drive
-                    List<Path> siblings = getDirectoryEntries(path.toAbsolutePath().getParent(), false);
-                    Optional<Path> found = siblings.stream().filter(p -> path.getFileName().equals(p.getFileName())).findFirst();
-                    if (found.isPresent()) {
-                        return cache.getEntry(found.get());
-                    } else {
-                        throw new NoSuchFileException(path.toString());
-                    }
-                }
-            }
-        }
-    };
-
-    @Nonnull
-    @Override
-    public InputStream newInputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
-        final DriveItem.Metadata entry = cache.getEntry(path);
-
-        if (entry.isFolder()) {
-            throw new IsDirectoryException("path: " + path);
-        }
-
-        return new BufferedInputStream(Files.download(DriveItem.class.cast(entry.getItem())), Util.BUFFER_SIZE);
+    private DriveItem asDriveItem(DriveItem.Metadata entry) {
+    	return DriveItem.class.cast(entry.getItem());    	
     }
 
-    @Nonnull
     @Override
-    public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
-        DriveItem.Metadata entry = null;
-        try {
-            entry = cache.getEntry(path);
+    protected String getFilenameString(DriveItem.Metadata entry) throws IOException {
+    	return entry.getName();
+    }
 
-            if (entry.isFolder()) {
-                throw new IsDirectoryException("path: " + path);
-            } else {
-                throw new FileAlreadyExistsException("path: " + path);
-            }
-        } catch (NoSuchFileException e) {
-Debug.println("newOutputStream: " + e.getMessage());
+    @Override
+    protected boolean isFolder(DriveItem.Metadata entry) {
+    	return entry.isFolder();
+    }
+
+    @Override
+    protected DriveItem.Metadata getRootEntry() throws IOException {
+    	return new Drive(client, drive.getId()).getRoot().getMetadata();
+    }
+
+    @Override
+    protected DriveItem.Metadata getEntry(DriveItem.Metadata parentDirEntry, Path path)throws IOException {
+        List<DriveItem.Metadata> siblings = getDirectoryEntries(parentDirEntry, null);
+        Optional<DriveItem.Metadata> found = siblings.stream().filter(i -> path.getFileName().toString().equals(i.getName())).findFirst();
+        if (found.isPresent()) {
+            return found.get();
+        } else {
+            return null;
         }
+    }
 
+    @Override
+    protected InputStream downloadEntry(DriveItem.Metadata entry, Path path, Set<? extends OpenOption> options) throws IOException {
+        return new BufferedInputStream(Files.download(asDriveItem(entry)), Util.BUFFER_SIZE);
+    }
+
+    @Override
+    protected OutputStream uploadEntry(DriveItem.Metadata parentEntry, Path path, Set<? extends OpenOption> options) throws IOException {
         OneDriveUploadOption uploadOption = Util.getOneOfOptions(OneDriveUploadOption.class, options);
         if (uploadOption != null) {
             // java.nio.file is highly abstracted, so here source information is lost.
@@ -227,7 +189,7 @@ Debug.println("upload w/o option: " + is.available());
     /** */
     private OutputStream uploadEntry(Path path, int size) throws IOException {
         DriveItem.Metadata folder = cache.getEntry(path.toAbsolutePath().getParent());
-        DriveItem file = new DriveItem(DriveItem.class.cast(folder.getItem()), toItemPathString(toFilenameString(path)));
+        DriveItem file = new DriveItem(asDriveItem(folder), toItemPathString(toFilenameString(path)));
         final UploadSession uploadSession = Files.createUploadSession(file);
         return new BufferedOutputStream(new OneDriveOutputStream(uploadSession, path, size, newEntry -> {
             cache.addEntry(path, newEntry);
@@ -239,117 +201,15 @@ Debug.println("upload w/o option: " + is.available());
         return URLEncoder.encode(pathString, "utf-8").replace("+", "%20");
     }
 
-    @Nonnull
     @Override
-    public DirectoryStream<Path> newDirectoryStream(final Path dir,
-                                                    final DirectoryStream.Filter<? super Path> filter) throws IOException {
-        return Util.newDirectoryStream(getDirectoryEntries(dir, true), filter);
-    }
-
-
-    @Override
-    public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
-        DriveItem.Metadata parentEntry = cache.getEntry(dir.toAbsolutePath().getParent());
-
+    protected DriveItem.Metadata createDirectoryEntry(DriveItem.Metadata parentEntry, Path dir) throws IOException {
         // TODO: how to diagnose?
-        DriveItem.Metadata dirEntry = Files.createFolder(DriveItem.class.cast(parentEntry.getItem()), toFilenameString(dir));
-
-        cache.addEntry(dir, dirEntry);
-    }
-
-    @Override
-    public void delete(final Path path) throws IOException {
-        removeEntry(path);
-    }
-
-    @Override
-    public void copy(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
-        if (cache.existsEntry(target)) {
-            if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
-                removeEntry(target);
-            } else {
-                throw new FileAlreadyExistsException(target.toString());
-            }
-        }
-        copyEntry(source, target);
-    }
-
-    @Override
-    public void move(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
-        if (cache.existsEntry(target)) {
-            if (cache.getEntry(target).isFolder()) {
-                if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
-                    // replace the target
-                    if (cache.getChildCount(target) > 0) {
-                        throw new DirectoryNotEmptyException(target.toString());
-                    } else {
-                        removeEntry(target);
-                        moveEntry(source, target, false);
-                    }
-                } else {
-                    // move into the target
-                    // TODO SPEC is FileAlreadyExistsException ?
-                    moveEntry(source, target, true);
-                }
-            } else {
-                if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
-                    removeEntry(target);
-                    moveEntry(source, target, false);
-                } else {
-                    throw new FileAlreadyExistsException(target.toString());
-                }
-            }
-        } else {
-            if (source.toAbsolutePath().getParent().equals(target.toAbsolutePath().getParent())) {
-                // rename
-                renameEntry(source, target);
-            } else {
-                moveEntry(source, target, false);
-            }
-        }
-    }
-
-    /**
-     * Check access modes for a path on this filesystem
-     * <p>
-     * If no modes are provided to check for, this simply checks for the
-     * existence of the path.
-     * </p>
-     *
-     * @param path the path to check
-     * @param modes the modes to check for, if any
-     * @throws IOException filesystem level error, or a plain I/O error
-     *                     if you use this with javafs (jnr-fuse), you should throw {@link NoSuchFileException} when the file not found.
-     * @see FileSystemProvider#checkAccess(Path, AccessMode...)
-     */
-    @Override
-    protected void checkAccessImpl(final Path path, final AccessMode... modes) throws IOException {
-        final DriveItem.Metadata entry = cache.getEntry(path);
-
-        if (!entry.isFile()) {
-            return;
-        }
-
-        // TODO: assumed; not a file == directory
-        for (final AccessMode mode : modes) {
-            if (mode == AccessMode.EXECUTE) {
-                throw new AccessDeniedException(path.toString());
-            }
-        }
+    	return Files.createFolder(asDriveItem(parentEntry), toFilenameString(dir));
     }
 
     @Override
     public void close() throws IOException {
         closer.run();
-    }
-
-    /**
-     * @throws IOException if you use this with javafs (jnr-fuse), you should throw {@link NoSuchFileException} when the file not found.
-     */
-    @Nonnull
-    @Override
-    protected Object getPathMetadataImpl(final Path path) throws IOException {
-        return cache.getEntry(path);
     }
 
     @Nonnull
@@ -362,135 +222,73 @@ Debug.println("upload w/o option: " + is.available());
         }
     }
 
-    /** */
-    private List<Path> getDirectoryEntries(Path dir, boolean useCache) throws IOException {
-        final DriveItem.Metadata entry = cache.getEntry(dir);
-
-        if (!entry.isFolder()) {
-            throw new NotDirectoryException(dir.toString());
-        }
-
-        final List<Path> list;
-        if (useCache && cache.containsFolder(dir)) {
-            list = cache.getFolder(dir);
-        } else {
-            list = new ArrayList<>();
-
-            Iterator<DriveItem.Metadata> iterator = Files.getFiles(DriveItem.class.cast(entry.getItem()));
-            Spliterator<DriveItem.Metadata> spliterator = Spliterators.spliteratorUnknownSize(iterator, 0);
-            StreamSupport.stream(spliterator, false).forEach(child -> {
-                Path childPath = dir.resolve(child.getName());
-                list.add(childPath);
-//System.err.println("child: " + childPath.toRealPath().toString());
-
-                cache.putFile(childPath, child);
-            });
-
-            cache.putFolder(dir, list);
-        }
-
-        return list;
-    }
-
-    /** for created entry */
-    private DriveItem.Metadata getEntry(Path path) throws IOException {
-        final DriveItem.Metadata parentEntry = cache.getEntry(path.toAbsolutePath().getParent());
-
-        Iterator<DriveItem.Metadata> iterator = Files.getFiles(DriveItem.class.cast(parentEntry.getItem()));
+    @Override
+    protected List<DriveItem.Metadata> getDirectoryEntries(DriveItem.Metadata dirEntry, Path dir) throws IOException {
+        Iterator<DriveItem.Metadata> iterator = Files.getFiles(asDriveItem(dirEntry));
         Spliterator<DriveItem.Metadata> spliterator = Spliterators.spliteratorUnknownSize(iterator, 0);
-        Optional<DriveItem.Metadata> found = StreamSupport.stream(spliterator, false)
-            .filter(child -> {
-                try {
-System.err.println(child.getName() + ", " + toFilenameString(path));
-                    return child.getName().equals(toFilenameString(path));
-                } catch (IOException e) {
-                    throw new IllegalStateException(e);
-                }
-            }).findFirst();
-        if (found.isPresent()) {
-            return found.get();
-        } else {
-            throw new NoSuchFileException(path.toString());
-        }
+        return StreamSupport.stream(spliterator, false).collect(Collectors.toList());
     }
 
-    /** */
-    private void removeEntry(Path path) throws IOException {
-        DriveItem.Metadata entry = cache.getEntry(path);
-        if (entry.isFolder()) {
-            if (getDirectoryEntries(path, false).size() > 0) {
-                throw new DirectoryNotEmptyException(path.toString());
-            }
-        }
+    @Override
+    protected boolean hasChildren(DriveItem.Metadata dirEntry, Path dir) throws IOException {
+    	return getDirectoryEntries(dir, false).size() > 0;
+    }
 
+    @Override
+    protected void removeEntry(DriveItem.Metadata entry, Path path) throws IOException {
         // TODO: unknown what happens when a move operation is performed
         // and the target already exists
-        Files.delete(DriveItem.class.cast(entry.getItem()));
-
-        cache.removeEntry(path);
+        Files.delete(asDriveItem(entry));
     }
 
-    /** */
-    private void copyEntry(final Path source, final Path target) throws IOException {
-        DriveItem.Metadata sourceEntry = cache.getEntry(source);
-        DriveItem.Metadata targetParentEntry = cache.getEntry(target.toAbsolutePath().getParent());
-        if (sourceEntry.isFile()) {
-            CopyOperation operation = new CopyOperation();
-            operation.rename(toFilenameString(target));
-            Files.copy(DriveItem.class.cast(targetParentEntry.getItem()), operation);
-            OneDriveLongRunningAction action = Files.copy(DriveItem.class.cast(sourceEntry.getItem()), operation);
-            action.await(statusObject -> {
+    @Override
+    protected DriveItem.Metadata copyEntry(DriveItem.Metadata sourceEntry, DriveItem.Metadata targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
+        CopyOperation operation = new CopyOperation();
+        operation.rename(toFilenameString(target));
+        Files.copy(asDriveItem(targetParentEntry), operation);
+        OneDriveLongRunningAction action = Files.copy(asDriveItem(sourceEntry), operation);
+        action.await(statusObject -> {
 Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",
- statusObject.getOperation(),
- statusObject.getPercentage(),
- statusObject.getStatus());
-            });
-            cache.addEntry(target, getEntry(target));
-        } else if (sourceEntry.isFolder()) {
-            throw new IsDirectoryException("source can not be a folder: " + source);
+statusObject.getOperation(),
+statusObject.getPercentage(),
+statusObject.getStatus());
+        });
+        return getEntry(targetParentEntry, target);
+    }
+
+    @Override
+    protected DriveItem.Metadata moveEntry(DriveItem.Metadata sourceEntry, DriveItem.Metadata targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
+        PatchOperation operation = new PatchOperation();
+        operation.rename(targetIsParent ? toFilenameString(source) : toFilenameString(target));
+        operation.move(asDriveItem(targetParentEntry));
+        final FileSystemInfo info = new FileSystemInfo();
+        info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
+        operation.facet("fileSystemInfo", info);
+        Files.patch(asDriveItem(sourceEntry), operation);
+        if (targetIsParent) {
+            return getEntry(targetParentEntry, target.resolve(source.getFileName()));
+        } else {
+            return getEntry(targetParentEntry, target);
         }
     }
 
-    /**
-     * @param targetIsParent if the target is folder
-     */
-    private void moveEntry(final Path source, final Path target, boolean targetIsParent) throws IOException {
-        DriveItem.Metadata sourceEntry = cache.getEntry(source);
-        DriveItem.Metadata targetParentEntry = cache.getEntry(targetIsParent ? target : target.toAbsolutePath().getParent());
-        if (sourceEntry.isFile()) {
-            PatchOperation operation = new PatchOperation();
-            operation.rename(targetIsParent ? toFilenameString(source) : toFilenameString(target));
-            operation.move(DriveItem.class.cast(targetParentEntry.getItem()));
-            final FileSystemInfo info = new FileSystemInfo();
-            info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
-            operation.facet("fileSystemInfo", info);
-            Files.patch(DriveItem.class.cast(sourceEntry.getItem()), operation);
-            cache.removeEntry(source);
-            if (targetIsParent) {
-                cache.addEntry(target.resolve(source.getFileName()), getEntry(target.resolve(source.getFileName())));
-            } else {
-                cache.addEntry(target, getEntry(target));
-            }
-        } else if (sourceEntry.isFolder()) {
-            PatchOperation operation = new PatchOperation();
-            operation.rename(toFilenameString(target));
-            operation.move(DriveItem.class.cast(targetParentEntry.getItem()));
-            final FileSystemInfo info = new FileSystemInfo();
-            info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
-            operation.facet("fileSystemInfo", info);
-            Files.patch(DriveItem.class.cast(sourceEntry.getItem()), operation);
-            cache.moveEntry(source, target, getEntry(target));
-        }
-    }
-
-    /** */
-    private void renameEntry(final Path source, final Path target) throws IOException {
-        DriveItem.Metadata sourceEntry = cache.getEntry(source);
-
+    @Override
+    protected DriveItem.Metadata moveFolderEntry(DriveItem.Metadata sourceEntry, DriveItem.Metadata targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
         PatchOperation operation = new PatchOperation();
         operation.rename(toFilenameString(target));
-        Files.patch(DriveItem.class.cast(sourceEntry.getItem()), operation);
-        cache.removeEntry(source);
-        cache.addEntry(target, getEntry(target));
+        operation.move(asDriveItem(targetParentEntry));
+        final FileSystemInfo info = new FileSystemInfo();
+        info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
+        operation.facet("fileSystemInfo", info);
+        Files.patch(asDriveItem(sourceEntry), operation);
+        return getEntry(targetParentEntry, target);
+    }
+
+    @Override
+    protected DriveItem.Metadata renameEntry(DriveItem.Metadata sourceEntry, DriveItem.Metadata targetParentEntry, Path source, Path target) throws IOException {
+        PatchOperation operation = new PatchOperation();
+        operation.rename(toFilenameString(target));
+        Files.patch(asDriveItem(sourceEntry), operation);
+        return getEntry(targetParentEntry, target);
     }
 }
