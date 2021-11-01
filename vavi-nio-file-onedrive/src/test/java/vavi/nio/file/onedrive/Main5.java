@@ -41,7 +41,7 @@ public class Main5 {
         Path dstDir;
         Path dst;
         String a, b;
-        try (FileSystem onedrivefs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP)) {
+        try (FileSystem onedrivefs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap())) {
 
             src = Paths.get("src/test/resources/Hello.java");
             dstDir = onedrivefs.getPath("/").resolve("TEST_FUSE_5");
@@ -60,7 +60,7 @@ Files.list(dstDir).forEach(System.err::println);
             a = Util.toFilenameString(Files.list(dstDir).findFirst().get());
         }
 
-        try (FileSystem onedrivefs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP)) {
+        try (FileSystem onedrivefs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap())) {
             dstDir = onedrivefs.getPath("/").resolve("TEST_FUSE_5");
             dst = dstDir.resolve("テスト 001");
 

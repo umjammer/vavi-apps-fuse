@@ -48,7 +48,7 @@ public class OneDriveFS {
 
         FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, env);
 
-        Fuse.getFuse().mount(fs, args[0], Collections.EMPTY_MAP);
+        Fuse.getFuse().mount(fs, args[0], Collections.emptyMap());
     }
 }
 

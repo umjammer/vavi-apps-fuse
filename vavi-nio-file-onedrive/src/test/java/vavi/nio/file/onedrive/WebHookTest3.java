@@ -86,7 +86,7 @@ Debug.println("refreshToken: timeout?");
 Debug.println("WEBSOCKET: start: " + service);
         try {
             URI uri = URI.create("onedrive1:///?id=" + email);
-            FileSystem fs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP);
+            FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
 
             Path tmpDir = fs.getPath("tmp");
             if (!Files.exists(tmpDir)) {

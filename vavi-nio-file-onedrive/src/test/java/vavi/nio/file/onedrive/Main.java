@@ -28,6 +28,6 @@ public class Main {
 
         URI uri = URI.create("onedrive1:///?id=" + email);
 
-        testAll(new OneDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
+        testAll(new OneDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap()));
     }
 }
