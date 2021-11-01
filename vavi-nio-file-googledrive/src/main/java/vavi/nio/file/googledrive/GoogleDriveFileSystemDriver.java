@@ -35,6 +35,8 @@ import com.google.api.client.http.AbstractInputStreamContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
+import com.google.api.services.drive.model.Revision;
+import com.google.api.services.drive.model.RevisionList;
 
 import vavi.nio.file.Util;
 import vavi.nio.file.googledrive.GoogleDriveFileAttributesFactory.Metadata;
@@ -322,6 +324,10 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
         return drive.files().update(sourceEntry.getId(), entry).setFields(ENTRY_FIELDS).execute();
     }
 
+    //
+    // user:attributes
+    //
+
     /** attributes user:description */
     void patchEntryDescription(File sourceEntry, String description) throws IOException {
         File entry = new File();
@@ -330,5 +336,38 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
         Path path = cache.getEntry(sourceEntry);
         cache.removeEntry(path);
         cache.addEntry(path, newEntry);
+    }
+
+    /** attributes user:revisions */
+    List<Revision> getRevisions(File entry) throws IOException {
+
+        if (isFolder(entry)) {
+            throw new IsDirectoryException("dir: " + entry.getName());
+        }
+
+        List<Revision> list = new ArrayList<>();
+        String pageToken = null;
+        do {
+            RevisionList revisions = drive.revisions().list(entry.getId())
+                    .setPageSize(1000)
+                    .setFields("nextPageToken, revisions(id, mimeType, modifiedTime, size)")
+                    .setPageToken(pageToken)
+                    .execute();
+
+            if (revisions.getRevisions() != null) {
+Debug.println(Level.FINE, "revisions: " + revisions.getRevisions().size() + ", " + revisions.getNextPageToken());
+				revisions.getRevisions().forEach(r -> list.add(r));
+            }
+
+            pageToken = revisions.getNextPageToken();
+        } while (pageToken != null);
+
+        return list;
+    }
+
+    /** attributes user:revisions */
+    void removeRevision(File entry, String revisionId) throws IOException {
+Debug.println(Level.INFO, "delete revision: " + entry.getName() + ", revision: " + revisionId);
+    	drive.revisions().delete(entry.getId(), revisionId).execute();
     }
 }
