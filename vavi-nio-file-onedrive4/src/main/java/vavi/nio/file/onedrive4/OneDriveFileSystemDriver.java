@@ -143,7 +143,7 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     }
 
     @Override
-    protected DriveItem getEntry(DriveItem dirEntry, Path path)throws IOException {
+    protected DriveItem getEntry(DriveItem parentDirEntry, Path path)throws IOException {
         try {
         	return client.drive().root().itemWithPath(toItemPathString(toPathString(path))).buildRequest().get();
 	    } catch (GraphServiceException e) {
@@ -256,9 +256,7 @@ Debug.println("upload done: " + result.name);
     }
 
     @Override
-    protected DriveItem createDirectoryEntry(Path dir) throws IOException {
-        DriveItem parentEntry = cache.getEntry(dir.toAbsolutePath().getParent());
-
+    protected DriveItem createDirectoryEntry(DriveItem parentEntry, Path dir) throws IOException {
         // TODO: how to diagnose?
         DriveItem preEntry = new DriveItem();
         preEntry.name = toFilenameString(dir);
