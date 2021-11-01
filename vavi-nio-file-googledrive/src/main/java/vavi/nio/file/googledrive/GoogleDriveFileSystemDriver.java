@@ -130,9 +130,9 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     }
 
     @Override
-    protected File getEntry(File dirEntry, Path path) throws IOException {
+    protected File getEntry(File parentDirEntry, Path path) throws IOException {
         try {
-    		String q = "'" + dirEntry.getId() + "' in parents and name = '" + path.getFileName() + "' and trashed=false";
+    		String q = "'" + parentDirEntry.getId() + "' in parents and name = '" + path.getFileName() + "' and trashed=false";
 //System.out.println("q: " + q);
 	        FileList files = drive.files().list()
 	                .setQ(q)
@@ -214,12 +214,12 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
     }
 
     @Override
-    protected File createDirectoryEntry(Path dir) throws IOException {
+    protected File createDirectoryEntry(File parentEntry, Path dir) throws IOException {
         File dirEntry = new File();
         dirEntry.setName(toFilenameString(dir));
         dirEntry.setMimeType(MIME_TYPE_DIR);
         if (dir.toAbsolutePath().getParent().getNameCount() != 0) {
-            dirEntry.setParents(Arrays.asList(cache.getEntry(dir.toAbsolutePath().getParent()).getId()));
+            dirEntry.setParents(Arrays.asList(parentEntry.getId()));
         }
         return drive.files().create(dirEntry).setFields(ENTRY_FIELDS).execute();
     }
