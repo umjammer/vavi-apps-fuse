@@ -24,9 +24,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.logging.Level;
 
-import javax.annotation.ParametersAreNonnullByDefault;
-
-import com.github.fge.filesystem.driver.CachedFileSystemDriverBase;
+import com.github.fge.filesystem.driver.CachedFileSystemDriver;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -44,7 +42,6 @@ import vavi.util.Debug;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static vavi.nio.file.Util.toFilenameString;
-import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_IGNORE_APPLE_DOUBLE;
 import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_USE_SYSTEM_WATCHER;
 
 
@@ -54,21 +51,20 @@ import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_USE_SY
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
-@ParametersAreNonnullByDefault
-public final class GoogleDriveFileSystemDriver extends CachedFileSystemDriverBase<File> {
+public final class GoogleDriveFileSystemDriver extends CachedFileSystemDriver<File> {
 
-    private final Drive drive;
+    private Drive drive;
 
     private GoogleDriveWatchService systemWatcher;
 
     @SuppressWarnings("unchecked")
-    public GoogleDriveFileSystemDriver(final FileStore fileStore,
-            final FileSystemFactoryProvider provider,
-            final Drive drive,
-            final Map<String, ?> env) throws IOException {
+    public GoogleDriveFileSystemDriver(FileStore fileStore,
+            FileSystemFactoryProvider provider,
+            Drive drive,
+            Map<String, ?> env) throws IOException {
         super(fileStore, provider);
         this.drive = drive;
-        ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_IGNORE_APPLE_DOUBLE, false);
+        setEnv(env);
         boolean useSystemWatcher = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_USE_SYSTEM_WATCHER, false);
 
         if (useSystemWatcher) {
@@ -115,8 +111,12 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     public static final String MIME_TYPE_DIR = "application/vnd.google-apps.folder";
 
     @Override
-    protected String getFilenameString(File entry) throws IOException {
-    	return Util.toNormalizedString(entry.getName());
+    protected String getFilenameString(File entry) {
+    	try {
+			return Util.toNormalizedString(entry.getName());
+		} catch (IOException e) {
+			throw new IllegalStateException(e);
+		}
     }
 
     @Override
@@ -125,14 +125,14 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     }
 
     @Override
-    protected File getRootEntry() throws IOException {
+    protected File getRootEntry(Path root) throws IOException {
     	return drive.files().get("root").setFields(ENTRY_FIELDS).execute().set("name", "/");
     }
 
     @Override
-    protected File getEntry(File parentDirEntry, Path path) throws IOException {
+    protected File getEntry(File parentEntry, Path path) throws IOException {
         try {
-    		String q = "'" + parentDirEntry.getId() + "' in parents and name = '" + path.getFileName() + "' and trashed=false";
+    		String q = "'" + parentEntry.getId() + "' in parents and name = '" + path.getFileName() + "' and trashed=false";
 //System.out.println("q: " + q);
 	        FileList files = drive.files().list()
 	                .setQ(q)
@@ -208,34 +208,9 @@ Debug.println("NOTIFICATION: parent not found: " + e);
             @Override
             protected void onClosed(File newEntry) {
 Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.getSize());
-                cache.addEntry(path, newEntry);
+				updateEntry(path, newEntry);
             }
         }, Util.BUFFER_SIZE);
-    }
-
-    @Override
-    protected File createDirectoryEntry(File parentEntry, Path dir) throws IOException {
-        File dirEntry = new File();
-        dirEntry.setName(toFilenameString(dir));
-        dirEntry.setMimeType(MIME_TYPE_DIR);
-        if (dir.toAbsolutePath().getParent().getNameCount() != 0) {
-            dirEntry.setParents(Arrays.asList(parentEntry.getId()));
-        }
-        return drive.files().create(dirEntry).setFields(ENTRY_FIELDS).execute();
-    }
-
-    @Override
-    protected Object getMetadata(File entry) throws IOException {
-        return new Metadata(this, entry);
-    }
-
-    @Override
-    public WatchService newWatchService() {
-        try {
-            return new GoogleDriveWatchService(drive);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
     }
 
     @Override
@@ -261,6 +236,17 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
         } while (pageToken != null);
 
         return list;
+    }
+
+    @Override
+    protected File createDirectoryEntry(File parentEntry, Path dir) throws IOException {
+        File dirEntry = new File();
+        dirEntry.setName(toFilenameString(dir));
+        dirEntry.setMimeType(MIME_TYPE_DIR);
+        if (dir.toAbsolutePath().getParent().getNameCount() != 0) {
+            dirEntry.setParents(Arrays.asList(parentEntry.getId()));
+        }
+        return drive.files().create(dirEntry).setFields(ENTRY_FIELDS).execute();
     }
 
     @Override
@@ -322,6 +308,20 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
         File entry = new File();
         entry.setName(toFilenameString(target));
         return drive.files().update(sourceEntry.getId(), entry).setFields(ENTRY_FIELDS).execute();
+    }
+
+    @Override
+    protected Object getPathMetadata(File entry) throws IOException {
+        return new Metadata(this, entry);
+    }
+
+    @Override
+    public WatchService newWatchService() {
+        try {
+            return new GoogleDriveWatchService(drive);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     //
