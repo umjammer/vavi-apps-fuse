@@ -34,9 +34,9 @@ import vavi.util.archive.Entry;
 public final class ArchiveBasicFileAttributesProvider extends BasicFileAttributesProvider implements PosixFileAttributes {
 
     /** null means root */
-    private Entry<?> entry;
+    private Entry entry;
 
-    public ArchiveBasicFileAttributesProvider(final Entry<?> entry) throws IOException {
+    public ArchiveBasicFileAttributesProvider(final Entry entry) throws IOException {
         this.entry = entry;
     }
 
