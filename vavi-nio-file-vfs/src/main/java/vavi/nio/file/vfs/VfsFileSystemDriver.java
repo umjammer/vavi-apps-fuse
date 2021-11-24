@@ -9,26 +9,17 @@ package vavi.nio.file.vfs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.AccessDeniedException;
-import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
-import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.spi.FileSystemProvider;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.apache.commons.vfs2.FileObject;
@@ -36,8 +27,7 @@ import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.Selectors;
 
-import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase;
-import com.github.fge.filesystem.exceptions.IsDirectoryException;
+import com.github.fge.filesystem.driver.ExtendedFileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import vavi.nio.file.Util;
@@ -54,40 +44,53 @@ import static vavi.nio.file.Util.toPathString;
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class VfsFileSystemDriver extends ExtendedFileSystemDriverBase {
+public final class VfsFileSystemDriver extends ExtendedFileSystemDriver<FileObject> {
 
     private final FileSystemManager manager;
 
     private final FileSystemOptions opts;
-
-    private boolean ignoreAppleDouble = false;
 
     private final String baseUrl;
 
     /**
      * @param env { "baseUrl": "smb://10.3.1.1/Temporary Share/", "ignoreAppleDouble": boolean }
      */
-    @SuppressWarnings("unchecked")
-    public VfsFileSystemDriver(final FileStore fileStore,
-            final FileSystemFactoryProvider provider,
-            final FileSystemManager manager,
-            final FileSystemOptions options,
+    public VfsFileSystemDriver(FileStore fileStore,
+            FileSystemFactoryProvider provider,
+            FileSystemManager manager,
+            FileSystemOptions options,
             String baseUrl,
-            final Map<String, ?> env) throws IOException {
-        super(fileStore, provider);
+            Map<String, ?> env) throws IOException {
+
+    	super(fileStore, provider);
+
+        setEnv(env);
+
         this.manager = manager;
         this.opts = options;
-        ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
+
 //System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
         this.baseUrl = baseUrl;
     }
 
-    /**
-     * VFS might have cache?
-     * @see #ignoreAppleDouble
-     * @throws NoSuchFileException apple double file
-     */
-    private FileObject getEntry(Path path) throws IOException {
+    @Override
+    protected String getFilenameString(FileObject entry) {
+    	return entry.getName().getBaseName();
+    }
+
+    @Override
+    protected boolean isFolder(FileObject entry) throws IOException {
+    	return entry.isFolder();
+    }
+
+    @Override
+    protected boolean exists(FileObject entry) throws IOException {
+    	return entry.exists();
+    }
+
+    // VFS might have cache?
+    @Override
+    protected FileObject getEntry(Path path) throws IOException {
         return getEntry(path, true);
     }
 
@@ -95,13 +98,13 @@ public final class VfsFileSystemDriver extends ExtendedFileSystemDriverBase {
      * @param check check existence of the path
      */
     private FileObject getEntry(Path path, boolean check) throws IOException {
-//System.err.println("path: " + path);
+//Debug.println(Level.FINE, "path: " + path);
         if (ignoreAppleDouble && path.getFileName() != null && isAppleDouble(path)) {
             throw new NoSuchFileException("ignore apple double file: " + path);
         }
 
         FileObject entry = manager.resolveFile(baseUrl + toPathString(path), opts);
-//System.err.println("entry: " + entry + ", " + entry.exists());
+//Debug.println(Level.FINE, "entry: " + entry + ", " + entry.exists());
         if (check) {
             if (entry.exists()) {
                 return entry;
@@ -113,226 +116,68 @@ public final class VfsFileSystemDriver extends ExtendedFileSystemDriverBase {
         }
     }
 
-    @Nonnull
     @Override
-    public InputStream newInputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
-        final FileObject entry = getEntry(path);
-
-        if (entry.isFolder()) {
-            throw new IsDirectoryException(path.toString());
-        }
-
+    protected InputStream downloadEntry(FileObject entry, Path path, Set<? extends OpenOption> options) throws IOException {
         return entry.getContent().getInputStream(Util.BUFFER_SIZE);
     }
 
-    @Nonnull
     @Override
-    public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
-        final FileObject entry = getEntry(path, false);
-
-        if (entry.exists()) {
-            if (entry.isFolder()) {
-                throw new IsDirectoryException(path.toString());
-            } else {
-                throw new FileAlreadyExistsException(path.toString());
-            }
-        } else {
-            entry.createFile();
-        }
-
-        return entry.getContent().getOutputStream(Util.BUFFER_SIZE);
+    protected OutputStream uploadEntry(FileObject parentEntry, Path path, Set<? extends OpenOption> options) throws IOException {
+        FileObject targetEntry = getEntry(path, false);
+        targetEntry.createFile();
+        return targetEntry.getContent().getOutputStream(Util.BUFFER_SIZE);
     }
 
-    @Nonnull
-    @Override
-    public DirectoryStream<Path> newDirectoryStream(final Path dir,
-                                                    final DirectoryStream.Filter<? super Path> filter) throws IOException {
-        return Util.newDirectoryStream(getDirectoryEntries(dir), filter);
+    /** */
+    protected List<FileObject> getDirectoryEntries(FileObject dirEntry, Path dir) throws IOException {
+//System.err.println("path: " + dir);
+//Arrays.stream(dirEntry.getChildren()).forEach(System.err::println);
+    	return Arrays.stream(dirEntry.getChildren()).collect(Collectors.toList());
     }
 
     @Override
-    public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
+    protected FileObject createDirectoryEntry(FileObject parentEntry, Path dir) throws IOException {
         FileObject dirEntry = getEntry(dir, false);
-        if (dirEntry.exists()) {
-            throw new FileAlreadyExistsException(dir.toString());
-        }
-
         dirEntry.createFolder();
+        return dirEntry;
     }
 
     @Override
-    public void delete(final Path path) throws IOException {
-        removeEntry(path);
+    protected boolean hasChildren(FileObject dirEntry, Path dir) throws IOException {
+    	return dirEntry.getChildren().length > 0;
     }
 
     @Override
-    public void copy(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
-        FileObject targetEntry = getEntry(target, false);
-        if (targetEntry.exists()) {
-            if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
-                removeEntry(target);
-            } else {
-                throw new FileAlreadyExistsException(target.toString());
-            }
-        }
-        copyEntry(source, target);
-    }
-
-    @Override
-    public void move(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
-        FileObject targetEntry = getEntry(target, false);
-        if (targetEntry.exists()) {
-            if (targetEntry.isFolder()) {
-                if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
-                    // replace the target
-                    if (targetEntry.getChildren().length > 0) {
-                        throw new DirectoryNotEmptyException(target.toString());
-                    } else {
-                        removeEntry(target);
-                        moveEntry(source, target, false);
-                    }
-                } else {
-                    // move into the target
-                    // TODO SPEC is FileAlreadyExistsException ?
-                    moveEntry(source, target, true);
-                }
-            } else {
-                if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
-                    removeEntry(target);
-                    moveEntry(source, target, false);
-                } else {
-                    throw new FileAlreadyExistsException(target.toString());
-                }
-            }
-        } else {
-            if (source.toAbsolutePath().getParent().equals(target.toAbsolutePath().getParent())) {
-                // rename
-                renameEntry(source, target);
-            } else {
-                moveEntry(source, target, false);
-            }
-        }
-    }
-
-    /**
-     * Check access modes for a path on this filesystem
-     * <p>
-     * If no modes are provided to check for, this simply checks for the
-     * existence of the path.
-     * </p>
-     *
-     * @param path the path to check
-     * @param modes the modes to check for, if any
-     * @throws IOException filesystem level error, or a plain I/O error if you
-     *             use this with javafs (jnr-fuse), you should throw
-     *             {@link NoSuchFileException} when the file not found.
-     * @see FileSystemProvider#checkAccess(Path, AccessMode...)
-     */
-    @Override
-    protected void checkAccessImpl(final Path path, final AccessMode... modes) throws IOException {
-        final FileObject entry = getEntry(path);
-
-        if (entry.isFolder()) {
-            return;
-        }
-
-        // TODO: assumed; not a file == directory
-        for (final AccessMode mode : modes) {
-            if (mode == AccessMode.EXECUTE) {
-                throw new AccessDeniedException(path.toString());
-            }
-        }
-    }
-
-    @Override
-    public void close() throws IOException {
-        // don't close the manager here, it will shutdown whole resources.
-        // https://issues.apache.org/jira/browse/VFS-454
-    }
-
-    /**
-     * @throws IOException if you use this with javafs (jnr-fuse), you should
-     *             throw {@link NoSuchFileException} when the file not found.
-     */
-    @Nonnull
-    @Override
-    protected Object getPathMetadataImpl(final Path path) throws IOException {
-        return getEntry(path);
-    }
-
-    /** */
-    private List<Path> getDirectoryEntries(final Path dir) throws IOException {
-        final FileObject entry = getEntry(dir);
-
-        if (!entry.isFolder()) {
-            throw new NotDirectoryException(dir.toString());
-        }
-
-        List<Path> list = null;
-        final FileObject[] children = entry.getChildren();
-        list = new ArrayList<>(children.length);
-
-        for (final FileObject child : children) {
-            Path childPath = dir.resolve(child.getName().getBaseName());
-            list.add(childPath);
-        }
-
-        return list;
-    }
-
-    /** */
-    private void removeEntry(Path path) throws IOException {
-        final FileObject entry = getEntry(path);
-
-        if (entry.isFolder()) {
-            final FileObject[] list = entry.getChildren();
-
-            if (list.length > 0) {
-                throw new DirectoryNotEmptyException(path.toString());
-            }
-        }
-
+    protected void removeEntry(FileObject entry, Path path) throws IOException {
         if (!entry.delete()) {
-            throw new IOException("delete: " + path);
+            throw new IOException("delete failed: " + path);
         }
     }
 
-    /** */
-    private void copyEntry(final Path source, final Path target) throws IOException {
+    @Override
+    protected FileObject copyEntry(FileObject sourceEntry, FileObject targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
         FileObject targetEntry = getEntry(target, false);
-        FileObject sourceEntry = getEntry(source);
-
-        if (sourceEntry.isFile()) {
-            targetEntry.copyFrom(sourceEntry, Selectors.SELECT_ALL);
-        } else if (sourceEntry.isFolder()) {
-            // TODO java spec. allows empty folder
-            throw new IsDirectoryException(source.toString());
-        }
+        targetEntry.copyFrom(sourceEntry, Selectors.SELECT_ALL);
+        return targetEntry;
     }
 
-    /**
-     * @param targetIsParent if the target is folder
-     */
-    private void moveEntry(final Path source, final Path target, boolean targetIsParent) throws IOException {
-        FileObject sourceEntry = getEntry(source);
+    @Override
+    protected FileObject moveEntry(FileObject sourceEntry, FileObject targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
         FileObject targetEntry = getEntry(targetIsParent ? target.resolve(toFilenameString(source)) : target, false);
-
-        if (sourceEntry.isFile()) {
-            sourceEntry.moveTo(targetEntry);
-        } else if (sourceEntry.isFolder()) {
-            sourceEntry.moveTo(targetEntry);
-        }
+        sourceEntry.moveTo(targetEntry);
+        return targetEntry;
     }
 
-    /** */
-    private void renameEntry(final Path source, final Path target) throws IOException {
-        FileObject sourceEntry = getEntry(source);
-        FileObject targetEntry = getEntry(target, false);
-
-        if (sourceEntry.isFile()) {
-            sourceEntry.moveTo(targetEntry);
-        } else if (sourceEntry.isFolder()) {
-            throw new IsDirectoryException(source.toString());
-        }
+    @Override
+    protected FileObject moveFolderEntry(FileObject sourceEntry, FileObject targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
+        return moveEntry(sourceEntry, targetParentEntry, source, target, targetIsParent);
     }
+
+    @Override
+    protected FileObject renameEntry(FileObject sourceEntry, FileObject targetParentEntry, Path source, Path target) throws IOException {
+        return moveEntry(sourceEntry, targetParentEntry, source, target, false);
+    }
+
+    // don't close the manager here, it will shutdown whole resources.
+    // https://issues.apache.org/jira/browse/VFS-454
 }
