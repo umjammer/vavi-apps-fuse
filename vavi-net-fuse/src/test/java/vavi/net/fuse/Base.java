@@ -14,7 +14,6 @@ import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Random;
 
-import vavi.net.fuse.Fuse;
 import vavi.util.Debug;
 
 import vavix.util.Checksum;
@@ -30,11 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2020/06/05 umjammer initial version <br>
  */
-public class Base {
-
-    /** */
-    private Base() {
-    }
+public abstract class Base {
 
     /** */
     private static int exec(String... commandLine) throws Exception {

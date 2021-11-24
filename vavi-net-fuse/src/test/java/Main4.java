@@ -53,13 +53,16 @@ import vavi.util.Debug;
 @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
 public class Main4 {
 
+    static {
+        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod", "co\\.paralleluniverse\\.fuse\\.LoggedFuseFilesystem#log");
+    }
+
     FileSystem fs;
     String mountPoint;
     Map<String, Object> options;
 
     @BeforeEach
     public void before() throws Exception {
-        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod", "co\\.paralleluniverse\\.fuse\\.LoggedFuseFilesystem#log");
 
         mountPoint = System.getenv("TEST4_MOUNT_POINT");
 Debug.println("mountPoint: " + mountPoint);
@@ -82,6 +85,7 @@ Debug.println("mountPoint: " + mountPoint);
     })
     public void test01(String providerClassName) throws Exception {
         System.setProperty("vavi.net.fuse.FuseProvider.class", providerClassName);
+System.err.println("--------------------------- " + providerClassName + " ---------------------------");
 
         Base.testFuse(fs, mountPoint, options);
 

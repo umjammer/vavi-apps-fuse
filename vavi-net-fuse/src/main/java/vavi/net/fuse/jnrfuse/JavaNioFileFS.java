@@ -96,7 +96,7 @@ Debug.println(e);
 
     @Override
     public int create(String path, @mode_t long mode, FuseFileInfo info) {
-Debug.println("create: " + path);
+Debug.println(Level.FINE, "create: " + path);
         try {
             Set<OpenOption> options = new HashSet<>();
             options.add(StandardOpenOption.WRITE);
@@ -142,8 +142,13 @@ Debug.println(Level.FINE, "getattr: " + path);
             }
             return 0;
         } catch (NoSuchFileException e) {
+            if (e.getMessage().startsWith("ignore apple double file:")) {
+Debug.println(Level.FINE, e.getMessage());
+                return 0;
+            } else {
 Debug.println(e);
-            return -ErrorCodes.ENOENT();
+                return -ErrorCodes.ENOENT();
+            }
         } catch (IOException e) {
 Debug.printStackTrace(e);
             return -ErrorCodes.EIO();
@@ -159,7 +164,7 @@ Debug.println(Level.FINE, "fgetattr: " + path);
 
     @Override
     public int mkdir(String path, @mode_t long mode) {
-Debug.println("mkdir: " + path);
+Debug.println(Level.FINE, "mkdir: " + path);
         try {
             fileSystem.provider().createDirectory(fileSystem.getPath(path));
             return 0;
@@ -171,7 +176,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int open(String path, FuseFileInfo info) {
-Debug.println("open: " + path);
+Debug.println(Level.FINE, "open: " + path);
         try {
             Set<OpenOption> options = new HashSet<>();
             options.add(StandardOpenOption.READ);
@@ -189,22 +194,22 @@ Debug.printStackTrace(e);
 
     @Override
     public int read(String path, Pointer buf, long size, long offset, FuseFileInfo info) {
-Debug.println("read: " + path + ", " + offset + ", " + size + ", " + info.fh.get());
+Debug.println(Level.FINE, "read: " + path + ", " + offset + ", " + size + ", " + info.fh.get());
         try {
             if (fileHandles.containsKey(info.fh.get())) {
                 SeekableByteChannel channel = fileHandles.get(info.fh.get());
                 ByteBuffer bb = ByteBuffer.allocate(BUFFER_SIZE);
                 long pos = 0;
-Debug.printf("Attempting to read %d-%d:", offset, offset + size);
+Debug.printf(Level.FINE, "Attempting to read %d-%d:", offset, offset + size);
                 do {
                     bb.clear();
                     bb.limit((int) Math.min(bb.capacity(), size - pos));
                     int read = channel.read(bb);
                     if (read == -1) {
-Debug.println("Reached EOF");
+Debug.println(Level.FINE, "Reached EOF");
                         return (int) pos; // reached EOF TODO: wtf cast
                     } else {
-Debug.printf("Reading %d-%d", offset + pos, offset + pos + read);
+Debug.printf(Level.FINE, "Reading %d-%d", offset + pos, offset + pos + read);
                         buf.put(pos, bb.array(), 0, read);
                         pos += read;
                     }
@@ -219,13 +224,13 @@ Debug.printStackTrace(e);
         }
     }
 
-    // TODO https://github.com/SerCeMan/jnr-fuse/issues/72
     @Override
     public int readdir(String path, Pointer buf, FuseFillDir filler, @off_t long offset, FuseFileInfo info) {
-Debug.println("readdir: " + path);
+Debug.println(Level.FINE, "readdir: " + path);
         try {
             fileSystem.provider().newDirectoryStream(fileSystem.getPath(path), p -> true)
                 .forEach(p -> {
+Debug.println(Level.FINE, "p: " + p);
                     try {
                         filler.apply(buf, Util.toFilenameString(p), null, 0);
                     } catch (IOException e) {
@@ -241,7 +246,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int rename(String path, String newName) {
-Debug.println("rename: " + path);
+Debug.println(Level.FINE, "rename: " + path);
         try {
             fileSystem.provider().move(fileSystem.getPath(path), fileSystem.getPath(newName));
             return 0;
@@ -253,7 +258,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int rmdir(String path) {
-Debug.println("rmdir: " + path);
+Debug.println(Level.FINE, "rmdir: " + path);
         try {
             fileSystem.provider().delete(fileSystem.getPath(path));
             return 0;
@@ -265,14 +270,14 @@ Debug.printStackTrace(e);
 
     @Override
     public int truncate(String path, long offset) {
-Debug.println("truncate: " + path);
+Debug.println(Level.FINE, "truncate: " + path);
         // TODO
         return -ErrorCodes.ENOSYS();
     }
 
     @Override
     public int unlink(String path) {
-Debug.println("unlink: " + path);
+Debug.println(Level.FINE, "unlink: " + path);
         try {
             fileSystem.provider().delete(fileSystem.getPath(path));
             return 0;
@@ -284,7 +289,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int write(String path, Pointer buf, @size_t long size, @off_t long offset, FuseFileInfo info) {
-Debug.println("write: " + path + ", " + offset + ", " + size + ", " + info.fh.get());
+Debug.println(Level.FINE, "write: " + path + ", " + offset + ", " + size + ", " + info.fh.get());
         try {
             if (fileHandles.containsKey(info.fh.get())) {
                 ByteBuffer bb = ByteBuffer.allocate(BUFFER_SIZE);
@@ -357,7 +362,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int chmod(String path, @mode_t long mode) {
-Debug.println("chmod: " + path);
+Debug.println(Level.FINE, "chmod: " + path);
         try {
             if (fileSystem.provider().getFileStore(fileSystem.getPath(path)).supportsFileAttributeView(PosixFileAttributeView.class)) {
                 PosixFileAttributeView attrs = fileSystem.provider().getFileAttributeView(fileSystem.getPath(path), PosixFileAttributeView.class);
@@ -375,7 +380,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int release(String path, FuseFileInfo info) {
-Debug.println("release: " + path);
+Debug.println(Level.FINE, "release: " + path);
         try {
             if (fileHandles.containsKey(info.fh.get())) {
                 Channel channel = fileHandles.get(info.fh.get());
@@ -394,7 +399,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int lock(String path, FuseFileInfo fi, int cmd, Flock flock) {
-Debug.println("lock: " + path);
+Debug.println(Level.FINE, "lock: " + path);
         return 0;
     }
 }

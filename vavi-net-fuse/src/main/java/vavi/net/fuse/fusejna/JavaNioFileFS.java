@@ -90,7 +90,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int create(final String path, final ModeWrapper mode, final FileInfoWrapper info) {
-Debug.println("create: " + path);
+Debug.println(Level.FINE, "create: " + path);
         try {
             Set<OpenOption> options = new HashSet<>();
             options.add(StandardOpenOption.WRITE);
@@ -136,8 +136,13 @@ Debug.println(Level.FINE, "getattr: " + path);
             }
             return 0;
         } catch (NoSuchFileException e) {
+            if (e.getMessage().startsWith("ignore apple double file:")) {
+Debug.println(Level.FINE, e.getMessage());
+                return 0;
+            } else {
 Debug.println(e);
-            return -ErrorCodes.ENOENT();
+                return -ErrorCodes.ENOENT();
+            }
         } catch (IOException e) {
 Debug.printStackTrace(e);
             return -ErrorCodes.EIO();
@@ -153,7 +158,7 @@ Debug.println(Level.FINE, "fgetattr: " + path);
 
     @Override
     public int mkdir(final String path, final ModeWrapper mode) {
-Debug.println("mkdir: " + path);
+Debug.println(Level.FINE, "mkdir: " + path);
         try {
             fileSystem.provider().createDirectory(fileSystem.getPath(path));
             return 0;
@@ -165,7 +170,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int open(final String path, final FileInfoWrapper info) {
-Debug.println("open: " + path);
+Debug.println(Level.FINE, "open: " + path);
         try {
             Set<OpenOption> options = new HashSet<>();
             options.add(StandardOpenOption.READ);
@@ -186,7 +191,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int read(final String path, final ByteBuffer buffer, final long size, final long offset, final FileInfoWrapper info) {
-Debug.println("read: " + path + ", " + offset + ", " + size + ", " + info.fh());
+Debug.println(Level.FINE, "read: " + path + ", " + offset + ", " + size + ", " + info.fh());
         try {
             if (fileHandles.containsKey(info.fh())) {
                 SeekableByteChannel channel = fileHandles.get(info.fh());
@@ -207,10 +212,10 @@ Debug.println("read: " + path + ", " + offset + ", " + size + ", " + info.fh());
                             n += c;
                         }
                     }
-Debug.println("read: " + n);
+Debug.println(Level.FINE, "read: " + n);
                     return n;
                 } else {
-Debug.println("read: 0");
+Debug.println(Level.FINE, "read: 0");
                     return 0; // we did not read any bytes
                 }
             } else {
@@ -224,7 +229,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int readdir(final String path, final DirectoryFiller filler) {
-Debug.println("readdir: " + path);
+Debug.println(Level.FINE, "readdir: " + path);
         try {
             fileSystem.provider().newDirectoryStream(fileSystem.getPath(path), p -> true)
                 .forEach(p -> {
@@ -243,7 +248,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int rename(final String path, final String newName) {
-Debug.println("rename: " + path);
+Debug.println(Level.FINE, "rename: " + path);
         try {
             fileSystem.provider().move(fileSystem.getPath(path), fileSystem.getPath(newName));
             return 0;
@@ -255,7 +260,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int rmdir(final String path) {
-Debug.println("rmdir: " + path);
+Debug.println(Level.FINE, "rmdir: " + path);
         try {
             fileSystem.provider().delete(fileSystem.getPath(path));
             return 0;
@@ -267,14 +272,14 @@ Debug.printStackTrace(e);
 
     @Override
     public int truncate(final String path, final long offset) {
-Debug.println("truncate: " + path);
+Debug.println(Level.FINE, "truncate: " + path);
         // TODO
         return -ErrorCodes.ENOSYS();
     }
 
     @Override
     public int unlink(final String path) {
-Debug.println("unlink: " + path);
+Debug.println(Level.FINE, "unlink: " + path);
         try {
             fileSystem.provider().delete(fileSystem.getPath(path));
             return 0;
@@ -290,7 +295,7 @@ Debug.printStackTrace(e);
                      final long size,
                      final long offset,
                      final FileInfoWrapper info) {
-Debug.println("write: " + path + ", " + offset + ", " + size + ", " + info.fh());
+Debug.println(Level.FINE, "write: " + path + ", " + offset + ", " + size + ", " + info.fh());
         try {
             if (fileHandles.containsKey(info.fh())) {
                 SeekableByteChannel channel = fileHandles.get(info.fh());
@@ -368,7 +373,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int release(final String path, final FileInfoWrapper info) {
-Debug.println("release: " + path);
+Debug.println(Level.FINE, "release: " + path);
         try {
             if (fileHandles.containsKey(info.fh())) {
                 Channel channel = fileHandles.get(info.fh());
@@ -387,7 +392,7 @@ Debug.println(e);
 
     @Override
     public int chmod(String path, ModeWrapper mode) {
-Debug.println("chmod: " + path);
+Debug.println(Level.FINE, "chmod: " + path);
         try {
             if (fileSystem.provider().getFileStore(fileSystem.getPath(path)).supportsFileAttributeView(PosixFileAttributeView.class)) {
                 PosixFileAttributeView attrs = fileSystem.provider().getFileAttributeView(fileSystem.getPath(path), PosixFileAttributeView.class);
