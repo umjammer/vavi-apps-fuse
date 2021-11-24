@@ -44,7 +44,7 @@ public final class Descriptor {
 
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        try (FileSystem fs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP)) {
+        try (FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap())) {
 
             Path root = fs.getPath(cwd);
             FileSearcher fileSearcher = new FileSearcher();

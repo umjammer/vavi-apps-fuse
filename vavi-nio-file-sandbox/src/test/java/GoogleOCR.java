@@ -61,7 +61,7 @@ System.err.println("fs: " + fs);
 
         URI uri = URI.create("googledrive:///?id=" + email);
 
-        return FileSystems.newFileSystem(uri, Collections.EMPTY_MAP);
+        return FileSystems.newFileSystem(uri, Collections.emptyMap());
     }
 
     /**

@@ -42,7 +42,7 @@ public final class Synchronizer {
 
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        FileSystem onedrivefs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP);
+        FileSystem onedrivefs = FileSystems.newFileSystem(uri, Collections.emptyMap());
 
         // onedrive
         Path root1 = onedrivefs.getPath(cwd1);

@@ -41,7 +41,7 @@ public final class Classification {
 
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        FileSystem onedrivefs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP);
+        FileSystem onedrivefs = FileSystems.newFileSystem(uri, Collections.emptyMap());
 
         Path root = onedrivefs.getPath(cwd);
         FileSearcher fileSearcher = new FileSearcher();
