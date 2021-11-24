@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -44,7 +43,7 @@ import org.nuxeo.onedrive.client.types.Drive;
 import org.nuxeo.onedrive.client.types.DriveItem;
 import org.nuxeo.onedrive.client.types.FileSystemInfo;
 
-import com.github.fge.filesystem.driver.CachedFileSystemDriverBase;
+import com.github.fge.filesystem.driver.CachedFileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import vavi.nio.file.Util;
@@ -52,7 +51,6 @@ import vavi.util.Debug;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static vavi.nio.file.Util.toFilenameString;
-import static vavi.nio.file.onedrive3.OneDriveFileSystemProvider.ENV_IGNORE_APPLE_DOUBLE;
 import static vavi.nio.file.onedrive3.OneDriveFileSystemProvider.ENV_USE_SYSTEM_WATCHER;
 
 
@@ -63,7 +61,7 @@ import static vavi.nio.file.onedrive3.OneDriveFileSystemProvider.ENV_USE_SYSTEM_
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class OneDriveFileSystemDriver extends CachedFileSystemDriverBase<DriveItem.Metadata> {
+public final class OneDriveFileSystemDriver extends CachedFileSystemDriver<DriveItem.Metadata> {
 
     private final OneDriveAPI client;
     private final Drive.Metadata drive;
@@ -81,8 +79,7 @@ public final class OneDriveFileSystemDriver extends CachedFileSystemDriverBase<D
         super(fileStore, provider);
         this.client = client;
         this.closer = closer;
-        ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_IGNORE_APPLE_DOUBLE, false);
-//System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
+        setEnv(env);
         this.drive = drive;
         boolean useSystemWatcher = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_USE_SYSTEM_WATCHER, false);
 
@@ -125,12 +122,12 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     }
 
     /** */
-    private DriveItem asDriveItem(DriveItem.Metadata entry) {
+    private static DriveItem asDriveItem(DriveItem.Metadata entry) {
     	return DriveItem.class.cast(entry.getItem());    	
     }
 
     @Override
-    protected String getFilenameString(DriveItem.Metadata entry) throws IOException {
+    protected String getFilenameString(DriveItem.Metadata entry) {
     	return entry.getName();
     }
 
@@ -140,19 +137,8 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     }
 
     @Override
-    protected DriveItem.Metadata getRootEntry() throws IOException {
+    protected DriveItem.Metadata getRootEntry(Path root) throws IOException {
     	return new Drive(client, drive.getId()).getRoot().getMetadata();
-    }
-
-    @Override
-    protected DriveItem.Metadata getEntry(DriveItem.Metadata parentDirEntry, Path path)throws IOException {
-        List<DriveItem.Metadata> siblings = getDirectoryEntries(parentDirEntry, null);
-        Optional<DriveItem.Metadata> found = siblings.stream().filter(i -> path.getFileName().toString().equals(i.getName())).findFirst();
-        if (found.isPresent()) {
-            return found.get();
-        } else {
-            return null;
-        }
     }
 
     @Override
@@ -166,10 +152,10 @@ Debug.println("NOTIFICATION: parent not found: " + e);
         if (uploadOption != null) {
             // java.nio.file is highly abstracted, so here source information is lost.
             // but onedrive graph api requires content length for upload.
-            // so reluctantly we provide {@link OneDriveUploadOpenOption} for {@link java.nio.file.Files#copy} options.
+            // so reluctantly we provide {@link OneDriveUploadOption} for {@link java.nio.file.Files#copy} options.
             Path source = uploadOption.getSource();
 Debug.println("upload w/ option: " + source);
-            return uploadEntry(path, (int) java.nio.file.Files.size(source));
+            return uploadEntry(parentEntry, path, (int) java.nio.file.Files.size(source));
         } else {
 Debug.println("upload w/o option");
             return new Util.OutputStreamForUploading() { // TODO used for only getting file length
@@ -177,7 +163,7 @@ Debug.println("upload w/o option");
                 protected void onClosed() throws IOException {
                     InputStream is = getInputStream();
 Debug.println("upload w/o option: " + is.available());
-                    OutputStream os = uploadEntry(path, is.available());
+                    OutputStream os = uploadEntry(parentEntry, path, is.available());
                     Util.transfer(is, os);
                     is.close();
                     os.close();
@@ -187,12 +173,11 @@ Debug.println("upload w/o option: " + is.available());
     }
 
     /** */
-    private OutputStream uploadEntry(Path path, int size) throws IOException {
-        DriveItem.Metadata folder = cache.getEntry(path.toAbsolutePath().getParent());
-        DriveItem file = new DriveItem(asDriveItem(folder), toItemPathString(toFilenameString(path)));
+    private OutputStream uploadEntry(DriveItem.Metadata parentEntry, Path path, int size) throws IOException {
+        DriveItem file = new DriveItem(asDriveItem(parentEntry), toItemPathString(toFilenameString(path)));
         final UploadSession uploadSession = Files.createUploadSession(file);
         return new BufferedOutputStream(new OneDriveOutputStream(uploadSession, path, size, newEntry -> {
-            cache.addEntry(path, newEntry);
+        	updateEntry(path, newEntry);
         }), Util.BUFFER_SIZE);
     }
 
@@ -202,31 +187,16 @@ Debug.println("upload w/o option: " + is.available());
     }
 
     @Override
-    protected DriveItem.Metadata createDirectoryEntry(DriveItem.Metadata parentEntry, Path dir) throws IOException {
-        // TODO: how to diagnose?
-    	return Files.createFolder(asDriveItem(parentEntry), toFilenameString(dir));
-    }
-
-    @Override
-    public void close() throws IOException {
-        closer.run();
-    }
-
-    @Nonnull
-    @Override
-    public WatchService newWatchService() {
-        try {
-            return new OneDriveWatchService(client);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    @Override
     protected List<DriveItem.Metadata> getDirectoryEntries(DriveItem.Metadata dirEntry, Path dir) throws IOException {
         Iterator<DriveItem.Metadata> iterator = Files.getFiles(asDriveItem(dirEntry));
         Spliterator<DriveItem.Metadata> spliterator = Spliterators.spliteratorUnknownSize(iterator, 0);
         return StreamSupport.stream(spliterator, false).collect(Collectors.toList());
+    }
+
+    @Override
+    protected DriveItem.Metadata createDirectoryEntry(DriveItem.Metadata parentEntry, Path dir) throws IOException {
+        // TODO: how to diagnose?
+    	return Files.createFolder(asDriveItem(parentEntry), toFilenameString(dir));
     }
 
     @Override
@@ -245,7 +215,8 @@ Debug.println("upload w/o option: " + is.available());
     protected DriveItem.Metadata copyEntry(DriveItem.Metadata sourceEntry, DriveItem.Metadata targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
         CopyOperation operation = new CopyOperation();
         operation.rename(toFilenameString(target));
-        Files.copy(asDriveItem(targetParentEntry), operation);
+Debug.println("target: " + targetParentEntry.getName());
+		operation.copy(asDriveItem(targetParentEntry));
         OneDriveLongRunningAction action = Files.copy(asDriveItem(sourceEntry), operation);
         action.await(statusObject -> {
 Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",
@@ -253,7 +224,7 @@ statusObject.getOperation(),
 statusObject.getPercentage(),
 statusObject.getStatus());
         });
-        return getEntry(targetParentEntry, target);
+        return getEntry(null, target);
     }
 
     @Override
@@ -266,9 +237,9 @@ statusObject.getStatus());
         operation.facet("fileSystemInfo", info);
         Files.patch(asDriveItem(sourceEntry), operation);
         if (targetIsParent) {
-            return getEntry(targetParentEntry, target.resolve(source.getFileName()));
+            return getEntry(null, target.resolve(source.getFileName()));
         } else {
-            return getEntry(targetParentEntry, target);
+            return getEntry(null, target);
         }
     }
 
@@ -281,7 +252,7 @@ statusObject.getStatus());
         info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
         operation.facet("fileSystemInfo", info);
         Files.patch(asDriveItem(sourceEntry), operation);
-        return getEntry(targetParentEntry, target);
+        return getEntry(null, target);
     }
 
     @Override
@@ -289,6 +260,21 @@ statusObject.getStatus());
         PatchOperation operation = new PatchOperation();
         operation.rename(toFilenameString(target));
         Files.patch(asDriveItem(sourceEntry), operation);
-        return getEntry(targetParentEntry, target);
+        return getEntry(null, target);
+    }
+
+    @Override
+    public void close() throws IOException {
+        closer.run();
+    }
+
+    @Nonnull
+    @Override
+    public WatchService newWatchService() {
+        try {
+            return new OneDriveWatchService(client);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }
