@@ -24,10 +24,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
-
-import com.github.fge.filesystem.driver.CachedFileSystemDriverBase;
+import com.github.fge.filesystem.driver.CachedFileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import com.google.common.io.ByteStreams;
 import com.microsoft.graph.concurrency.ChunkedUploadProvider;
@@ -59,7 +56,6 @@ import vavi.util.Debug;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static vavi.nio.file.Util.toFilenameString;
 import static vavi.nio.file.Util.toPathString;
-import static vavi.nio.file.onedrive4.OneDriveFileSystemProvider.ENV_IGNORE_APPLE_DOUBLE;
 import static vavi.nio.file.onedrive4.OneDriveFileSystemProvider.ENV_USE_SYSTEM_WATCHER;
 
 
@@ -69,8 +65,7 @@ import static vavi.nio.file.onedrive4.OneDriveFileSystemProvider.ENV_USE_SYSTEM_
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
-@ParametersAreNonnullByDefault
-public final class OneDriveFileSystemDriver extends CachedFileSystemDriverBase<DriveItem> {
+public final class OneDriveFileSystemDriver extends CachedFileSystemDriver<DriveItem> {
 
     private final IGraphServiceClient client;
 
@@ -78,16 +73,15 @@ public final class OneDriveFileSystemDriver extends CachedFileSystemDriverBase<D
     private OneDriveWatchService systemWatcher;
 
     @SuppressWarnings("unchecked")
-    public OneDriveFileSystemDriver(final FileStore fileStore,
-            final FileSystemFactoryProvider provider,
-            final IGraphServiceClient client,
+    public OneDriveFileSystemDriver(FileStore fileStore,
+            FileSystemFactoryProvider provider,
+            IGraphServiceClient client,
             Runnable closer,
-            final Map<String, ?> env) throws IOException {
+            Map<String, ?> env) throws IOException {
         super(fileStore, provider);
         this.client = client;
         this.closer = closer;
-        ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_IGNORE_APPLE_DOUBLE, false);
-//System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
+        setEnv(env);
         boolean useSystemWatcher = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_USE_SYSTEM_WATCHER, false);
 
         if (useSystemWatcher) {
@@ -133,17 +127,17 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     }
 
     @Override
-    protected String getFilenameString(DriveItem entry) throws IOException {
+    protected String getFilenameString(DriveItem entry) {
     	return entry.name;
     }
 
     @Override
-    protected DriveItem getRootEntry() throws IOException {
+    protected DriveItem getRootEntry(Path root) throws IOException {
     	return client.drive().root().buildRequest().get();
     }
 
     @Override
-    protected DriveItem getEntry(DriveItem parentDirEntry, Path path)throws IOException {
+    protected DriveItem getEntry(DriveItem parentEntry, Path path)throws IOException {
         try {
         	return client.drive().root().itemWithPath(toItemPathString(toPathString(path))).buildRequest().get();
 	    } catch (GraphServiceException e) {
@@ -170,7 +164,7 @@ Debug.println("NOTIFICATION: parent not found: " + e);
 	    if (uploadOption != null) {
 	        // java.nio.file is highly abstracted, so here source information is lost.
 	        // but onedrive graph api requires content length for upload.
-	        // so reluctantly we provide {@link OneDriveUploadOpenOption} for {@link java.nio.file.Files#copy} options.
+	        // so reluctantly we provide {@link OneDriveUploadOption} for {@link java.nio.file.Files#copy} options.
 	        Path source = uploadOption.getSource();
 Debug.println("upload w/ option: " + source);
 	
@@ -203,7 +197,7 @@ Debug.println(current + "/" + max);
                     }
                     @Override
                     public void success(final DriveItem result) {
-                        cache.addEntry(path, result);
+                    	updateEntry(path, result);
 Debug.println("upload done: " + result.name);
                     }
                     @Override
@@ -217,7 +211,7 @@ Debug.println("upload done: " + result.name);
                 protected void onClosed() throws IOException {
                     InputStream is = getInputStream();
                     DriveItem newEntry = client.drive().root().itemWithPath(toItemPathString(toPathString(path))).content().buildRequest().put(ByteStreams.toByteArray(is)); // TODO depends on guava
-                    cache.addEntry(path, newEntry);
+                    updateEntry(path, newEntry);
                 }
             };
         }
@@ -236,7 +230,7 @@ Debug.println(current + "/" + max);
                     }
                     @Override
                     public void success(final DriveItem result) {
-                        cache.addEntry(path, result);
+                    	updateEntry(path, result);
 Debug.println("upload done: " + result.name);
                     }
                     @Override
@@ -246,44 +240,13 @@ Debug.println("upload done: " + result.name);
                 });
         } else {
             DriveItem newEntry = client.drive().root().itemWithPath(toItemPathString(toPathString(path))).content().buildRequest().put(ByteStreams.toByteArray(is)); // TODO depends on guava
-            cache.addEntry(path, newEntry);
+            updateEntry(path, newEntry);
         }
     }
 
     /** ms-graph doesn't accept '+' in a path string */
     private String toItemPathString(String pathString) throws IOException {
         return URLEncoder.encode(pathString.replaceFirst("^\\/", ""), "utf-8").replace("+", "%20");
-    }
-
-    @Override
-    protected DriveItem createDirectoryEntry(DriveItem parentEntry, Path dir) throws IOException {
-        // TODO: how to diagnose?
-        DriveItem preEntry = new DriveItem();
-        preEntry.name = toFilenameString(dir);
-        preEntry.folder = new Folder();
-        DriveItem newEntry = client.drive().items(parentEntry.id).children().buildRequest().post(preEntry);
-Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEntry) + ", " + newEntry.hashCode());
-		return newEntry;
-    }
-
-    @Override
-    public void close() throws IOException {
-        closer.run();
-    }
-
-    @Override
-    protected Object getMetadata(DriveItem entry) throws IOException {
-        return new Metadata(this, entry);
-    }
-
-    @Nonnull
-    @Override
-    public WatchService newWatchService() {
-        try {
-            return new OneDriveWatchService(client);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
     }
 
     @Override
@@ -303,6 +266,16 @@ Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEn
     }
 
     @Override
+    protected DriveItem createDirectoryEntry(DriveItem parentEntry, Path dir) throws IOException {
+        DriveItem preEntry = new DriveItem();
+        preEntry.name = toFilenameString(dir);
+        preEntry.folder = new Folder();
+        DriveItem newEntry = client.drive().items(parentEntry.id).children().buildRequest().post(preEntry);
+Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEntry) + ", " + newEntry.hashCode());
+		return newEntry;
+    }
+
+    @Override
     protected boolean hasChildren(DriveItem dirEntry, Path path) throws IOException {
         IDriveItemCollectionPage pages = client.drive().items(dirEntry.id).children().buildRequest().get();
     	return pages.getCurrentPage().size() > 0;
@@ -310,8 +283,6 @@ Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEn
 
     @Override
     protected void removeEntry(DriveItem entry, Path path) throws IOException {
-    	// TODO: unknown what happens when a move operation is performed
-        // and the target already exists
         client.drive().items(entry.id).buildRequest().delete();
 	}
 
@@ -336,7 +307,7 @@ Debug.println("copy progress: " + current + "/" + max);
             @Override
             public void success(final DriveItem result) {
 Debug.println("copy done: " + result.id);
-                cache.addEntry(target, result);
+				updateEntry(target, result);
             }
             @Override
             public void failure(final ClientException ex) {
@@ -371,6 +342,25 @@ Debug.println("copy done: " + result.id);
         DriveItem preEntry = new DriveItem();
         preEntry.name = toFilenameString(target);
         return client.drive().items(sourceEntry.id).buildRequest().patch(preEntry);
+    }
+
+    @Override
+    protected Object getPathMetadata(DriveItem entry) throws IOException {
+        return new Metadata(this, entry);
+    }
+
+    @Override
+    public void close() throws IOException {
+        closer.run();
+    }
+
+    @Override
+    public WatchService newWatchService() {
+        try {
+            return new OneDriveWatchService(client);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     //
