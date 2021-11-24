@@ -7,6 +7,7 @@ package vavi.nio.file.vfs;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
@@ -82,7 +83,7 @@ public class TestVfsSftp {
         FileSystemOptions options = new FileSystemOptions();
 //        SftpFileSystemConfigBuilder.getInstance().setStrictHostKeyChecking(options, "no");
         SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(options, false);
-        SftpFileSystemConfigBuilder.getInstance().setSessionTimeoutMillis(options, 10000);
+        SftpFileSystemConfigBuilder.getInstance().setSessionTimeout(options, Duration.ofMillis(10000));
         SftpFileSystemConfigBuilder.getInstance().setUserInfo(options, new SftpPassphraseUserInfo(passphrase));
         SftpFileSystemConfigBuilder.getInstance().setIdentityProvider(options, new IdentityInfo(new File(keyPath)));
         FileSystemManager fs = VFS.getManager();

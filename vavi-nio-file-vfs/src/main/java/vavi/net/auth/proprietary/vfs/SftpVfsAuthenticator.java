@@ -9,6 +9,7 @@ package vavi.net.auth.proprietary.vfs;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -145,8 +146,8 @@ Debug.println("credential: by uri");
         FileSystemOptions options = new FileSystemOptions();
         SftpFileSystemConfigBuilder builder = SftpFileSystemConfigBuilder.getInstance();
         builder.setUserDirIsRoot(options, false);
-        builder.setConnectTimeoutMillis(options, 30000);
-        builder.setSessionTimeoutMillis(options, 30000);
+        builder.setConnectTimeout(options, Duration.ofMillis(30000));
+        builder.setSessionTimeout(options, Duration.ofMillis(30000));
         builder.setUserInfo(options, new SftpUserInfo(pkc ? c.passphrase : c.password, pkc));
         if (pkc) {
             builder.setIdentityProvider(options, new IdentityInfo(new File(c.keyPath)));
