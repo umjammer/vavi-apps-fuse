@@ -52,7 +52,7 @@ Debug.println("Done");
         public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
             try {
                 long c1 = Files.list(dir).count();
-                
+
                 DirectoryStream<Path> iterable = Files.newDirectoryStream(dir, "*.lastUpdated");
                 long c2 = StreamSupport.stream(iterable.spliterator(), false).count();
                 iterable.close();

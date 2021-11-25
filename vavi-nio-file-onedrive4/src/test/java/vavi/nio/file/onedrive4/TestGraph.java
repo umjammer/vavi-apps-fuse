@@ -72,7 +72,7 @@ public class TestGraph {
 
         WithTotpUserCredential userCredential = new MicrosoftLocalUserCredential(email);
         @SuppressWarnings("resource")
-		String accesssToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
+        String accesssToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
 
         client = GraphServiceClient.builder()
                 .authenticationProvider(new IAuthenticationProvider() {

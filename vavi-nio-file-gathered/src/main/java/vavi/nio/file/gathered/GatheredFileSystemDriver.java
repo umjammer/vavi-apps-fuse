@@ -61,7 +61,7 @@ public final class GatheredFileSystemDriver extends ExtendedFileSystemDriverBase
         }
     }
 
-	@Override
+    @Override
     public InputStream newInputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
         final Object entry = getPathMetadata(path);
 

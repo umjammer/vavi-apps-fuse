@@ -53,18 +53,18 @@ public final class FlickrFileSystemDriver extends CachedFileSystemDriver<Photo> 
 
     @Override
     protected String getFilenameString(Photo entry) {
-    	return entry.getTitle();
+        return entry.getTitle();
     }
 
     @Override
     protected boolean isFolder(Photo entry) {
-    	// flickr doesn't have folder capability
-    	return false;
+        // flickr doesn't have folder capability
+        return false;
     }
 
     @Override
     protected Photo getRootEntry(Path root) throws IOException {
-    	Photo photo = new Photo();
+        Photo photo = new Photo();
         photo.setTitle("/");
         photo.setId("root");
         photo.setLastUpdate(new Date(0)); // TODO
@@ -108,14 +108,14 @@ System.out.println("file: " + newEntry.getTitle() + ", " + newEntry.getDateAdded
     @Override
     protected List<Photo> getDirectoryEntries(Photo dirEntry, Path dir) throws IOException {
         try {
-			SearchParameters params = new SearchParameters();
-			Date now = new Date();
-			params.setMaxTakenDate(now);
-			params.setMinTakenDate(now);
-			return flickr.getPhotosInterface().search(params, 10, 0);
-		} catch (FlickrException e) {
-			throw new IOException(e);
-		}
+            SearchParameters params = new SearchParameters();
+            Date now = new Date();
+            params.setMaxTakenDate(now);
+            params.setMinTakenDate(now);
+            return flickr.getPhotosInterface().search(params, 10, 0);
+        } catch (FlickrException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
@@ -125,8 +125,8 @@ System.out.println("file: " + newEntry.getTitle() + ", " + newEntry.getDateAdded
 
     @Override
     protected boolean hasChildren(Photo dirEntry, Path dir) throws IOException {
-    	// flickr doesn't have folder capability
-    	return false;
+        // flickr doesn't have folder capability
+        return false;
     }
 
     @Override
@@ -141,10 +141,10 @@ System.out.println("file: " + newEntry.getTitle() + ", " + newEntry.getDateAdded
     @Override
     protected Photo copyEntry(Photo sourceEntry, Photo targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
 //        try {
-	        Photo entry = new Photo();
-	        entry.setTitle(Util.toFilenameString(target));
-	        // TODO
-	        return null; //flickr.getPhotosInterface().copy(sourceEntry.getId(), entry);
+            Photo entry = new Photo();
+            entry.setTitle(Util.toFilenameString(target));
+            // TODO
+            return null; //flickr.getPhotosInterface().copy(sourceEntry.getId(), entry);
 //        } catch (FlickrException e) {
 //            throw new IOException(e);
 //        }
@@ -153,9 +153,9 @@ System.out.println("file: " + newEntry.getTitle() + ", " + newEntry.getDateAdded
     @Override
     protected Photo moveEntry(Photo sourceEntry, Photo targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
 //        try {
-	        sourceEntry.setTitle(Util.toFilenameString(target));
-	        // TODO
-	        return null; //flickr.getPeopleInterface().update(sourceEntry.getId(), sourceEntry);
+            sourceEntry.setTitle(Util.toFilenameString(target));
+            // TODO
+            return null; //flickr.getPeopleInterface().update(sourceEntry.getId(), sourceEntry);
 //        } catch (FlickrException e) {
 //            throw new IOException(e);
 //        }

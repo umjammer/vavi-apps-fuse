@@ -42,14 +42,14 @@ public class Main7 {
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
         // ...
-        
+
         fs.close();
     }
 
     //
 
     public static void main(String[] args) throws IOException {
-    	t1(args);
+        t1(args);
     }
 
     /** list */
@@ -60,13 +60,13 @@ public class Main7 {
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
         Files.list(fs.getPath("/tmp")).forEach(p -> {
-        	try {
-	        	if (!Files.isDirectory(p)) {
-	        		System.err.println(p + "\n" + new String((byte[]) Files.getAttribute(p, "user:revisions")));
-	        	}
-        	} catch (IOException e) {
-        		System.err.println(e);
-        	}
+            try {
+                if (!Files.isDirectory(p)) {
+                    System.err.println(p + "\n" + new String((byte[]) Files.getAttribute(p, "user:revisions")));
+                }
+            } catch (IOException e) {
+                System.err.println(e);
+            }
         });
 
         fs.close();
@@ -99,25 +99,25 @@ System.err.println("--- after ---");
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
             if (attr.isRegularFile()) {
-            	try {
-            		int size = RevisionsUtil.size(Files.getAttribute(file, "user:revisions"));
-            		if (size > 1) {
-            			System.err.println(file + ": " + size);
+                try {
+                    int size = RevisionsUtil.size(Files.getAttribute(file, "user:revisions"));
+                    if (size > 1) {
+                        System.err.println(file + ": " + size);
 
 System.err.println("--- before ---");
-            	        byte[] in = (byte[]) Files.getAttribute(file, "user:revisions");
-            	        byte[] out = RevisionsUtil.getLatestOnly(in);
+                        byte[] in = (byte[]) Files.getAttribute(file, "user:revisions");
+                        byte[] out = RevisionsUtil.getLatestOnly(in);
 System.err.println("--- write ---");
 System.err.println(new String(out));
-            	        Files.setAttribute(file, "user:revisions", out);
+                        Files.setAttribute(file, "user:revisions", out);
 
 System.err.println("--- after ---");
-            	        in = (byte[]) Files.getAttribute(file, "user:revisions");
-            	        RevisionsUtil.getLatestOnly(in);
-            		}
-            	} catch (IOException e) {
-            		System.err.println(e);
-            	}
+                        in = (byte[]) Files.getAttribute(file, "user:revisions");
+                        RevisionsUtil.getLatestOnly(in);
+                    }
+                } catch (IOException e) {
+                    System.err.println(e);
+                }
             }
             return CONTINUE;
         }

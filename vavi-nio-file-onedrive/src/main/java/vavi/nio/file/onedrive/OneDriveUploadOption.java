@@ -26,9 +26,9 @@ import java.nio.file.Path;
 public class OneDriveUploadOption implements OpenOption, CopyOption {
 
     /** */
-	private static final long serialVersionUID = -3760090552182064957L;
+    private static final long serialVersionUID = -3760090552182064957L;
 
-	/** */
+    /** */
     private Path source;
 
     /** */

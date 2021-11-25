@@ -43,7 +43,7 @@ public class WebHookApiTest {
     /**
      * @param args
      */
-	public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Exception {
         String email = System.getenv("MICROSOFT3_TEST_ACCOUNT");
 
         MicrosoftLocalUserCredential userCredential = new MicrosoftLocalUserCredential(email);
@@ -104,10 +104,10 @@ public class WebHookApiTest {
         DriveItem rootFolder = new Drive(client, drive.getId()).getRoot();
         Iterator<DriveItem.Metadata> i = Files.getFiles(rootFolder);
         while (i.hasNext()) {
-        	DriveItem.Metadata child = i.next();
+            DriveItem.Metadata child = i.next();
             if (child.getName().equals("TEST_WEBHOOK")) {
 System.out.println("rmdir " + child.getName());
-				Files.delete(DriveItem.class.cast(child.getItem()));
+                Files.delete(DriveItem.class.cast(child.getItem()));
             }
         }
 System.out.println("mkdir " + "TEST_WEBHOOK");

@@ -43,47 +43,47 @@ public class OneDriveUserDefinedFileAttributesProvider extends UserDefinedFileAt
 
     @Override
     public int size(String name) throws IOException {
-    	return UserAttributes.valueOf(name).size(entry);
+        return UserAttributes.valueOf(name).size(entry);
     }
 
     @Override
     public int read(String name, ByteBuffer dst) throws IOException {
-    	return UserAttributes.valueOf(name).read(entry, dst);
+        return UserAttributes.valueOf(name).read(entry, dst);
     }
 
     @Override
     public int write(final String name, final ByteBuffer src) throws IOException {
-    	return UserAttributes.valueOf(name).write(entry, src);
+        return UserAttributes.valueOf(name).write(entry, src);
     }
 
     private interface UserAttribute<T> {
-    	int size(T entry) throws IOException;
+        int size(T entry) throws IOException;
         int read(T entry, ByteBuffer dst) throws IOException;
         int write(T entry, ByteBuffer src) throws IOException;
     }
 
     private enum UserAttributes implements UserAttribute<Metadata> {
-    	description {
-    	    public int size(Metadata entry) throws IOException {
-    	        String description = entry.driveItem.description;
+        description {
+            public int size(Metadata entry) throws IOException {
+                String description = entry.driveItem.description;
 Debug.println("size " + name() + ": " + description);
-    	        return description == null ? 0 : description.getBytes().length;
-    	    }
-    	    public int read(Metadata entry, ByteBuffer dst) throws IOException {
-    	        String description = entry.driveItem.description;
+                return description == null ? 0 : description.getBytes().length;
+            }
+            public int read(Metadata entry, ByteBuffer dst) throws IOException {
+                String description = entry.driveItem.description;
 Debug.println("read " + name() + ": " + description);
-    	        if (description != null) {
-    	            dst.put(description.getBytes());
-    	        }
-    	        return dst.array().length;
-    	    }
-    	    public int write(Metadata entry, ByteBuffer src) throws IOException {
-    	        String description = new String(src.array());
+                if (description != null) {
+                    dst.put(description.getBytes());
+                }
+                return dst.array().length;
+            }
+            public int write(Metadata entry, ByteBuffer src) throws IOException {
+                String description = new String(src.array());
 Debug.println("write " + name() + ": " + description);
-				entry.driver.patchEntryDescription(entry.driveItem, description);
-    	        return description.getBytes().length;
-    	    }
-    	};
+                entry.driver.patchEntryDescription(entry.driveItem, description);
+                return description.getBytes().length;
+            }
+        };
     }
 }
 

@@ -128,25 +128,25 @@ Debug.println("NOTIFICATION: parent not found: " + e);
 
     @Override
     protected String getFilenameString(DriveItem entry) {
-    	return entry.name;
+        return entry.name;
     }
 
     @Override
     protected DriveItem getRootEntry(Path root) throws IOException {
-    	return client.drive().root().buildRequest().get();
+        return client.drive().root().buildRequest().get();
     }
 
     @Override
     protected DriveItem getEntry(DriveItem parentEntry, Path path)throws IOException {
         try {
-        	return client.drive().root().itemWithPath(toItemPathString(toPathString(path))).buildRequest().get();
-	    } catch (GraphServiceException e) {
-	        if (e.getMessage().startsWith("Error code: itemNotFound")) {
-	            return null;
-	        } else {
-	            throw new IOException(e);
-	        }
-	    }
+            return client.drive().root().itemWithPath(toItemPathString(toPathString(path))).buildRequest().get();
+        } catch (GraphServiceException e) {
+            if (e.getMessage().startsWith("Error code: itemNotFound")) {
+                return null;
+            } else {
+                throw new IOException(e);
+            }
+        }
     }
 
     @Override
@@ -160,25 +160,25 @@ Debug.println("NOTIFICATION: parent not found: " + e);
 
     @Override
     protected OutputStream uploadEntry(DriveItem parentEntry, Path path, Set<? extends OpenOption> options) throws IOException {
-	    OneDriveUploadOption uploadOption = Util.getOneOfOptions(OneDriveUploadOption.class, options);
-	    if (uploadOption != null) {
-	        // java.nio.file is highly abstracted, so here source information is lost.
-	        // but onedrive graph api requires content length for upload.
-	        // so reluctantly we provide {@link OneDriveUploadOption} for {@link java.nio.file.Files#copy} options.
-	        Path source = uploadOption.getSource();
+        OneDriveUploadOption uploadOption = Util.getOneOfOptions(OneDriveUploadOption.class, options);
+        if (uploadOption != null) {
+            // java.nio.file is highly abstracted, so here source information is lost.
+            // but onedrive graph api requires content length for upload.
+            // so reluctantly we provide {@link OneDriveUploadOption} for {@link java.nio.file.Files#copy} options.
+            Path source = uploadOption.getSource();
 Debug.println("upload w/ option: " + source);
-	
-	        return uploadEntry(path, (int) Files.size(source));
-	    } else {
+
+            return uploadEntry(path, (int) Files.size(source));
+        } else {
 Debug.println("upload w/o option");
-	        return new Util.OutputStreamForUploading() { // TODO used for getting file length
-	            @Override
-	            protected void onClosed() throws IOException {
-	                InputStream is = getInputStream();
-	                uploadEntry(path, is, is.available());
-	            }
-	        };
-	    }
+            return new Util.OutputStreamForUploading() { // TODO used for getting file length
+                @Override
+                protected void onClosed() throws IOException {
+                    InputStream is = getInputStream();
+                    uploadEntry(path, is, is.available());
+                }
+            };
+        }
     }
 
     /** */
@@ -197,7 +197,7 @@ Debug.println(current + "/" + max);
                     }
                     @Override
                     public void success(final DriveItem result) {
-                    	updateEntry(path, result);
+                        updateEntry(path, result);
 Debug.println("upload done: " + result.name);
                     }
                     @Override
@@ -230,7 +230,7 @@ Debug.println(current + "/" + max);
                     }
                     @Override
                     public void success(final DriveItem result) {
-                    	updateEntry(path, result);
+                        updateEntry(path, result);
 Debug.println("upload done: " + result.name);
                     }
                     @Override
@@ -251,7 +251,7 @@ Debug.println("upload done: " + result.name);
 
     @Override
     protected List<DriveItem> getDirectoryEntries(DriveItem dirEntry, Path dir) throws IOException {
-    	List<DriveItem> list = new ArrayList<>(dirEntry.folder.childCount);
+        List<DriveItem> list = new ArrayList<>(dirEntry.folder.childCount);
 
         IDriveItemCollectionPage pages = client.drive().items(dirEntry.id).children().buildRequest().get();
         while (pages != null) {
@@ -272,19 +272,19 @@ Debug.println("upload done: " + result.name);
         preEntry.folder = new Folder();
         DriveItem newEntry = client.drive().items(parentEntry.id).children().buildRequest().post(preEntry);
 Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEntry) + ", " + newEntry.hashCode());
-		return newEntry;
+        return newEntry;
     }
 
     @Override
     protected boolean hasChildren(DriveItem dirEntry, Path path) throws IOException {
         IDriveItemCollectionPage pages = client.drive().items(dirEntry.id).children().buildRequest().get();
-    	return pages.getCurrentPage().size() > 0;
+        return pages.getCurrentPage().size() > 0;
     }
 
     @Override
     protected void removeEntry(DriveItem entry, Path path) throws IOException {
         client.drive().items(entry.id).buildRequest().delete();
-	}
+    }
 
     @Override
     protected DriveItem copyEntry(DriveItem sourceEntry, DriveItem targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
@@ -307,7 +307,7 @@ Debug.println("copy progress: " + current + "/" + max);
             @Override
             public void success(final DriveItem result) {
 Debug.println("copy done: " + result.id);
-				updateEntry(target, result);
+                updateEntry(target, result);
             }
             @Override
             public void failure(final ClientException ex) {

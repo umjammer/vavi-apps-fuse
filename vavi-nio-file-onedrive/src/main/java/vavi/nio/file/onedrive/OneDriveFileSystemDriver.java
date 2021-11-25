@@ -106,35 +106,35 @@ Debug.println("NOTIFICATION: parent not found: " + e);
 
     /** */
     private static OneFile asFile(OneItem entry) {
-    	return OneFile.class.cast(entry);
+        return OneFile.class.cast(entry);
     }
 
     /** */
     private static OneFolder asFolder(OneItem entry) {
-    	return OneFolder.class.cast(entry);
+        return OneFolder.class.cast(entry);
     }
 
     @Override
     protected String getFilenameString(OneItem entry) {
-    	return entry.getName();
+        return entry.getName();
     }
 
     @Override
     protected boolean isFolder(OneItem entry) {
-    	return entry.isFolder();
+        return entry.isFolder();
     }
 
     @Override
     protected OneItem getRootEntry(Path root) throws IOException {
-    	return client.getItemByPath(toPathString(root));
+        return client.getItemByPath(toPathString(root));
     }
 
     @Override
     protected OneItem getEntry(OneItem parentEntry, Path path)throws IOException {
         try {
-        	return client.getItemByPath(toPathString(path));
+            return client.getItemByPath(toPathString(path));
         } catch (OneDriveException e) {
-        	return null;
+            return null;
         }
     }
 
@@ -173,25 +173,25 @@ Debug.println("upload w/o option: " + is.available());
     /** OneDriveUploadOption */
     private OutputStream uploadEntry(OneItem parentEntry, Path path, int size) throws IOException {
         OneUpload uploader = asFolder(parentEntry).upload(toFilenameString(path), size, newEntry -> {
-        	updateEntry(path, newEntry);
+            updateEntry(path, newEntry);
         });
         return new BufferedOutputStream(uploader.upload(), Util.BUFFER_SIZE);
     }
 
     @Override
     protected List<OneItem> getDirectoryEntries(OneItem dirEntry, Path dir) throws IOException {
-    	return asFolder(dirEntry).getChildren();
+        return asFolder(dirEntry).getChildren();
     }
 
     @Override
     protected OneItem createDirectoryEntry(OneItem parentEntry, Path dir) throws IOException {
         // TODO: how to diagnose?
-    	return OneItem.class.cast(asFolder(parentEntry).createFolder(toFilenameString(dir)));
+        return OneItem.class.cast(asFolder(parentEntry).createFolder(toFilenameString(dir)));
     }
 
     @Override
     protected boolean hasChildren(OneItem dirEntry, Path dir) throws IOException {
-    	return client.getFolderByPath(toPathString(dir)).getChildren().size() > 0;
+        return client.getFolderByPath(toPathString(dir)).getChildren().size() > 0;
     }
 
     @Override
@@ -210,19 +210,19 @@ Debug.println(newEntry.getParentFolder().getName() + "/" + newEntry.getName());
 
     @Override
     protected OneItem moveEntry(OneItem sourceEntry, OneItem targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
-    	return asFile(sourceEntry).move(asFolder(targetParentEntry));
+        return asFile(sourceEntry).move(asFolder(targetParentEntry));
     }
 
     @Override
     protected OneItem moveFolderEntry(OneItem sourceEntry, OneItem targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
         OneItem newEntry = asFolder(sourceEntry).move(asFolder(targetParentEntry));
 Debug.println(newEntry.getParentFolder().getName() + "/" + newEntry.getName());
-		return newEntry;
+        return newEntry;
     }
 
     @Override
     protected OneItem renameEntry(OneItem sourceEntry, OneItem targetParentEntry, Path source, Path target) throws IOException {
-    	return sourceEntry.rename(asFolder(targetParentEntry), toFilenameString(target));
+        return sourceEntry.rename(asFolder(targetParentEntry), toFilenameString(target));
     }
 
     @Override

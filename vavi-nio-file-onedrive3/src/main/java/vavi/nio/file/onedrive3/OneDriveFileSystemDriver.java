@@ -123,22 +123,22 @@ Debug.println("NOTIFICATION: parent not found: " + e);
 
     /** */
     private static DriveItem asDriveItem(DriveItem.Metadata entry) {
-    	return DriveItem.class.cast(entry.getItem());    	
+        return DriveItem.class.cast(entry.getItem());        
     }
 
     @Override
     protected String getFilenameString(DriveItem.Metadata entry) {
-    	return entry.getName();
+        return entry.getName();
     }
 
     @Override
     protected boolean isFolder(DriveItem.Metadata entry) {
-    	return entry.isFolder();
+        return entry.isFolder();
     }
 
     @Override
     protected DriveItem.Metadata getRootEntry(Path root) throws IOException {
-    	return new Drive(client, drive.getId()).getRoot().getMetadata();
+        return new Drive(client, drive.getId()).getRoot().getMetadata();
     }
 
     @Override
@@ -177,7 +177,7 @@ Debug.println("upload w/o option: " + is.available());
         DriveItem file = new DriveItem(asDriveItem(parentEntry), toItemPathString(toFilenameString(path)));
         final UploadSession uploadSession = Files.createUploadSession(file);
         return new BufferedOutputStream(new OneDriveOutputStream(uploadSession, path, size, newEntry -> {
-        	updateEntry(path, newEntry);
+            updateEntry(path, newEntry);
         }), Util.BUFFER_SIZE);
     }
 
@@ -196,12 +196,12 @@ Debug.println("upload w/o option: " + is.available());
     @Override
     protected DriveItem.Metadata createDirectoryEntry(DriveItem.Metadata parentEntry, Path dir) throws IOException {
         // TODO: how to diagnose?
-    	return Files.createFolder(asDriveItem(parentEntry), toFilenameString(dir));
+        return Files.createFolder(asDriveItem(parentEntry), toFilenameString(dir));
     }
 
     @Override
     protected boolean hasChildren(DriveItem.Metadata dirEntry, Path dir) throws IOException {
-    	return getDirectoryEntries(dir, false).size() > 0;
+        return getDirectoryEntries(dir, false).size() > 0;
     }
 
     @Override
@@ -216,7 +216,7 @@ Debug.println("upload w/o option: " + is.available());
         CopyOperation operation = new CopyOperation();
         operation.rename(toFilenameString(target));
 Debug.println("target: " + targetParentEntry.getName());
-		operation.copy(asDriveItem(targetParentEntry));
+        operation.copy(asDriveItem(targetParentEntry));
         OneDriveLongRunningAction action = Files.copy(asDriveItem(sourceEntry), operation);
         action.await(statusObject -> {
 Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",

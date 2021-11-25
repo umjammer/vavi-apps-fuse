@@ -112,11 +112,11 @@ Debug.println("NOTIFICATION: parent not found: " + e);
 
     @Override
     protected String getFilenameString(File entry) {
-    	try {
-			return Util.toNormalizedString(entry.getName());
-		} catch (IOException e) {
-			throw new IllegalStateException(e);
-		}
+        try {
+            return Util.toNormalizedString(entry.getName());
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override
@@ -126,31 +126,31 @@ Debug.println("NOTIFICATION: parent not found: " + e);
 
     @Override
     protected File getRootEntry(Path root) throws IOException {
-    	return drive.files().get("root").setFields(ENTRY_FIELDS).execute().set("name", "/");
+        return drive.files().get("root").setFields(ENTRY_FIELDS).execute().set("name", "/");
     }
 
     @Override
     protected File getEntry(File parentEntry, Path path) throws IOException {
         try {
-    		String q = "'" + parentEntry.getId() + "' in parents and name = '" + path.getFileName() + "' and trashed=false";
+            String q = "'" + parentEntry.getId() + "' in parents and name = '" + path.getFileName() + "' and trashed=false";
 //System.out.println("q: " + q);
-	        FileList files = drive.files().list()
-	                .setQ(q)
-	                .setSpaces("drive")
-	                .setFields("nextPageToken, files(" + ENTRY_FIELDS + ")")
-	                .execute();
-	        if (files.getFiles().size() > 0) {
-	        	return files.getFiles().get(0);
-	        } else {
-	        	return null;
-	        }
-	    } catch (GoogleJsonResponseException e) {
-	        if (e.getMessage().startsWith("404")) {
-	        	return null;
-	        } else {
-	            throw e;
-	        }
-	    }
+            FileList files = drive.files().list()
+                    .setQ(q)
+                    .setSpaces("drive")
+                    .setFields("nextPageToken, files(" + ENTRY_FIELDS + ")")
+                    .execute();
+            if (files.getFiles().size() > 0) {
+                return files.getFiles().get(0);
+            } else {
+                return null;
+            }
+        } catch (GoogleJsonResponseException e) {
+            if (e.getMessage().startsWith("404")) {
+                return null;
+            } else {
+                throw e;
+            }
+        }
     }
 
     @Override
@@ -189,7 +189,7 @@ Debug.println("NOTIFICATION: parent not found: " + e);
                     }
                     @Override
                     public void writeTo(OutputStream os) throws IOException {
-                    	setOutputStream(os); // socket
+                        setOutputStream(os); // socket
                     }
                 };
 
@@ -208,14 +208,14 @@ Debug.println("NOTIFICATION: parent not found: " + e);
             @Override
             protected void onClosed(File newEntry) {
 Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.getSize());
-				updateEntry(path, newEntry);
+                updateEntry(path, newEntry);
             }
         }, Util.BUFFER_SIZE);
     }
 
     @Override
     protected List<File> getDirectoryEntries(File dirEntry, Path dir) throws IOException {
-    	List<File> list = new ArrayList<>();
+        List<File> list = new ArrayList<>();
         String pageToken = null;
         do {
             FileList files = drive.files().list()
@@ -228,7 +228,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
                     .execute();
 
             for (File child : files.getFiles()) {
-            	list.add(child);
+                list.add(child);
             }
 
             pageToken = files.getNextPageToken();
@@ -252,10 +252,10 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
     @Override
     protected boolean hasChildren(File dirEntry, Path dir) throws IOException {
         // TODO use cache ???
-    	List<File> files = drive.files().list()
+        List<File> files = drive.files().list()
                 .setQ("'" + dirEntry.getId() + "' in parents and trashed=false")
                 .execute().getFiles();
-    	return files != null && files.size() > 0;
+        return files != null && files.size() > 0;
     }
 
     @Override
@@ -356,7 +356,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
 
             if (revisions.getRevisions() != null) {
 Debug.println(Level.FINE, "revisions: " + revisions.getRevisions().size() + ", " + revisions.getNextPageToken());
-				revisions.getRevisions().forEach(r -> list.add(r));
+                revisions.getRevisions().forEach(r -> list.add(r));
             }
 
             pageToken = revisions.getNextPageToken();
@@ -368,6 +368,6 @@ Debug.println(Level.FINE, "revisions: " + revisions.getRevisions().size() + ", "
     /** attributes user:revisions */
     void removeRevision(File entry, String revisionId) throws IOException {
 Debug.println(Level.INFO, "delete revision: " + entry.getName() + ", revision: " + revisionId);
-    	drive.revisions().delete(entry.getId(), revisionId).execute();
+        drive.revisions().delete(entry.getId(), revisionId).execute();
     }
 }

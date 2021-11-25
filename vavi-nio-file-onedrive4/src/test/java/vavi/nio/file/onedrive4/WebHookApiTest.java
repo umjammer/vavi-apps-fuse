@@ -49,7 +49,7 @@ public class WebHookApiTest {
         MicrosoftGraphLocalAppCredential appCredential = new MicrosoftGraphLocalAppCredential();
 
         @SuppressWarnings("resource")
-		String accessToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
+        String accessToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
 //Debug.println("accessToken: " + accessToken);
 
         IAuthenticationProvider authenticationProvider = new IAuthenticationProvider() {

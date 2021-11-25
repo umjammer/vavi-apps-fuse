@@ -133,7 +133,7 @@ public class WatchDirectoryTest {
         while (count < 2) {
             WatchKey watchKey = watchService.poll(20, TimeUnit.SECONDS);
             @SuppressWarnings("unused")
-			Path watchedPath = (Path) watchKey.watchable();
+            Path watchedPath = (Path) watchKey.watchable();
             assertNotNull(watchKey);
             List<WatchEvent<?>> eventList = watchKey.pollEvents();
             WatchEvent<?> event = eventList.get(0);

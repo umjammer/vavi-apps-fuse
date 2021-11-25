@@ -41,14 +41,14 @@ public class Main8 {
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
         // ...
-        
+
         fs.close();
     }
 
     //
 
     public static void main(String[] args) throws IOException {
-    	t1(args);
+        t1(args);
     }
 
     static class FileSearcher extends SimpleFileVisitor<Path> {
@@ -60,13 +60,13 @@ public class Main8 {
 
         @Override
         public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-        	try {
-	        	if (Files.list(dir).count() == 0) {
-	        		System.out.println("DIR0: " + dir);
-	        	}
-        	} catch (IOException e) {
-        		System.err.println("ERROR: " + dir + ", " + e.getMessage());
-        	}
+            try {
+                if (Files.list(dir).count() == 0) {
+                    System.out.println("DIR0: " + dir);
+                }
+            } catch (IOException e) {
+                System.err.println("ERROR: " + dir + ", " + e.getMessage());
+            }
             return CONTINUE;
         }
 

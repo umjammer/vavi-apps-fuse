@@ -62,7 +62,7 @@ public final class VfsFileSystemDriver extends ExtendedFileSystemDriver<FileObje
             String baseUrl,
             Map<String, ?> env) throws IOException {
 
-    	super(fileStore, provider);
+        super(fileStore, provider);
 
         setEnv(env);
 
@@ -75,17 +75,17 @@ public final class VfsFileSystemDriver extends ExtendedFileSystemDriver<FileObje
 
     @Override
     protected String getFilenameString(FileObject entry) {
-    	return entry.getName().getBaseName();
+        return entry.getName().getBaseName();
     }
 
     @Override
     protected boolean isFolder(FileObject entry) throws IOException {
-    	return entry.isFolder();
+        return entry.isFolder();
     }
 
     @Override
     protected boolean exists(FileObject entry) throws IOException {
-    	return entry.exists();
+        return entry.exists();
     }
 
     // VFS might have cache?
@@ -132,7 +132,7 @@ public final class VfsFileSystemDriver extends ExtendedFileSystemDriver<FileObje
     protected List<FileObject> getDirectoryEntries(FileObject dirEntry, Path dir) throws IOException {
 //System.err.println("path: " + dir);
 //Arrays.stream(dirEntry.getChildren()).forEach(System.err::println);
-    	return Arrays.stream(dirEntry.getChildren()).collect(Collectors.toList());
+        return Arrays.stream(dirEntry.getChildren()).collect(Collectors.toList());
     }
 
     @Override
@@ -144,7 +144,7 @@ public final class VfsFileSystemDriver extends ExtendedFileSystemDriver<FileObje
 
     @Override
     protected boolean hasChildren(FileObject dirEntry, Path dir) throws IOException {
-    	return dirEntry.getChildren().length > 0;
+        return dirEntry.getChildren().length > 0;
     }
 
     @Override
