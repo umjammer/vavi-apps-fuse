@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 
 import javax.annotation.Nonnull;
 
@@ -28,6 +29,7 @@ import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import vavi.nio.file.Util;
+import vavi.util.Debug;
 import vavi.util.archive.Archive;
 import vavi.util.archive.Entry;
 
@@ -50,11 +52,13 @@ public final class ArchiveFileSystemDriver extends ExtendedFileSystemDriverBase 
             Archive archive,
             Map<String, ?> env) throws IOException {
         super(fileStore, provider);
+        setEnv(env);
         this.archive = archive;
     }
 
     /** */
     private Entry getEntry(Path path) {
+Debug.println(Level.FINE, "entry: \"" + path.toAbsolutePath().toString().substring(1) + "\"");
         return archive.getEntry(path.toAbsolutePath().toString().substring(1));
     }
 
@@ -99,11 +103,6 @@ public final class ArchiveFileSystemDriver extends ExtendedFileSystemDriverBase 
     protected void checkAccessImpl(Path path, AccessMode... modes) throws IOException {
     }
 
-    @Override
-    public void close() throws IOException {
-        archive.close();
-    }
-
     /**
      * @return null when path is root
      * @throws IOException if you use this with javafs (jnr-fuse), you should throw {@link NoSuchFileException} when the file not found.
@@ -111,6 +110,11 @@ public final class ArchiveFileSystemDriver extends ExtendedFileSystemDriverBase 
     @Override
     protected Object getPathMetadataImpl(final Path path) throws IOException {
         return getEntry(path);
+    }
+
+    @Override
+    public void close() throws IOException {
+        archive.close();
     }
 
     /** */

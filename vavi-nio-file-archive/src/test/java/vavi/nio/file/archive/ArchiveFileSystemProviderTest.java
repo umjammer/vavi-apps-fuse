@@ -7,13 +7,18 @@
 package vavi.nio.file.archive;
 
 import java.net.URI;
+import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.EnabledIf;
+
+import vavi.util.properties.annotation.Property;
+import vavi.util.properties.annotation.PropsEntity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -24,7 +29,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2019/06/23 umjammer initial version <br>
  */
+@EnabledIf("localPropertiesExists")
+@PropsEntity(url = "file:local.properties")
 class ArchiveFileSystemProviderTest {
+
+    static boolean localPropertiesExists() {
+        return Files.exists(Paths.get("local.properties"));
+    }
+
+    @Property(name = "test.archive")
+    String file;
 
     @Test
     void test() throws Exception {
@@ -58,10 +72,10 @@ System.err.println("rawFragment: " + uri.getRawFragment());
     }
 
     @Test
-    @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void test3() throws Exception {
-        URI uri = URI.create("archive:file:/Users/nsano/src/vavi/vavi-util-archive/src/test/resources/test.lzh");
-        FileSystem fs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP);
+        URL url = ArchiveFileSystemProviderTest.class.getResource("/test.lzh");
+        URI uri = URI.create("archive:file:" + url.getPath());
+        FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
         Files.list(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
     }
 
@@ -69,9 +83,10 @@ System.err.println("rawFragment: " + uri.getRawFragment());
      * @param args
      */
     public static void main(String[] args) throws Exception {
-        String file = "/Users/nsano/Documents/Games/PC98/bacumed/88/ALPHO.D88";
-        URI uri = URI.create("archive:file:" + file);
-        FileSystem fs = FileSystems.newFileSystem(uri, Collections.EMPTY_MAP);
+        ArchiveFileSystemProviderTest app = new ArchiveFileSystemProviderTest();
+        PropsEntity.Util.bind(app);
+        URI uri = URI.create("archive:file:" + app.file);
+        FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
         Files.list(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
     }
 }
