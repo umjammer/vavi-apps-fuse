@@ -193,11 +193,11 @@ Debug.println("NOTIFICATION: parent not found: " + e);
                     }
                 };
 
-                File fileMetadata = new File();
-                fileMetadata.setName(toFilenameString(path));
-                fileMetadata.setParents(Arrays.asList(parentEntry.getId()));
+                File entry = new File();
+                entry.setName(toFilenameString(path));
+                entry.setParents(Arrays.asList(parentEntry.getId()));
 
-                Drive.Files.Create creator = drive.files().create(fileMetadata, mediaContent); // why not HttpContent ???
+                Drive.Files.Create creator = drive.files().create(entry, mediaContent); // why not HttpContent ???
                 MediaHttpUploader uploader = creator.getMediaHttpUploader();
                 uploader.setDirectUploadEnabled(true);
                 // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead

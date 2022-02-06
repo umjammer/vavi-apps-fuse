@@ -47,7 +47,7 @@ public final class Descriptor {
         try (FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap())) {
 
             Path root = fs.getPath(cwd);
-            FileSearcher fileSearcher = new FileSearcher();
+            MyFileVisitor fileSearcher = new MyFileVisitor();
             Files.walkFileTree(root, fileSearcher);
 
 //            String query = args[2];
@@ -121,7 +121,7 @@ public final class Descriptor {
          return WebScraper.Util.scrape(Result.class, query).get(0);
     }
 
-    static class FileSearcher extends SimpleFileVisitor<Path> {
+    static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
         static final Pattern pattern = Pattern.compile("^\\(一般小説\\)\\s\\[(.+?)\\]\\s(.+?)(\\(.+?\\)){0,1}\\..+$");
 

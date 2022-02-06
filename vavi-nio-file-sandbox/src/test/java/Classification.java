@@ -44,7 +44,7 @@ public final class Classification {
         FileSystem onedrivefs = FileSystems.newFileSystem(uri, Collections.emptyMap());
 
         Path root = onedrivefs.getPath(cwd);
-        FileSearcher fileSearcher = new FileSearcher();
+        MyFileVisitor fileSearcher = new MyFileVisitor();
         Files.walkFileTree(root, fileSearcher);
         Pattern pattern = Pattern.compile("\\[(.+?)\\]");
         Map<String, Long> authors = fileSearcher.result().stream()
@@ -77,7 +77,7 @@ public final class Classification {
             });
     }
 
-    static class FileSearcher extends SimpleFileVisitor<Path> {
+    static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
         private List<Path> list = new ArrayList<>();
 

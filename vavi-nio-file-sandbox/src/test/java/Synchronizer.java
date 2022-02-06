@@ -46,12 +46,12 @@ public final class Synchronizer {
 
         // onedrive
         Path root1 = onedrivefs.getPath(cwd1);
-        FileSearcher fileSearcher1 = new FileSearcher();
+        MyFileVisitor fileSearcher1 = new MyFileVisitor();
         Files.walkFileTree(root1, fileSearcher1);
 
         // local
         Path root2 = Paths.get(cwd2);
-        FileSearcher fileSearcher2 = new FileSearcher();
+        MyFileVisitor fileSearcher2 = new MyFileVisitor();
         Files.walkFileTree(root2, fileSearcher2);
 
         fileSearcher2.result().parallelStream()
@@ -74,7 +74,7 @@ public final class Synchronizer {
             });
     }
 
-    static class FileSearcher extends SimpleFileVisitor<Path> {
+    static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
         private List<Path> list = new ArrayList<>();
 

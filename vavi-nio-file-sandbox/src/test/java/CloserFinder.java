@@ -43,7 +43,7 @@ public final class CloserFinder {
         FileSystem onedrivefs = FileSystems.newFileSystem(uri, Collections.emptyMap());
 
         Path root = onedrivefs.getPath(cwd);
-        FileSearcher fileSearcher = new FileSearcher();
+        MyFileVisitor fileSearcher = new MyFileVisitor();
         Files.walkFileTree(root, fileSearcher);
         fileSearcher.result().parallelStream()
             .forEach(path1 -> {
@@ -65,7 +65,7 @@ public final class CloserFinder {
             });
     }
 
-    static class FileSearcher extends SimpleFileVisitor<Path> {
+    static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
         private List<Path> list = new ArrayList<>();
 

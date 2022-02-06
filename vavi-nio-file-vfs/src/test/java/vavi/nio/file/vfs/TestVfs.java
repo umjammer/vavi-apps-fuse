@@ -1,9 +1,10 @@
-package vavi.nio.file.vfs;
 /*
  * Copyright (c) 2016 by Naohide Sano, All rights reserved.
  *
  * Programmed by Naohide Sano
  */
+
+package vavi.nio.file.vfs;
 
 import java.io.IOException;
 import java.net.URI;

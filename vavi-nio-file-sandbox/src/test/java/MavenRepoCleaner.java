@@ -24,8 +24,8 @@ import static com.rainerhahnekamp.sneakythrow.Sneaky.sneaked;
 /**
  * maven repo cleaner.
  * <p>
- * fucking eclipse content assist leaves half way named junk files and folders
- * in the repository. 
+ * fu*king eclipse content assist leaves half way named junk files and folders
+ * in the repository.
  * </p>
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
@@ -37,11 +37,11 @@ public class MavenRepoCleaner {
      * @param args
      */
     public static void main(String[] args) throws IOException {
-        Files.walkFileTree(Paths.get(System.getProperty("user.home"), ".m2/repository"), new FileSearcher());
+        Files.walkFileTree(Paths.get(System.getProperty("user.home"), ".m2/repository"), new MyFileVisitor());
 Debug.println("Done");
     }
 
-    static class FileSearcher extends SimpleFileVisitor<Path> {
+    static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
