@@ -160,7 +160,7 @@ Debug.println("NOTIFICATION: parent not found: " + e);
         // TODO detect automatically? (w/o options)
         if (options != null && options.stream().anyMatch(o -> o.equals(GoogleDriveOpenOption.EXPORT_WITH_GDOCS_DOCX) ||
                                                          o.equals(GoogleDriveOpenOption.EXPORT_WITH_GDOCS_XLSX))) {
-        GoogleDriveOpenOption option = Util.getOneOfOptions(GoogleDriveOpenOption.class, options);
+            GoogleDriveOpenOption option = Util.getOneOfOptions(GoogleDriveOpenOption.class, options);
             return drive.files().export(entry.getId(), option.getValue()).executeMediaAsInputStream();
         } else {
             return drive.files().get(entry.getId()).executeMediaAsInputStream();
@@ -388,5 +388,37 @@ Debug.println(Level.FINE, "revisions: " + revisions.getRevisions().size() + ", "
     void removeRevision(File entry, String revisionId) throws IOException {
 Debug.println(Level.INFO, "delete revision: " + entry.getName() + ", revision: " + revisionId);
         drive.revisions().delete(entry.getId(), revisionId).execute();
+    }
+
+    /**
+     * attributes user:thumbnail
+     * @param image currently only jpeg is available.
+     */
+    void setThumbnail(File sourceEntry, byte[] image) throws IOException {
+        File.ContentHints.Thumbnail thumbnail = new File.ContentHints.Thumbnail();
+        thumbnail.setMimeType("image/jpg");
+        thumbnail.encodeImage(image);
+
+        File.ContentHints contentHints = new File.ContentHints();
+        contentHints.setThumbnail(thumbnail);
+
+        File entry = new File();
+        entry.setContentHints(contentHints);
+
+        drive.files().update(sourceEntry.getId(), entry).execute();
+Debug.println(Level.INFO, "thumbnail updated: " + sourceEntry.getName() + ", size: " + image.length);
+    }
+
+    /**
+     * attributes user:thumbnail
+     * @return url
+     * @see "https://stackoverflow.com/a/45027853"
+     */
+    String getThumbnail(File sourceEntry) throws IOException {
+        File entry = new File();
+
+        File newEntry = drive.files().update(sourceEntry.getId(), entry).setFields("thumbnailLink").execute();
+Debug.println(Level.INFO, "thumbnail url: " + sourceEntry.getName() + ", url: " + newEntry.getThumbnailLink());
+        return newEntry.getThumbnailLink();
     }
 }

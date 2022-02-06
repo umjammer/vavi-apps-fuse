@@ -6,7 +6,11 @@
 
 package vavi.nio.file.googledrive;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -35,6 +39,7 @@ import vavi.util.Debug;
  */
 public class GoogleDriveUserDefinedFileAttributesProvider extends UserDefinedFileAttributesProvider {
 
+    /** driver & file entry */
     private final Metadata entry;
 
     /** */
@@ -42,6 +47,7 @@ public class GoogleDriveUserDefinedFileAttributesProvider extends UserDefinedFil
         this.entry = entry;
     }
 
+    /** pre-listed */
     private static final List<String> list = Arrays.stream(UserAttributes.values()).map(e -> e.name()).collect(Collectors.toList());
 
     @Override
@@ -71,10 +77,14 @@ public class GoogleDriveUserDefinedFileAttributesProvider extends UserDefinedFil
         int write(T entry, ByteBuffer src) throws IOException;
     }
 
-    /** */
+    /** user:foo */
     private enum UserAttributes implements UserAttribute<Metadata> {
+        /** {@link String} */
         description {
-            Map<File, String> descriptionCache = new ConcurrentHashMap<>();
+            /** */
+            Map<File, String> descriptionCache = new ConcurrentHashMap<>(); // TODO LRU
+
+            /** */
             private String getDescription(File file) {
                 if (descriptionCache.containsKey(file)) {
                     return descriptionCache.get(file);
@@ -84,6 +94,8 @@ public class GoogleDriveUserDefinedFileAttributesProvider extends UserDefinedFil
                     return description;
                 }
             }
+
+            @Override
             public int size(Metadata entry) throws IOException {
                 String description = getDescription(entry.file);
 if (description != null) {
@@ -91,6 +103,8 @@ if (description != null) {
 }
                 return description == null ? 0 : description.getBytes().length;
             }
+
+            @Override
             public int read(Metadata entry, ByteBuffer dst) throws IOException {
                 String description = getDescription(entry.file);
 if (description != null) {
@@ -101,6 +115,8 @@ if (description != null) {
                 }
                 return dst.array().length;
             }
+
+            @Override
             public int write(Metadata entry, ByteBuffer src) throws IOException {
                 String description = new String(src.array());
 Debug.println(Level.FINE, "write " + name() + ": " + description);
@@ -141,9 +157,11 @@ Debug.println(Level.FINE, "read " + name() + ":\n" + String.join("\n", getRevisi
                 dst.put(String.join("\n", getRevisions(entry)).getBytes());
                 return dst.array().length;
             }
+
+            @Override
             public int write(Metadata entry, ByteBuffer src) throws IOException {
                 String[] revisions = RevisionsUtil.split(src.array());
-Arrays.stream(revisions).forEach(r -> {            
+Arrays.stream(revisions).forEach(r -> {
  Debug.println(Level.INFO, "write " + name() + ": " + r);
 });
                 // to be deleted
@@ -161,7 +179,7 @@ Debug.printStackTrace(Level.WARNING, e);
                         }
                     });
 
-                toDeleted.forEach(id -> {            
+                toDeleted.forEach(id -> {
                     try {
                         entry.driver.removeRevision(entry.file, id);
                     } catch (IOException e) {
@@ -174,6 +192,72 @@ Debug.printStackTrace(Level.WARNING, e);
                 // TODO to be added?
 
                 return src.array().length;
+            }
+        },
+        /** whole image file */
+        thumbnail {
+            /** */
+            Map<File, String> thumbnailCache = new ConcurrentHashMap<>(); // TODO LRU
+
+            /** */
+            private String getUrl(Metadata entry) throws IOException {
+                if (thumbnailCache.containsKey(entry.file)) {
+                    return thumbnailCache.get(entry.file);
+                } else {
+                    String url = entry.driver.getThumbnail(entry.file); 
+                    thumbnailCache.put(entry.file, url);
+                    return url;
+                }
+            }
+
+            /** */
+            private byte[] getThumbnail(Metadata entry) throws IOException {
+try {
+                String url = getUrl(entry);
+                InputStream is = new BufferedInputStream(new URL(url).openStream());
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buffer = new byte[8024];
+                int l = 0;
+                while ((l = is.read(buffer)) != -1) {
+                    baos.write(buffer, 0, l);
+                }
+                return baos.toByteArray();
+} catch (java.io.FileNotFoundException e) {
+ Debug.println(Level.WARNING, e.toString());
+ return null;
+}
+            }
+
+            @Override
+            public int size(Metadata entry) throws IOException {
+                String url = getUrl(entry);
+                if (url != null) {
+                    byte[] thumbnail = getThumbnail(entry);
+                    if (thumbnail != null) {
+                        return thumbnail.length;
+                    }
+                }
+                return 0;
+            }
+
+            @Override
+            public int read(Metadata entry, ByteBuffer dst) throws IOException {
+                String url = getUrl(entry);
+                if (url != null) {
+                    byte[] thumbnail = getThumbnail(entry);
+                    if (thumbnail != null) {
+                        dst.put(thumbnail);
+                        return thumbnail.length;
+                    }
+                }
+                return 0;
+            }
+
+            @Override
+            public int write(Metadata entry, ByteBuffer src) throws IOException {
+                byte[] thumbnail = src.array();
+                entry.driver.setThumbnail(entry.file, thumbnail);
+                return thumbnail.length;
             }
         };
     }
