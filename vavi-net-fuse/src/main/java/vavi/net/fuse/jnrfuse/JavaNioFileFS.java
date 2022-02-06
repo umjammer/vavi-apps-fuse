@@ -124,19 +124,23 @@ Debug.println(Level.FINE, "getattr: " + path);
                 long mode = JnrFuseFuse.permissionsToMode(PosixFileAttributes.class.cast(attributes).permissions());
                 if (attributes.isDirectory()) {
                     stat.st_mode.set(FileStat.S_IFDIR | mode);
-                    stat.st_atim.tv_sec.set(attributes.lastModifiedTime().to(TimeUnit.SECONDS));
+                    stat.st_mtim.tv_sec.set(attributes.lastModifiedTime().to(TimeUnit.SECONDS));
+                    stat.st_ctim.tv_sec.set(attributes.creationTime().to(TimeUnit.SECONDS));
                 } else {
                     stat.st_mode.set(FileStat.S_IFREG | mode);
-                    stat.st_atim.tv_sec.set(attributes.lastModifiedTime().to(TimeUnit.SECONDS));
+                    stat.st_mtim.tv_sec.set(attributes.lastModifiedTime().to(TimeUnit.SECONDS));
+                    stat.st_ctim.tv_sec.set(attributes.creationTime().to(TimeUnit.SECONDS));
                     stat.st_size.set(attributes.size());
                 }
             } else {
                 if (attributes.isDirectory()) {
                     stat.st_mode.set(FileStat.S_IFDIR | 0755);
-                    stat.st_atim.tv_sec.set(attributes.lastModifiedTime().to(TimeUnit.SECONDS));
+                    stat.st_mtim.tv_sec.set(attributes.lastModifiedTime().to(TimeUnit.SECONDS));
+                    stat.st_ctim.tv_sec.set(attributes.creationTime().to(TimeUnit.SECONDS));
                 } else {
                     stat.st_mode.set(FileStat.S_IFREG | 0644);
-                    stat.st_atim.tv_sec.set(attributes.lastModifiedTime().to(TimeUnit.SECONDS));
+                    stat.st_mtim.tv_sec.set(attributes.lastModifiedTime().to(TimeUnit.SECONDS));
+                    stat.st_ctim.tv_sec.set(attributes.creationTime().to(TimeUnit.SECONDS));
                     stat.st_size.set(attributes.size());
                 }
             }
