@@ -12,21 +12,25 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 import java.util.Collections;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import vavi.nio.file.googledrive.GoogleDriveUserDefinedFileAttributesProvider.RevisionsUtil;
 import vavi.util.Debug;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 /**
- * GoogleDrive user:revision.
+ * GoogleDrive attribute user:revision.
+ *
+ * TODO upload a file as new revision
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2021/10/30 umjammer initial version <br>
@@ -34,14 +38,42 @@ import static java.nio.file.FileVisitResult.CONTINUE;
 public class Main7 {
 
     @Test
-    @Disabled
     void test01() throws Exception {
         String email = System.getenv("GOOGLE_TEST_ACCOUNT");
 
         URI uri = URI.create("googledrive:///?id=" + email);
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
-        // ...
+        Path src = Paths.get(Main7.class.getResource("/Hello.java").toURI());
+        Path dst = fs.getPath("/tmp/vavi.nio.file.googledrive.Main7-" + System.currentTimeMillis());
+
+        // revision 1
+        Files.copy(src, dst);
+
+        Thread.sleep(100);
+
+        // revision 2
+        // copy options don't be passed to the upload method of file system driver...
+        Files.copy(src, Files.newOutputStream(dst, GoogleDriveOpenOption.INPORT_AS_NEW_REVISION));
+
+        byte[] in = (byte[]) Files.getAttribute(dst, "user:revisions");
+        String[] revisions = RevisionsUtil.split(in);
+        assertEquals(2, revisions.length);
+System.err.println(dst);
+Arrays.stream(revisions).forEach(System.err::println);
+
+        // revision latest
+        byte[] out = RevisionsUtil.getLatestOnly(in);
+        Files.setAttribute(dst, "user:revisions", out);
+
+        in = (byte[]) Files.getAttribute(dst, "user:revisions");
+        revisions = RevisionsUtil.split(in);
+        assertEquals(1, revisions.length);
+System.err.println("---- latest ---");
+Arrays.stream(revisions).forEach(System.err::println);
+
+        // clean up
+        Files.delete(dst);
 
         fs.close();
     }
@@ -89,12 +121,13 @@ System.err.println(new String(out));
 
 System.err.println("--- after ---");
         in = (byte[]) Files.getAttribute(path, "user:revisions");
-        RevisionsUtil.getLatestOnly(in);
+        String[] as = RevisionsUtil.split(in);
+Arrays.stream(as).forEach(System.err::println);
 
         fs.close();
     }
 
-    static class FileSearcher extends SimpleFileVisitor<Path> {
+    static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
@@ -113,7 +146,9 @@ System.err.println(new String(out));
 
 System.err.println("--- after ---");
                         in = (byte[]) Files.getAttribute(file, "user:revisions");
-                        RevisionsUtil.getLatestOnly(in);
+                        String[] as = RevisionsUtil.split(in);
+Arrays.stream(as).forEach(System.err::println);
+System.err.println("\n");
                     }
                 } catch (IOException e) {
                     System.err.println(e);
@@ -141,7 +176,7 @@ System.err.println("--- after ---");
         URI uri = URI.create("googledrive:///?id=" + email);
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
-        Files.walkFileTree(fs.getPath("/Books/Calibre Library"), new FileSearcher());
+        Files.walkFileTree(fs.getPath("/Books/Comics/"), new MyFileVisitor());
 
         fs.close();
 Debug.println("Done");

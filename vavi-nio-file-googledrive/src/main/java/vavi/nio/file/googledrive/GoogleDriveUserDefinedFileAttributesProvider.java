@@ -108,8 +108,12 @@ Debug.println(Level.FINE, "write " + name() + ": " + description);
                 return description.getBytes().length;
             }
         },
+        /** {@link String}, "\n" separated */
         revisions {
-            Map<File, List<String>> revisionsCache = new ConcurrentHashMap<>();
+            /** */
+            Map<File, List<String>> revisionsCache = new ConcurrentHashMap<>(); // TODO LRU
+
+            /** */
             private List<String> getRevisions(Metadata entry) throws IOException {
                 if (revisionsCache.containsKey(entry.file)) {
                     return revisionsCache.get(entry.file);
@@ -120,6 +124,8 @@ Debug.println(Level.FINE, "write " + name() + ": " + description);
                     return results;
                 }
             }
+
+            @Override
             public int size(Metadata entry) throws IOException {
                 // joined by '\n'
                 int len = getRevisions(entry).stream().mapToInt(r -> r.toString().getBytes().length + 1).sum() - 1;
@@ -128,6 +134,8 @@ if (len > 0) {
 }
                 return len;
             }
+
+            @Override
             public int read(Metadata entry, ByteBuffer dst) throws IOException {
 Debug.println(Level.FINE, "read " + name() + ":\n" + String.join("\n", getRevisions(entry)));
                 dst.put(String.join("\n", getRevisions(entry)).getBytes());
@@ -170,12 +178,14 @@ Debug.printStackTrace(Level.WARNING, e);
         };
     }
 
-    static Gson gson = new GsonBuilder().create();
+    /** */
+    private static Gson gson = new GsonBuilder().create();
 
+    /** utility */
     public static class RevisionsUtil {
         /** sort by "modifiedTime" desc */
-        static byte[] getLatestOnly(Object revisions) {
-            List<Map<String, String>> revisionList = Arrays.stream(split((byte[]) revisions))
+        public static byte[] getLatestOnly(byte[] revisions) {
+            List<Map<String, String>> revisionList = Arrays.stream(split(revisions))
                     .map(r -> gson.fromJson(r, Map.class))
                     .sorted((o1, o2) -> {
                         OffsetDateTime odt1 = OffsetDateTime.parse((String) o1.get("modifiedTime"));
@@ -183,13 +193,13 @@ Debug.printStackTrace(Level.WARNING, e);
                         return odt2.compareTo(odt1);
                     })
                     .collect(Collectors.toList());
-            revisionList.forEach(System.err::println);
+//revisionList.forEach(System.err::println);
             return gson.toJson(revisionList.get(0)).getBytes(); 
         }
-        static String[] split(byte[] revisions) {
+        public static String[] split(byte[] revisions) {
             return new String((byte[]) revisions).split("\n");
         }
-        static int size(Object revisions) {
+        public static int size(Object revisions) {
             return split((byte[]) revisions).length;
         }
     }

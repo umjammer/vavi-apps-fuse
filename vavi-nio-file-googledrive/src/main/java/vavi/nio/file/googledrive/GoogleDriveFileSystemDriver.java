@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.CopyOption;
 import java.nio.file.FileStore;
+import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent.Kind;
@@ -30,6 +31,7 @@ import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.googleapis.media.MediaHttpUploader;
 import com.google.api.client.http.AbstractInputStreamContent;
+import com.google.api.client.http.InputStreamContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
@@ -155,9 +157,10 @@ Debug.println("NOTIFICATION: parent not found: " + e);
 
     @Override
     protected InputStream downloadEntry(File entry, Path path, Set<? extends OpenOption> options) throws IOException {
-        // TODO detect automatically?
+        // TODO detect automatically? (w/o options)
+        if (options != null && options.stream().anyMatch(o -> o.equals(GoogleDriveOpenOption.EXPORT_WITH_GDOCS_DOCX) ||
+                                                         o.equals(GoogleDriveOpenOption.EXPORT_WITH_GDOCS_XLSX))) {
         GoogleDriveOpenOption option = Util.getOneOfOptions(GoogleDriveOpenOption.class, options);
-        if (option != null) {
             return drive.files().export(entry.getId(), option.getValue()).executeMediaAsInputStream();
         } else {
             return drive.files().get(entry.getId()).executeMediaAsInputStream();
@@ -165,12 +168,28 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     }
 
     @Override
-    protected OutputStream uploadEntry(File parentEntry, Path path, Set<? extends OpenOption> options) throws IOException {
-        // TODO detect automatically?
-        @SuppressWarnings("unused")
-        GoogleDriveOpenOption option = Util.getOneOfOptions(GoogleDriveOpenOption.class, options);
+    protected void whenUploadEntryExists(File sourceEntry, Path path, Set<? extends OpenOption> options) throws IOException {
+        if (options == null || !options.stream().anyMatch(o -> o.equals(GoogleDriveOpenOption.INPORT_AS_NEW_REVISION))) {
+            super.whenUploadEntryExists(sourceEntry, path, options);
+        }
 
-        //
+        File entry = new File();
+
+        AbstractInputStreamContent mediaContent = new InputStreamContent(null, Files.newInputStream(path));
+        Drive.Files.Update updator = drive.files().update(sourceEntry.getId(), entry, mediaContent);
+        MediaHttpUploader uploader = updator.getMediaHttpUploader();
+        uploader.setDirectUploadEnabled(true);
+        // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
+        uploader.setProgressListener(u -> { Debug.println("new revision progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()); });
+        updator.getMediaHttpUploader();
+        File newEntry = updator.setFields(ENTRY_FIELDS).execute();
+Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.getSize());
+        updateEntry(path, newEntry);
+    }
+
+    @Override
+    protected OutputStream uploadEntry(File parentEntry, Path path, Set<? extends OpenOption> options) throws IOException {
+
         return new BufferedOutputStream(new Util.StealingOutputStreamForUploading<File>() {
             @Override
             protected File upload() throws IOException {
