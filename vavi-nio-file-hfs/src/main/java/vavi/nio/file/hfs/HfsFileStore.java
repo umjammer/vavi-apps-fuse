@@ -8,6 +8,7 @@ package vavi.nio.file.hfs;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
+import java.util.logging.Level;
 
 import org.catacombae.storage.fs.FSFolder;
 import org.catacombae.storage.fs.FSForkType;
@@ -15,6 +16,9 @@ import org.catacombae.storage.fs.hfscommon.HFSCommonFileSystemHandler;
 
 import com.github.fge.filesystem.attributes.FileAttributesFactory;
 import com.github.fge.filesystem.filestore.FileStoreBase;
+
+import vavi.util.Debug;
+import vavi.util.StringUtil;
 
 
 /**
@@ -35,6 +39,9 @@ public final class HfsFileStore extends FileStoreBase {
     public HfsFileStore(HFSCommonFileSystemHandler handler, final FileAttributesFactory factory) {
         super("hfs", factory, false);
         this.root = handler.getRoot();
+Debug.println(Level.FINE, StringUtil.paramString(root));
+Debug.println(Level.FINE, StringUtil.paramString(root.getAllForks()));
+Debug.println(Level.FINE, StringUtil.paramString(root.getAttributes()));
     }
 
     /**
@@ -46,7 +53,7 @@ public final class HfsFileStore extends FileStoreBase {
      */
     @Override
     public long getTotalSpace() throws IOException {
-        return root.getForkByType(FSForkType.DATA).getLength();
+        return 100000000;
     }
 
     /**
@@ -67,7 +74,7 @@ public final class HfsFileStore extends FileStoreBase {
      */
     @Override
     public long getUsableSpace() throws IOException {
-        return root.getForkByType(FSForkType.DATA).getLength();
+        return 100000000;
     }
 
     /**
@@ -86,6 +93,6 @@ public final class HfsFileStore extends FileStoreBase {
      */
     @Override
     public long getUnallocatedSpace() throws IOException {
-        return root.getForkByType(FSForkType.DATA).getLength();
+        return 100000000;
     }
 }
