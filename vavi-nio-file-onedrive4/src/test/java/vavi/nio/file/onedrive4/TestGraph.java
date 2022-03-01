@@ -9,9 +9,13 @@ package vavi.nio.file.onedrive4;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.concurrency.ChunkedUploadProvider;
@@ -27,9 +31,12 @@ import com.microsoft.graph.models.extensions.DriveItemCopyBody;
 import com.microsoft.graph.models.extensions.DriveItemUploadableProperties;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.models.extensions.ItemReference;
+import com.microsoft.graph.models.extensions.ThumbnailSet;
 import com.microsoft.graph.models.extensions.UploadSession;
+import com.microsoft.graph.options.QueryOption;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 import com.microsoft.graph.requests.extensions.IDriveItemCopyRequest;
+import com.microsoft.graph.requests.extensions.IThumbnailSetCollectionPage;
 
 import vavi.net.auth.WithTotpUserCredential;
 import vavi.net.auth.oauth2.OAuth2AppCredential;
@@ -40,6 +47,9 @@ import vavi.nio.file.onedrive4.graph.LraMonitorProvider;
 import vavi.nio.file.onedrive4.graph.LraMonitorResponseHandler;
 import vavi.nio.file.onedrive4.graph.LraMonitorResult;
 import vavi.nio.file.onedrive4.graph.LraSession;
+import vavi.nio.file.onedrive4.graph.ThumbnailUploadProvider;
+import vavi.util.Debug;
+import vavi.util.StringUtil;
 import vavi.util.properties.annotation.PropsEntity;
 
 
@@ -51,28 +61,42 @@ import vavi.util.properties.annotation.PropsEntity;
  */
 public class TestGraph {
 
+    static {
+        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod", "(" +
+                           "sun\\.util\\.logging\\.\\w*Log\\w*#\\w+" + "|" +
+                           "jdk\\.internal\\.event\\.EventHelper#log\\w+" +
+                           ")");
+    }
+
     /**
      * @param args 0: email
      */
     public static void main(String[] args) throws Exception {
-        String email = args[0];
+//        String email = args[0];
+        String email = "snaohide@hotmail.com";
 
         TestGraph app = new TestGraph();
         app.auth(email);
-        app.testCopy();
+//        app.testCopy();
+        app.testThumbnail();
+        app.close();
     }
 
-    /** */
+    void close() {
+        auth2.close();
+    }
+
+    MicrosoftGraphOAuth2 auth2;
+
+    /** @after {@link #client} */
     void auth(String email) throws IOException {
 
         OAuth2AppCredential appCredential = new MicrosoftGraphLocalAppCredential();
         PropsEntity.Util.bind(appCredential);
 
-        PropsEntity.Util.bind(this);
-
         WithTotpUserCredential userCredential = new MicrosoftLocalUserCredential(email);
-        @SuppressWarnings("resource")
-        String accesssToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
+        auth2 = new MicrosoftGraphOAuth2(appCredential, true);
+        String accesssToken = auth2.authorize(userCredential);
 
         client = GraphServiceClient.builder()
                 .authenticationProvider(new IAuthenticationProvider() {
@@ -167,6 +191,33 @@ public class TestGraph {
                     ex.printStackTrace();
                 }
             });
+    }
+
+    /** */
+    void testThumbnail() throws Exception {
+        Path p = Paths.get(TestGraph.class.getResource("/duke.jpg").toURI());
+        byte[] b = Files.readAllBytes(p);
+
+        DriveItem sourceEntry = client.drive().root().itemWithPath("tmp/test.zip").buildRequest().get();
+
+        ThumbnailUploadProvider provider = new ThumbnailUploadProvider(sourceEntry, client);
+        provider.upload(b);
+Debug.println("upload done");
+
+        Thread.sleep(3000);
+
+        IThumbnailSetCollectionPage page = client.drive().items(sourceEntry.id)
+            .thumbnails()
+            .buildRequest(Arrays.asList(new QueryOption("select", "source")))
+            .get();
+        ThumbnailSet set = page.getCurrentPage().get(0);
+Debug.println("set: " + StringUtil.paramString(set));
+Debug.println("thumbnail url: " + set.source.url);
+
+        Path dir = Paths.get("tmp");
+        Path out = dir.resolve("thumbnail.jpg");
+
+        Files.copy(new URL(set.source.url).openStream(), out, StandardCopyOption.REPLACE_EXISTING);
     }
 }
 

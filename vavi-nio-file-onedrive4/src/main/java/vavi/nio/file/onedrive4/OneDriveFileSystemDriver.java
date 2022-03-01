@@ -19,10 +19,12 @@ import java.nio.file.Path;
 import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.logging.Level;
 
 import com.github.fge.filesystem.driver.CachedFileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
@@ -41,9 +43,12 @@ import com.microsoft.graph.models.extensions.DriveItemUploadableProperties;
 import com.microsoft.graph.models.extensions.Folder;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.models.extensions.ItemReference;
+import com.microsoft.graph.models.extensions.ThumbnailSet;
 import com.microsoft.graph.models.extensions.UploadSession;
+import com.microsoft.graph.options.QueryOption;
 import com.microsoft.graph.requests.extensions.IDriveItemCollectionPage;
 import com.microsoft.graph.requests.extensions.IDriveItemCopyRequest;
+import com.microsoft.graph.requests.extensions.IThumbnailSetCollectionPage;
 
 import vavi.nio.file.Util;
 import vavi.nio.file.onedrive4.OneDriveFileAttributesFactory.Metadata;
@@ -51,6 +56,7 @@ import vavi.nio.file.onedrive4.graph.LraMonitorProvider;
 import vavi.nio.file.onedrive4.graph.LraMonitorResponseHandler;
 import vavi.nio.file.onedrive4.graph.LraMonitorResult;
 import vavi.nio.file.onedrive4.graph.LraSession;
+import vavi.nio.file.onedrive4.graph.ThumbnailUploadProvider;
 import vavi.util.Debug;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
@@ -371,9 +377,34 @@ Debug.println("copy done: " + result.id);
     void patchEntryDescription(DriveItem sourceEntry, String description) throws IOException {
         DriveItem preEntry = new DriveItem();
         preEntry.description = description;
-        DriveItem patchedEntry = client.drive().items(sourceEntry.id).buildRequest().patch(preEntry);
+        DriveItem newEntry = client.drive().items(sourceEntry.id).buildRequest().patch(preEntry);
         Path path = cache.getEntry(sourceEntry);
         cache.removeEntry(path);
-        cache.addEntry(path, patchedEntry);
+        cache.addEntry(path, newEntry);
+    }
+
+    /**
+     * attributes user:thumbnail
+     * @param image currently only jpeg is available.
+     */
+    void setThumbnail(DriveItem sourceEntry, byte[] image) throws IOException {
+        ThumbnailUploadProvider provider = new ThumbnailUploadProvider(sourceEntry, client);
+        provider.upload(image);
+Debug.println(Level.INFO, "thumbnail updated: " + sourceEntry.name + ", size: " + image.length);
+    }
+
+    /**
+     * attributes user:thumbnail
+     * @return url
+     * @see "https://stackoverflow.com/a/45027853"
+     */
+    String getThumbnail(DriveItem sourceEntry) throws IOException {
+        IThumbnailSetCollectionPage page = client.drive().items(sourceEntry.id)
+                .thumbnails()
+                .buildRequest(Arrays.asList(new QueryOption("select", "source")))
+                .get();
+        ThumbnailSet set = page.getCurrentPage().get(0);
+Debug.println(Level.INFO, "thumbnail url: " + set.source.url);
+        return set.source.url;
     }
 }
