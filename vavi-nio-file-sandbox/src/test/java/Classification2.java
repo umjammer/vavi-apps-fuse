@@ -161,12 +161,6 @@ public final class Classification2 {
             return CONTINUE;
         }
 
-        @Override
-        public FileVisitResult visitFileFailed(Path file, IOException exc) {
-            System.err.println(exc);
-            return CONTINUE;
-        }
-
         List<Path> result() {
             return list;
         }

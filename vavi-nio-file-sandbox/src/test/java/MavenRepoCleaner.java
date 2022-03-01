@@ -11,14 +11,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.stream.StreamSupport;
 
 import vavi.util.Debug;
 
-import static java.nio.file.FileVisitResult.CONTINUE;
-
 import static com.rainerhahnekamp.sneakythrow.Sneaky.sneaked;
+import static java.nio.file.FileVisitResult.CONTINUE;
 
 
 /**
@@ -44,11 +42,6 @@ Debug.println("Done");
     static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
         @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
-            return CONTINUE;
-        }
-
-        @Override
         public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
             try {
                 long c1 = Files.list(dir).count();
@@ -66,38 +59,32 @@ Debug.println("Done");
                 iterable.close();
 
                 if (c1 == 0) {
+                    // no files
                     System.out.println("DIR0: " + dir);
 
-System.err.println("DEL0: " + dir);
                     Files.delete(dir);
                 } else if (c1 == c2) {
+                    // only eclipse files
                     System.out.println("DIR1: " + dir);
 
-System.err.println("DEL1: " + dir);
                     Files.list(dir).forEach(sneaked(Files::delete));
                     Files.delete(dir);
                 } else if (c1 == c2 + c4) {
+                    // only eclipse files 2
                     System.out.println("DIR2: " + dir);
 
-System.err.println("DEL2: " + dir);
                     Files.list(dir).forEach(sneaked(Files::delete));
                     Files.delete(dir);
                 } else if (c1 == c3) {
-                    System.out.println("DIR1X " + dir);
+                    // only mac files
+                    System.out.println("DIRX " + dir);
 
-System.err.println("DELX: " + dir);
                     Files.list(dir).forEach(sneaked(Files::delete));
                     Files.delete(dir);
                 }
             } catch (IOException e) {
                 System.err.println("ERROR: " + dir + ", " + e.getMessage());
             }
-            return CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFileFailed(Path file, IOException exc) {
-            System.err.println(exc);
             return CONTINUE;
         }
     }

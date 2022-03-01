@@ -77,17 +77,6 @@ public final class CloserFinder {
             return CONTINUE;
         }
 
-        @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-            return CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFileFailed(Path file, IOException exc) {
-            System.err.println(exc);
-            return CONTINUE;
-        }
-
         public List<Path> result() {
             return list;
         }

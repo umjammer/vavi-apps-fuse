@@ -149,12 +149,5 @@ System.out.println(description + "\n\n");
             }
             return CONTINUE;
         }
-
-        @Override
-        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-System.err.println(file);
-exc.printStackTrace();
-            return CONTINUE;
-        }
     }
 }
