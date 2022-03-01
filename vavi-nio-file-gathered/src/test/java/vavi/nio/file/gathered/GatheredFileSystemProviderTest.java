@@ -26,7 +26,7 @@ import com.github.fge.fs.dropbox.DropBoxFileSystemProvider;
 import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.box.BoxLocalAppCredential;
 import vavi.net.auth.oauth2.dropbox.DropBoxLocalAppCredential;
-import vavi.net.auth.oauth2.google.GoogleLocalAppCredential;
+import vavi.net.auth.oauth2.google.GoogleLocalOAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
 import vavi.net.fuse.Fuse;
 import vavi.nio.file.googledrive.GoogleDriveFileSystemProvider;
@@ -86,7 +86,7 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
     /** */
     private OAuth2AppCredential microsoftAppCredential = new MicrosoftGraphLocalAppCredential();
     /** */
-    private OAuth2AppCredential googleAppCredential = new GoogleLocalAppCredential("googledrive");
+    private OAuth2AppCredential googleAppCredential = new GoogleLocalOAuth2AppCredential("googledrive");
     /** */
     private OAuth2AppCredential boxAppCredential = new BoxLocalAppCredential();
     /** */

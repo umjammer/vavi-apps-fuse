@@ -21,8 +21,8 @@ import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.services.drive.Drive;
 
 import vavi.net.auth.WithTotpUserCredential;
-import vavi.net.auth.oauth2.google.GoogleAppCredential;
-import vavi.net.auth.oauth2.google.GoogleLocalAppCredential;
+import vavi.net.auth.oauth2.google.GoogleOAuth2AppCredential;
+import vavi.net.auth.oauth2.google.GoogleLocalOAuth2AppCredential;
 import vavi.net.auth.oauth2.google.GoogleOAuth2;
 import vavi.net.auth.web.google.GoogleLocalUserCredential;
 import vavi.util.Debug;
@@ -54,10 +54,10 @@ public class WebHookTest3 {
 
     void test() throws Exception {
         WithTotpUserCredential userCredential = new GoogleLocalUserCredential(email);
-        GoogleAppCredential appCredential = new GoogleLocalAppCredential("googledrive");
+        GoogleOAuth2AppCredential appCredential = new GoogleLocalOAuth2AppCredential("googledrive");
 
         Credential credential = new GoogleOAuth2(appCredential).authorize(userCredential);
-        Drive driveService = new Drive.Builder(appCredential.getHttpTransport(), appCredential.getJsonFactory(), credential)
+        Drive driveService = new Drive.Builder(GoogleOAuth2.getHttpTransport(), GoogleOAuth2.getJsonFactory(), credential)
                 .setHttpRequestInitializer(new HttpRequestInitializer() {
                     @Override
                     public void initialize(HttpRequest httpRequest) throws IOException {
