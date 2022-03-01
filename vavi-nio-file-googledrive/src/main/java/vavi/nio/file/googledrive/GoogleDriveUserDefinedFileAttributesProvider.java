@@ -201,11 +201,14 @@ Debug.printStackTrace(Level.WARNING, e);
 
             /** */
             private String getUrl(Metadata entry) throws IOException {
-                if (thumbnailCache.containsKey(entry.file)) {
-                    return thumbnailCache.get(entry.file);
+                String url = thumbnailCache.get(entry.file);
+                if (url != null) {
+                    return url;
                 } else {
-                    String url = entry.driver.getThumbnail(entry.file); 
-                    thumbnailCache.put(entry.file, url);
+                    url = entry.driver.getThumbnail(entry.file);
+                    if (url != null) {
+                        thumbnailCache.put(entry.file, url);
+                    }
                     return url;
                 }
             }

@@ -41,6 +41,7 @@ import com.google.api.services.drive.model.RevisionList;
 import vavi.nio.file.Util;
 import vavi.nio.file.googledrive.GoogleDriveFileAttributesFactory.Metadata;
 import vavi.util.Debug;
+import vavi.util.StringUtil;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static vavi.nio.file.Util.toFilenameString;
@@ -405,8 +406,8 @@ Debug.println(Level.INFO, "delete revision: " + entry.getName() + ", revision: "
         File entry = new File();
         entry.setContentHints(contentHints);
 
-        drive.files().update(sourceEntry.getId(), entry).execute();
-Debug.println(Level.INFO, "thumbnail updated: " + sourceEntry.getName() + ", size: " + image.length);
+        File newEntry = drive.files().update(sourceEntry.getId(), entry).setFields("thumbnailLink").execute();
+Debug.println(Level.INFO, "thumbnail updated: " + sourceEntry.getName() + ", size: " + image.length + ", " + StringUtil.paramString(newEntry));
     }
 
     /**
