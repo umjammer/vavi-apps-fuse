@@ -5,7 +5,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.7-SNAPSHOT</version>
+    <version>0.1.7</version>
   </parent>
 
   <artifactId>vavi-nio-file-googledrive</artifactId>
@@ -54,7 +54,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.22.2</version>
             <configuration>
               <environmentVariables>
                 <TEST4_ACCOUNT>${test4.account}</TEST4_ACCOUNT>

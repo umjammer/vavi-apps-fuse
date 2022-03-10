@@ -7,7 +7,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.7-SNAPSHOT</version>
+    <version>0.1.7</version>
   </parent>
 
   <artifactId>vavi-net-fuse</artifactId>
@@ -20,6 +20,59 @@
   <issueManagement>
     <url>https://github.com/umjammer/vavi-net-fuse/issues</url>
   </issueManagement>
+
+  <profiles>
+    <profile>
+      <id>local (not on CI)</id>
+      <activation>
+        <file>
+          <exists>${basedir}/local.properties</exists>
+        </file>
+        <property>
+          <name>env.JITPACK</name>
+          <value>!true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>properties-maven-plugin</artifactId>
+            <version>1.0.0</version>
+            <executions>
+              <execution>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>read-project-properties</goal>
+                </goals>
+                <configuration>
+                  <files>
+                    <file>${basedir}/local.properties</file>
+                  </files>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <includes>
+                <include>**/Main4</include>
+              </includes>
+              <environmentVariables>
+                <TEST4_MOUNT_POINT>${test.mountPoint}</TEST4_MOUNT_POINT>
+              </environmentVariables>
+              <argLine>
+                -Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties
+                -Djna.library.path=/usr/local/lib
+              </argLine>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
   <build>
     <plugins>
@@ -42,28 +95,24 @@
       <!-- fuse jnr (co.paralleluniverse) -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>javafs</artifactId>
-      <version>0.1.5v</version>
+      <version>0.1.6v</version>
     </dependency>
     <dependency>
-      <!-- fuse jna -->
+      <!-- fuse jna (net.fuse-jna) -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>fuse-jna</artifactId>
-      <version>1.0.3v</version>
+      <version>1.0.4v</version>
     </dependency>
     <dependency>
-      <!-- jnr fuse
-           jnr-ffi >= 2.1.8 has problems, see https://github.com/SerCeMan/jnr-fuse/issues/72
-           currently with this pom.xml jnr-ffi is overwritten by javafs dependencies, so it works fine.
-       -->
       <groupId>com.github.serceman</groupId>
       <artifactId>jnr-fuse</artifactId>
-      <version>master-SNAPSHOT</version>
+      <version>0.5.7</version>
     </dependency>
 
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
-      <version>1.1.4</version>
+      <version>1.1.6</version>
     </dependency>
 
     <dependency>
