@@ -56,6 +56,7 @@ import static org.junit.jupiter.api.Assertions.fail;
  *
  * @author Colin Decker
  */
+@Disabled
 public class WatchServiceTest {
 
     private FileSystem fs;
@@ -81,7 +82,6 @@ public class WatchServiceTest {
     }
 
     @Test
-    @Disabled
     public void testNewWatcher() {
 //      assertTrue(watcher.isOpen());
 //    assertFalse(watcher.isPolling());

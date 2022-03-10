@@ -24,6 +24,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
@@ -38,6 +39,7 @@ import static vavi.nio.file.Base.removeTree;
  * Date: 2/13/12
  * Time: 9:47 PM
  */
+@Disabled
 public class WatchDirectoryTest {
 
     static Path dir1Path;
