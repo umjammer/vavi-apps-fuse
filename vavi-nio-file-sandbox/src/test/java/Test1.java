@@ -21,6 +21,7 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.xpath.XPathExpression;
 import org.jdom2.xpath.XPathFactory;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
 import vavi.util.Debug;
 
@@ -84,6 +85,7 @@ Debug.println("support user attr view: " + r);
     }
 
     @Test
+    @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
     void test06() throws Exception {
         Path path = Paths.get("/Volumes/GoogleDrive/Books/Comics");
         UserDefinedFileAttributeView userDefinedFAView = Files.getFileAttributeView(path, UserDefinedFileAttributeView.class);
