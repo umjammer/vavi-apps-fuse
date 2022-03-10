@@ -14,16 +14,11 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
-import vavi.net.auth.oauth2.OAuth2AppCredential;
-import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
 import vavi.nio.file.Util;
-import vavi.nio.file.onedrive.OneDriveFileSystemProvider;
 import vavi.util.LevenshteinDistance;
-import vavi.util.properties.annotation.PropsEntity;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
@@ -39,22 +34,16 @@ public final class CloserFinder {
     /**
      * @param args 0: email, 1: dir
      */
-    public static void main(final String... args) throws IOException {
+    public static void main(String[] args) throws IOException {
         String email = args[0];
         String cwd = args[1];
 
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        OAuth2AppCredential appCredential = new MicrosoftLocalAppCredential();
-        PropsEntity.Util.bind(appCredential);
-
-        Map<String, Object> env = new HashMap<>();
-        env.put(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL, appCredential);
-
-        FileSystem onedrivefs = FileSystems.newFileSystem(uri, env);
+        FileSystem onedrivefs = FileSystems.newFileSystem(uri, Collections.emptyMap());
 
         Path root = onedrivefs.getPath(cwd);
-        FileSearcher fileSearcher = new FileSearcher();
+        MyFileVisitor fileSearcher = new MyFileVisitor();
         Files.walkFileTree(root, fileSearcher);
         fileSearcher.result().parallelStream()
             .forEach(path1 -> {
@@ -74,11 +63,9 @@ public final class CloserFinder {
                         }
                     });
             });
-
-        System.exit(0);
     }
 
-    static class FileSearcher extends SimpleFileVisitor<Path> {
+    static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
         private List<Path> list = new ArrayList<>();
 
@@ -87,17 +74,6 @@ public final class CloserFinder {
             if (attr.isRegularFile()) {
                 list.add(file);
             }
-            return CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-            return CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFileFailed(Path file, IOException exc) {
-            System.err.println(exc);
             return CONTINUE;
         }
 

@@ -31,7 +31,7 @@ public final class Main3 {
         String email = System.getenv("GOOGLE_TEST_ACCOUNT");
 
         URI uri = URI.create("googledrive:///?id=" + email);
-        FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
+        FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
         testMoveFolder(fs);
     }

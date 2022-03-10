@@ -15,15 +15,10 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
-import vavi.net.auth.oauth2.OAuth2AppCredential;
-import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
 import vavi.nio.file.Util;
-import vavi.nio.file.onedrive.OneDriveFileSystemProvider;
-import vavi.util.properties.annotation.PropsEntity;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
@@ -39,7 +34,7 @@ public final class Synchronizer {
     /**
      * @param args 0: dir, 1: dir1, 2: dir2
      */
-    public static void main(final String... args) throws IOException {
+    public static void main(String[] args) throws IOException {
         String email = args[0];
         String cwd1 = args[1];
         String cwd2 = args[2];
@@ -47,22 +42,16 @@ public final class Synchronizer {
 
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        OAuth2AppCredential appCredential = new MicrosoftLocalAppCredential();
-        PropsEntity.Util.bind(appCredential);
-
-        Map<String, Object> env = new HashMap<>();
-        env.put(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL, appCredential);
-
-        FileSystem onedrivefs = FileSystems.newFileSystem(uri, env);
+        FileSystem onedrivefs = FileSystems.newFileSystem(uri, Collections.emptyMap());
 
         // onedrive
         Path root1 = onedrivefs.getPath(cwd1);
-        FileSearcher fileSearcher1 = new FileSearcher();
+        MyFileVisitor fileSearcher1 = new MyFileVisitor();
         Files.walkFileTree(root1, fileSearcher1);
 
         // local
         Path root2 = Paths.get(cwd2);
-        FileSearcher fileSearcher2 = new FileSearcher();
+        MyFileVisitor fileSearcher2 = new MyFileVisitor();
         Files.walkFileTree(root2, fileSearcher2);
 
         fileSearcher2.result().parallelStream()
@@ -83,11 +72,9 @@ public final class Synchronizer {
                     throw new IllegalStateException(e);
                 }
             });
-
-        System.exit(0);
     }
 
-    static class FileSearcher extends SimpleFileVisitor<Path> {
+    static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
         private List<Path> list = new ArrayList<>();
 

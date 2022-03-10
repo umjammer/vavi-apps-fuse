@@ -16,8 +16,6 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.Set;
 
-import javax.annotation.Nonnull;
-
 import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider;
 
 import vavi.util.archive.Entry;
@@ -35,9 +33,10 @@ import vavi.util.archive.Entry;
  */
 public final class ArchiveBasicFileAttributesProvider extends BasicFileAttributesProvider implements PosixFileAttributes {
 
-    private Entry<?> entry;
+    /** null means root */
+    private Entry entry;
 
-    public ArchiveBasicFileAttributesProvider(@Nonnull final Entry<?> entry) throws IOException {
+    public ArchiveBasicFileAttributesProvider(final Entry entry) throws IOException {
         this.entry = entry;
     }
 
@@ -54,7 +53,7 @@ public final class ArchiveBasicFileAttributesProvider extends BasicFileAttribute
      */
     @Override
     public FileTime lastModifiedTime() {
-        return FileTime.fromMillis(entry.getTime());
+        return FileTime.fromMillis(entry == null ? 0 : entry.getTime());
     }
 
     /**
@@ -62,7 +61,7 @@ public final class ArchiveBasicFileAttributesProvider extends BasicFileAttribute
      */
     @Override
     public boolean isRegularFile() {
-        return !entry.isDirectory();
+        return entry != null && !entry.isDirectory();
     }
 
     /**
@@ -70,7 +69,8 @@ public final class ArchiveBasicFileAttributesProvider extends BasicFileAttribute
      */
     @Override
     public boolean isDirectory() {
-        return entry.isDirectory();
+//Debug.println("entry: " + entry + ", " + (entry != null ? entry.isDirectory() : "means root"));
+        return entry == null || entry.isDirectory();
     }
 
     /**
@@ -84,7 +84,7 @@ public final class ArchiveBasicFileAttributesProvider extends BasicFileAttribute
      */
     @Override
     public long size() {
-        return entry.getSize();
+        return entry == null ? 0 : entry.getSize();
     }
 
     @Override

@@ -12,54 +12,46 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
-import java.nio.file.AccessDeniedException;
-import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
-import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.spi.FileSystemProvider;
+import java.nio.file.WatchEvent.Kind;
+import java.nio.file.WatchService;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import org.nuxeo.onedrive.client.CopyOperation;
+import org.nuxeo.onedrive.client.Files;
 import org.nuxeo.onedrive.client.OneDriveAPI;
-import org.nuxeo.onedrive.client.OneDriveCopyOperation;
-import org.nuxeo.onedrive.client.OneDriveDrive;
-import org.nuxeo.onedrive.client.OneDriveFile;
-import org.nuxeo.onedrive.client.OneDriveFolder;
-import org.nuxeo.onedrive.client.OneDriveItem;
-import org.nuxeo.onedrive.client.OneDriveItem.ItemIdentifierType;
 import org.nuxeo.onedrive.client.OneDriveLongRunningAction;
-import org.nuxeo.onedrive.client.OneDrivePatchOperation;
-import org.nuxeo.onedrive.client.OneDriveUploadSession;
-import org.nuxeo.onedrive.client.facets.FileSystemInfoFacet;
+import org.nuxeo.onedrive.client.PatchOperation;
+import org.nuxeo.onedrive.client.UploadSession;
+import org.nuxeo.onedrive.client.types.Drive;
+import org.nuxeo.onedrive.client.types.DriveItem;
+import org.nuxeo.onedrive.client.types.FileSystemInfo;
 
-import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase;
-import com.github.fge.filesystem.exceptions.IsDirectoryException;
+import com.github.fge.filesystem.driver.CachedFileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
-import vavi.nio.file.Cache;
 import vavi.nio.file.Util;
 import vavi.util.Debug;
 
+import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static vavi.nio.file.Util.toFilenameString;
+import static vavi.nio.file.onedrive3.OneDriveFileSystemProvider.ENV_USE_SYSTEM_WATCHER;
 
 
 /**
@@ -69,95 +61,101 @@ import static vavi.nio.file.Util.toFilenameString;
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class OneDriveFileSystemDriver extends ExtendedFileSystemDriverBase {
+public final class OneDriveFileSystemDriver extends CachedFileSystemDriver<DriveItem.Metadata> {
 
     private final OneDriveAPI client;
-    private final OneDriveDrive drive;
-    private boolean ignoreAppleDouble = false;
+    private final Drive.Metadata drive;
+
+    private Runnable closer;
+    private OneDriveWatchService systemWatcher;
 
     @SuppressWarnings("unchecked")
     public OneDriveFileSystemDriver(final FileStore fileStore,
             final FileSystemFactoryProvider provider,
             final OneDriveAPI client,
-            final OneDriveDrive drive,
-            final Map<String, ?> env) {
+            Runnable closer,
+            final Drive.Metadata drive,
+            final Map<String, ?> env) throws IOException {
         super(fileStore, provider);
         this.client = client;
-        ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
-//System.err.println("ignoreAppleDouble: " + ignoreAppleDouble);
+        this.closer = closer;
+        setEnv(env);
         this.drive = drive;
+        boolean useSystemWatcher = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_USE_SYSTEM_WATCHER, false);
+
+        if (useSystemWatcher) {
+            systemWatcher = new OneDriveWatchService(client);
+            systemWatcher.setNotificationListener(this::processNotification);
+        }
+    }
+
+    /** for system watcher */
+    private void processNotification(String id, Kind<?> kind) {
+        if (ENTRY_DELETE == kind) {
+            try {
+                Path path = cache.getEntry(e -> id.equals(e.getId()));
+                cache.removeEntry(path);
+            } catch (NoSuchElementException e) {
+Debug.println("NOTIFICATION: already deleted: " + id);
+            }
+        } else {
+            try {
+                try {
+                    Path path = cache.getEntry(e -> id.equals(e.getId()));
+Debug.println("NOTIFICATION: maybe updated: " + path);
+                    cache.removeEntry(path);
+                    cache.getEntry(path);
+                } catch (NoSuchElementException e) {
+// TODO impl
+//                    OneDriveItem.Metadata entry = drive.getApi().getMetadata(id);
+//                    Path parent = cache.getEntry(f -> entry.getParentReference().getId().equals(f.getId()));
+//                    Path path = parent.resolve(entry.getName());
+//Debug.println("NOTIFICATION: maybe created: " + path);
+//                    cache.addEntry(path, entry);
+                }
+            } catch (NoSuchElementException e) {
+Debug.println("NOTIFICATION: parent not found: " + e);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /** */
-    private Cache<OneDriveItem.Metadata> cache = new Cache<OneDriveItem.Metadata>() {
-        /**
-         * @see #ignoreAppleDouble
-         * @throws NoSuchFileException must be thrown when the path is not found in this cache
-         */
-        public OneDriveItem.Metadata getEntry(Path path) throws IOException {
-            if (cache.containsFile(path)) {
-                return cache.getFile(path);
-            } else {
-                if (ignoreAppleDouble && path.getFileName() != null && Util.isAppleDouble(path)) {
-                    throw new NoSuchFileException("ignore apple double file: " + path);
-                }
-
-//                String pathString = toPathString(path);
-//Debug.println("path: " + pathString);
-                OneDriveItem.Metadata entry;
-                if (path.getNameCount() == 0) {
-                    entry = drive.getRoot().getMetadata();
-                    cache.putFile(path, entry);
-                    return entry;
-                } else {
-                    List<Path> siblings = getDirectoryEntries(path.getParent(), false);
-                    Optional<Path> found = siblings.stream().filter(p -> path.getFileName().equals(p.getFileName())).findFirst();
-                    if (found.isPresent()) {
-                        return cache.getEntry(found.get());
-                    } else {
-                        throw new NoSuchFileException(path.toString());
-                    }
-                }
-            }
-        }
-    };
-
-    @Nonnull
-    @Override
-    public InputStream newInputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
-        final OneDriveItem.Metadata entry = cache.getEntry(path);
-
-        if (entry.isFolder()) {
-            throw new IsDirectoryException("path: " + path);
-        }
-
-        return new BufferedInputStream(OneDriveFile.class.cast(entry.getResource()).download(), Util.BUFFER_SIZE);
+    private static DriveItem asDriveItem(DriveItem.Metadata entry) {
+        return DriveItem.class.cast(entry.getItem());        
     }
 
-    @Nonnull
     @Override
-    public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
-        OneDriveItem.Metadata entry = null;
-        try {
-            entry = cache.getEntry(path);
+    protected String getFilenameString(DriveItem.Metadata entry) {
+        return entry.getName();
+    }
 
-            if (entry.isFolder()) {
-                throw new IsDirectoryException("path: " + path);
-            } else {
-                throw new FileAlreadyExistsException("path: " + path);
-            }
-        } catch (NoSuchFileException e) {
-Debug.println("newOutputStream: " + e.getMessage());
-        }
+    @Override
+    protected boolean isFolder(DriveItem.Metadata entry) {
+        return entry.isFolder();
+    }
 
+    @Override
+    protected DriveItem.Metadata getRootEntry(Path root) throws IOException {
+        return new Drive(client, drive.getId()).getRoot().getMetadata();
+    }
+
+    @Override
+    protected InputStream downloadEntry(DriveItem.Metadata entry, Path path, Set<? extends OpenOption> options) throws IOException {
+        return new BufferedInputStream(Files.download(asDriveItem(entry)), Util.BUFFER_SIZE);
+    }
+
+    @Override
+    protected OutputStream uploadEntry(DriveItem.Metadata parentEntry, Path path, Set<? extends OpenOption> options) throws IOException {
         OneDriveUploadOption uploadOption = Util.getOneOfOptions(OneDriveUploadOption.class, options);
         if (uploadOption != null) {
             // java.nio.file is highly abstracted, so here source information is lost.
             // but onedrive graph api requires content length for upload.
-            // so reluctantly we provide {@link OneDriveUploadOpenOption} for {@link java.nio.file.Files#copy} options.
+            // so reluctantly we provide {@link OneDriveUploadOption} for {@link java.nio.file.Files#copy} options.
             Path source = uploadOption.getSource();
 Debug.println("upload w/ option: " + source);
-            return uploadEntry(path, (int) Files.size(source));
+            return uploadEntry(parentEntry, path, (int) java.nio.file.Files.size(source));
         } else {
 Debug.println("upload w/o option");
             return new Util.OutputStreamForUploading() { // TODO used for only getting file length
@@ -165,7 +163,7 @@ Debug.println("upload w/o option");
                 protected void onClosed() throws IOException {
                     InputStream is = getInputStream();
 Debug.println("upload w/o option: " + is.available());
-                    OutputStream os = uploadEntry(path, is.available());
+                    OutputStream os = uploadEntry(parentEntry, path, is.available());
                     Util.transfer(is, os);
                     is.close();
                     os.close();
@@ -175,258 +173,108 @@ Debug.println("upload w/o option: " + is.available());
     }
 
     /** */
-    private OutputStream uploadEntry(Path path, int size) throws IOException {
-        OneDriveFolder folder = OneDriveFolder.class.cast(cache.getEntry(path.getParent()).getResource());
-        OneDriveFile file = new OneDriveFile(client, folder, toItemPathString(toFilenameString(path)), ItemIdentifierType.Path);
-        final OneDriveUploadSession uploadSession = file.createUploadSession();
+    private OutputStream uploadEntry(DriveItem.Metadata parentEntry, Path path, int size) throws IOException {
+        DriveItem file = new DriveItem(asDriveItem(parentEntry), toItemPathString(toFilenameString(path)));
+        final UploadSession uploadSession = Files.createUploadSession(file);
         return new BufferedOutputStream(new OneDriveOutputStream(uploadSession, path, size, newEntry -> {
-            cache.addEntry(path, newEntry);
+            updateEntry(path, newEntry);
         }), Util.BUFFER_SIZE);
     }
 
-    /** */
+    /** ms-graph doesn't accept '+' in a path string */
     private String toItemPathString(String pathString) throws IOException {
         return URLEncoder.encode(pathString, "utf-8").replace("+", "%20");
     }
 
-    @Nonnull
     @Override
-    public DirectoryStream<Path> newDirectoryStream(final Path dir,
-                                                    final DirectoryStream.Filter<? super Path> filter) throws IOException {
-        return Util.newDirectoryStream(getDirectoryEntries(dir, true), filter);
+    protected List<DriveItem.Metadata> getDirectoryEntries(DriveItem.Metadata dirEntry, Path dir) throws IOException {
+        Iterator<DriveItem.Metadata> iterator = Files.getFiles(asDriveItem(dirEntry));
+        Spliterator<DriveItem.Metadata> spliterator = Spliterators.spliteratorUnknownSize(iterator, 0);
+        return StreamSupport.stream(spliterator, false).collect(Collectors.toList());
     }
 
-
     @Override
-    public void createDirectory(final Path dir, final FileAttribute<?>... attrs) throws IOException {
-        OneDriveItem.Metadata parentEntry = cache.getEntry(dir.getParent());
-
+    protected DriveItem.Metadata createDirectoryEntry(DriveItem.Metadata parentEntry, Path dir) throws IOException {
         // TODO: how to diagnose?
-        OneDriveFolder.Metadata dirEntry = OneDriveFolder.class.cast(parentEntry.getResource()).create(toFilenameString(dir));
-
-        cache.addEntry(dir, dirEntry);
+        return Files.createFolder(asDriveItem(parentEntry), toFilenameString(dir));
     }
 
     @Override
-    public void delete(final Path path) throws IOException {
-        removeEntry(path);
+    protected boolean hasChildren(DriveItem.Metadata dirEntry, Path dir) throws IOException {
+        return getDirectoryEntries(dir, false).size() > 0;
     }
 
     @Override
-    public void copy(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
-        if (cache.existsEntry(target)) {
-            if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
-                removeEntry(target);
-            } else {
-                throw new FileAlreadyExistsException(target.toString());
-            }
-        }
-        copyEntry(source, target);
+    protected void removeEntry(DriveItem.Metadata entry, Path path) throws IOException {
+        // TODO: unknown what happens when a move operation is performed
+        // and the target already exists
+        Files.delete(asDriveItem(entry));
     }
 
     @Override
-    public void move(final Path source, final Path target, final Set<CopyOption> options) throws IOException {
-        if (cache.existsEntry(target)) {
-            if (cache.getEntry(target).isFolder()) {
-                if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
-                    // replace the target
-                    if (cache.getChildCount(target) > 0) {
-                        throw new DirectoryNotEmptyException(target.toString());
-                    } else {
-                        removeEntry(target);
-                        moveEntry(source, target, false);
-                    }
-                } else {
-                    // move into the target
-                    // TODO SPEC is FileAlreadyExistsException ?
-                    moveEntry(source, target, true);
-                }
-            } else {
-                if (options != null && options.stream().anyMatch(o -> o.equals(StandardCopyOption.REPLACE_EXISTING))) {
-                    removeEntry(target);
-                    moveEntry(source, target, false);
-                } else {
-                    throw new FileAlreadyExistsException(target.toString());
-                }
-            }
+    protected DriveItem.Metadata copyEntry(DriveItem.Metadata sourceEntry, DriveItem.Metadata targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
+        CopyOperation operation = new CopyOperation();
+        operation.rename(toFilenameString(target));
+Debug.println("target: " + targetParentEntry.getName());
+        operation.copy(asDriveItem(targetParentEntry));
+        OneDriveLongRunningAction action = Files.copy(asDriveItem(sourceEntry), operation);
+        action.await(statusObject -> {
+Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",
+statusObject.getOperation(),
+statusObject.getPercentage(),
+statusObject.getStatus());
+        });
+        return getEntry(null, target);
+    }
+
+    @Override
+    protected DriveItem.Metadata moveEntry(DriveItem.Metadata sourceEntry, DriveItem.Metadata targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
+        PatchOperation operation = new PatchOperation();
+        operation.rename(targetIsParent ? toFilenameString(source) : toFilenameString(target));
+        operation.move(asDriveItem(targetParentEntry));
+        final FileSystemInfo info = new FileSystemInfo();
+        info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
+        operation.facet("fileSystemInfo", info);
+        Files.patch(asDriveItem(sourceEntry), operation);
+        if (targetIsParent) {
+            return getEntry(null, target.resolve(source.getFileName()));
         } else {
-            if (source.getParent().equals(target.getParent())) {
-                // rename
-                renameEntry(source, target);
-            } else {
-                moveEntry(source, target, false);
-            }
+            return getEntry(null, target);
         }
     }
 
-    /**
-     * Check access modes for a path on this filesystem
-     * <p>
-     * If no modes are provided to check for, this simply checks for the
-     * existence of the path.
-     * </p>
-     *
-     * @param path the path to check
-     * @param modes the modes to check for, if any
-     * @throws IOException filesystem level error, or a plain I/O error
-     *                     if you use this with javafs (jnr-fuse), you should throw {@link NoSuchFileException} when the file not found.
-     * @see FileSystemProvider#checkAccess(Path, AccessMode...)
-     */
     @Override
-    protected void checkAccessImpl(final Path path, final AccessMode... modes) throws IOException {
-        final OneDriveItem.Metadata entry = cache.getEntry(path);
+    protected DriveItem.Metadata moveFolderEntry(DriveItem.Metadata sourceEntry, DriveItem.Metadata targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
+        PatchOperation operation = new PatchOperation();
+        operation.rename(toFilenameString(target));
+        operation.move(asDriveItem(targetParentEntry));
+        final FileSystemInfo info = new FileSystemInfo();
+        info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
+        operation.facet("fileSystemInfo", info);
+        Files.patch(asDriveItem(sourceEntry), operation);
+        return getEntry(null, target);
+    }
 
-        if (!entry.isFile()) {
-            return;
-        }
-
-        // TODO: assumed; not a file == directory
-        for (final AccessMode mode : modes) {
-            if (mode == AccessMode.EXECUTE) {
-                throw new AccessDeniedException(path.toString());
-            }
-        }
+    @Override
+    protected DriveItem.Metadata renameEntry(DriveItem.Metadata sourceEntry, DriveItem.Metadata targetParentEntry, Path source, Path target) throws IOException {
+        PatchOperation operation = new PatchOperation();
+        operation.rename(toFilenameString(target));
+        Files.patch(asDriveItem(sourceEntry), operation);
+        return getEntry(null, target);
     }
 
     @Override
     public void close() throws IOException {
-        // TODO: what to do here? OneDriveClient does not implement Closeable :(
+        closer.run();
     }
 
-    /**
-     * @throws IOException if you use this with javafs (jnr-fuse), you should throw {@link NoSuchFileException} when the file not found.
-     */
     @Nonnull
     @Override
-    protected Object getPathMetadataImpl(final Path path) throws IOException {
-        return cache.getEntry(path);
-    }
-
-    /** */
-    private List<Path> getDirectoryEntries(Path dir, boolean useCache) throws IOException {
-        final OneDriveItem.Metadata entry = cache.getEntry(dir);
-
-        if (!entry.isFolder()) {
-            throw new NotDirectoryException(dir.toString());
+    public WatchService newWatchService() {
+        try {
+            return new OneDriveWatchService(client);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
         }
-
-        List<Path> list = null;
-        if (useCache && cache.containsFolder(dir)) {
-            list = cache.getFolder(dir);
-        } else {
-            list = new ArrayList<>();
-
-            for (final OneDriveItem.Metadata child : OneDriveFolder.class.cast(entry.getResource()).getChildren()) {
-                Path childPath = dir.resolve(child.getName());
-                list.add(childPath);
-//System.err.println("child: " + childPath.toRealPath().toString());
-
-                cache.putFile(childPath, child);
-            }
-
-            cache.putFolder(dir, list);
-        }
-
-        return list;
-    }
-
-    /** for created entry */
-    private OneDriveItem.Metadata getEntry(Path path) throws IOException {
-        final OneDriveItem.Metadata parentEntry = cache.getEntry(path.getParent());
-
-        Optional<OneDriveItem.Metadata> found = StreamSupport.stream(OneDriveFolder.class.cast(parentEntry.getResource()).getChildren().spliterator(), false)
-            .filter(child -> {
-                try {
-System.err.println(child.getName() + ", " + toFilenameString(path));
-                    return child.getName().equals(toFilenameString(path));
-                } catch (IOException e) {
-                    throw new IllegalStateException(e);
-                }
-            }).findFirst();
-        if (found.isPresent()) {
-            return found.get();
-        } else {
-            throw new NoSuchFileException(path.toString());
-        }
-    }
-
-    /** */
-    private void removeEntry(Path path) throws IOException {
-        OneDriveItem.Metadata entry = cache.getEntry(path);
-        if (entry.isFolder()) {
-            if (getDirectoryEntries(path, false).size() > 0) {
-                throw new DirectoryNotEmptyException(path.toString());
-            }
-        }
-
-        // TODO: unknown what happens when a move operation is performed
-        // and the target already exists
-        entry.getResource().delete();
-
-        cache.removeEntry(path);
-    }
-
-    /** */
-    private void copyEntry(final Path source, final Path target) throws IOException {
-        OneDriveItem.Metadata sourceEntry = cache.getEntry(source);
-        OneDriveItem.Metadata targetParentEntry = cache.getEntry(target.getParent());
-        if (sourceEntry.isFile()) {
-            OneDriveCopyOperation operation = new OneDriveCopyOperation();
-            operation.rename(toFilenameString(target));
-            operation.copy(OneDriveFolder.class.cast(targetParentEntry.getResource()));
-            OneDriveLongRunningAction action = sourceEntry.getResource().copy(operation);
-            action.await(statusObject -> {
-Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",
- statusObject.getOperation(),
- statusObject.getPercentage(),
- statusObject.getStatus());
-            });
-            cache.addEntry(target, getEntry(target));
-        } else if (sourceEntry.isFolder()) {
-            throw new IsDirectoryException("source can not be a folder: " + source);
-        }
-    }
-
-    /**
-     * @param targetIsParent if the target is folder
-     */
-    private void moveEntry(final Path source, final Path target, boolean targetIsParent) throws IOException {
-        OneDriveItem.Metadata sourceEntry = cache.getEntry(source);
-        OneDriveItem.Metadata targetParentEntry = cache.getEntry(targetIsParent ? target : target.getParent());
-        if (sourceEntry.isFile()) {
-            OneDrivePatchOperation operation = new OneDrivePatchOperation();
-            operation.rename(targetIsParent ? toFilenameString(source) : toFilenameString(target));
-            operation.move(OneDriveFolder.class.cast(targetParentEntry.getResource()));
-            final FileSystemInfoFacet info = new FileSystemInfoFacet();
-            info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
-            operation.facet("fileSystemInfo", info);
-            sourceEntry.getResource().patch(operation);
-            cache.removeEntry(source);
-            if (targetIsParent) {
-                cache.addEntry(target.resolve(source.getFileName()), getEntry(target.resolve(source.getFileName())));
-            } else {
-                cache.addEntry(target, getEntry(target));
-            }
-        } else if (sourceEntry.isFolder()) {
-            OneDrivePatchOperation operation = new OneDrivePatchOperation();
-            operation.rename(toFilenameString(target));
-            operation.move(OneDriveFolder.class.cast(targetParentEntry.getResource()));
-            final FileSystemInfoFacet info = new FileSystemInfoFacet();
-            info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
-            operation.facet("fileSystemInfo", info);
-            sourceEntry.getResource().patch(operation);
-            cache.moveEntry(source, target, getEntry(target));
-        }
-    }
-
-    /** */
-    private void renameEntry(final Path source, final Path target) throws IOException {
-        OneDriveItem.Metadata sourceEntry = cache.getEntry(source);
-
-        OneDrivePatchOperation operation = new OneDrivePatchOperation();
-        operation.rename(toFilenameString(target));
-        sourceEntry.getResource().patch(operation);
-        cache.removeEntry(source);
-        cache.addEntry(target, getEntry(target));
     }
 }

@@ -1,20 +1,13 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.1.6</version>
-
-  <properties>
-    <vavi-net-auth.version>0.1.2</vavi-net-auth.version>
-    <vavi-nio-file.groupId>com.github.umjammer</vavi-nio-file.groupId>
-    <vavi-nio-file.version>0.0.12</vavi-nio-file.version>
-    <java7-fs-base.groupId>com.github.umjammer</java7-fs-base.groupId>
-    <java7-fs-base.version>0.0.10v</java7-fs-base.version>
-  </properties>
+  <version>0.1.7</version>
 
   <modules>
+    <module>vavi-nio-file-commons</module>
     <module>vavi-nio-file-googledrive</module>
     <module>vavi-nio-file-amazondrive</module>
     <module>vavi-nio-file-flickr</module>
@@ -29,71 +22,19 @@
     <module>vavi-net-fuse</module>
   </modules>
 
+  <properties>
+    <vavi-net-auth.groupId>com.github.umjammer.vavi-net-auth</vavi-net-auth.groupId>
+    <vavi-net-auth.version>0.1.4</vavi-net-auth.version>
+    <vavi-nio-file.groupId>com.github.umjammer </vavi-nio-file.groupId>
+    <vavi-nio-file.version>0.0.13</vavi-nio-file.version>
+    <java7-fs-base.groupId>com.github.umjammer</java7-fs-base.groupId>
+    <java7-fs-base.version>0.0.12v</java7-fs-base.version>
+  </properties>
+
   <packaging>pom</packaging>
   <name>vavi-apps-fuse</name>
   <url>https://github.com/umjammer/vavi-apps-fuse</url>
-  <description>0.1.0
-
-    separate into sub modules
-
-0.0.10
-
-    fix googledrive redundancy
-    use util transfer method
-
-0.0.9
-
-    fix gatheredfs name map update
-
-0.0.8
-
-    update dependencies
-
-0.0.7
-
-    catch up with vavi-net-auth
-
-0.0.6
-
-    improve google drive
-    add google drive ocr capability
-    gatheredfs alias
-
-0.0.5
-
-    relive fuse-jna as generic
-    make onedrive (cyberduck engine) work
-    make vfs (ssh engine) work
-
-0.0.4
-
-    separate nio base
-    separate oauth2
-
-0.0.3
-
-    apache commons vfs
-    archive
-    hfs
-
-0.0.2
-
-    nio.file
-
-        onedrive
-        googledrive (wip)
-        box
-        dropbox
-
-    fuse-jna
-
-        onedrive
-
-TODO
-
-    apple photos.app
-    google automatic authentication (how to click button)
-    detect gdocs automatically</description>
+  <description>fuse for java and many file systems.</description>
   <scm>
     <url>https://github.com/umjammer/vavi-apps-fuse</url>
   </scm>
@@ -105,18 +46,19 @@ TODO
     <pluginManagement>
       <plugins>
         <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.9.0</version>
           <configuration>
             <source>1.8</source>
             <target>1.8</target>
             <encoding>utf-8</encoding>
           </configuration>
-          <version>3.3</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.22.0</version>
+          <version>3.0.0-M5</version>
           <configuration>
             <argLine>-Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties</argLine>
             <trimStackTrace>false</trimStackTrace>
@@ -155,27 +97,22 @@ TODO
 
       <dependency>
         <groupId>vavi</groupId>
-        <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.6</version>
+        <artifactId>vavi-nio-file-commons</artifactId>
+        <version>0.1.7</version>
       </dependency>
 
       <dependency>
-        <groupId>org.junit.jupiter</groupId>
-        <artifactId>junit-jupiter-api</artifactId>
-        <version>5.3.0</version>
-        <scope>test</scope>
+        <groupId>vavi</groupId>
+        <artifactId>vavi-net-fuse</artifactId>
+        <version>0.1.7</version>
       </dependency>
+
       <dependency>
-        <groupId>org.junit.jupiter</groupId>
-        <artifactId>junit-jupiter-engine</artifactId>
-        <version>5.3.0</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.junit.platform</groupId>
-        <artifactId>junit-platform-commons</artifactId>
-        <version>1.5.2</version>
-        <scope>test</scope>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>5.8.1</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
 
       <dependency>
@@ -195,13 +132,13 @@ TODO
       <dependency>
         <groupId>vavi</groupId>
         <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.6</version>
+        <version>0.1.7</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>vavi</groupId>
         <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.6</version>
+        <version>0.1.7</version>
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>

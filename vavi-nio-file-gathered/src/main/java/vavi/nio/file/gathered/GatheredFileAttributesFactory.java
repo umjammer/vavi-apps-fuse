@@ -6,7 +6,7 @@
 
 package vavi.nio.file.gathered;
 
-import com.github.fge.filesystem.attributes.FileAttributesFactory;
+import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase.ExtendsdFileAttributesFactory;
 
 
 /**
@@ -15,7 +15,7 @@ import com.github.fge.filesystem.attributes.FileAttributesFactory;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/04/06 umjammer initial version <br>
  */
-public final class GatheredFileAttributesFactory extends FileAttributesFactory {
+public final class GatheredFileAttributesFactory extends ExtendsdFileAttributesFactory {
 
     public GatheredFileAttributesFactory() {
         setMetadataClass(Object.class);

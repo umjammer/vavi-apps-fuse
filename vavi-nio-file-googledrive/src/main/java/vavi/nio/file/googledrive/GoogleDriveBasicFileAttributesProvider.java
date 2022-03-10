@@ -22,6 +22,8 @@ import javax.annotation.Nonnull;
 import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider;
 import com.google.api.services.drive.model.File;
 
+import vavi.nio.file.googledrive.GoogleDriveFileAttributesFactory.Metadata;
+
 
 /**
  * {@link BasicFileAttributes} implementation for GoogleDrive
@@ -35,10 +37,12 @@ import com.google.api.services.drive.model.File;
  */
 public final class GoogleDriveBasicFileAttributesProvider extends BasicFileAttributesProvider implements PosixFileAttributes {
 
+    private final GoogleDriveFileSystemDriver driver;
     private final File entry;
 
-    public GoogleDriveBasicFileAttributesProvider(@Nonnull final File entry) throws IOException {
-        this.entry = Objects.requireNonNull(entry);
+    public GoogleDriveBasicFileAttributesProvider(@Nonnull final Metadata entry) throws IOException {
+        this.driver = Objects.requireNonNull(entry).driver;
+        this.entry = Objects.requireNonNull(entry).file;
     }
 
     /**
@@ -62,7 +66,7 @@ public final class GoogleDriveBasicFileAttributesProvider extends BasicFileAttri
      */
     @Override
     public boolean isRegularFile() {
-        return !GoogleDriveFileSystemDriver.isFolder(entry);
+        return !driver.isFolder(entry);
     }
 
     /**
@@ -70,7 +74,7 @@ public final class GoogleDriveBasicFileAttributesProvider extends BasicFileAttri
      */
     @Override
     public boolean isDirectory() {
-        return GoogleDriveFileSystemDriver.isFolder(entry);
+        return driver.isFolder(entry);
     }
 
     /**

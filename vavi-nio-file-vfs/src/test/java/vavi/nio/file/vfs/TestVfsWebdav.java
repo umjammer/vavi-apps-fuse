@@ -1,9 +1,10 @@
-package vavi.nio.file.vfs;
 /*
  * Copyright (c) 2016 by Naohide Sano, All rights reserved.
  *
  * Programmed by Naohide Sano
  */
+
+package vavi.nio.file.vfs;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -66,7 +67,7 @@ System.err.println("Connecting \"" + baseUrl + "\" with " + options);
 //System.err.println(smbFile.exists() + " " + smbFile.getContent().getLastModifiedTime());
         if (davFile.isFolder()) {
             for (FileObject fo : davFile.getChildren()) {
-System.err.println(fo.getName()); // TODO 文字化け
+System.err.println(fo.getName()); // TODO garbled text
             }
         }
     }

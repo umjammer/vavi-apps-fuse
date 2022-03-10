@@ -15,6 +15,10 @@ import java.nio.file.Path;
  * OneDriveUploadOption.
  * <p>
  * for large file.
+ * <p>
+ * in {@link com.github.fge.filesystem.options.FileSystemOptionsFactory},
+ * instances of this class are compared by contains method. so i override
+ * {@link #equals(Object)} and {@link #hashCode()}.
  * </p>
  * TODO CopyOption doesn't work.
  *
@@ -22,6 +26,9 @@ import java.nio.file.Path;
  * @version 0.00 2020/05/31 umjammer initial version <br>
  */
 public class OneDriveUploadOption implements OpenOption, CopyOption {
+
+    /** */
+    private static final long serialVersionUID = 5575546140441990410L;
 
     /** */
     private Path source;
@@ -43,7 +50,7 @@ public class OneDriveUploadOption implements OpenOption, CopyOption {
 
     @Override
     public int hashCode() {
-        return Long.hashCode(5575546140441990410L); // TODO ad-hoc
+        return Long.hashCode(serialVersionUID); // TODO ad-hoc
     }
 }
 

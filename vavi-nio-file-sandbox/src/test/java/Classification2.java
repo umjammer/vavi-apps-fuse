@@ -50,12 +50,12 @@ public final class Classification2 {
     /**
      * @param args 0: dir
      */
-    public static void main(final String... args) throws IOException {
+    public static void main(String[] args) throws IOException {
         String cwd = args[0];
         boolean dryRun = true;
 
         Path root = Paths.get(cwd);
-        FileSearcher fileSearcher = new FileSearcher(root);
+        MyFileVisitor fileSearcher = new MyFileVisitor(root);
         Files.walkFileTree(root, fileSearcher);
         Pattern pattern = Pattern.compile("\\[(.+?)\\]");
         fileSearcher.result().forEach(path -> {
@@ -124,7 +124,7 @@ public final class Classification2 {
         return sb.length() == 0 ? text : sb.toString();
     }
 
-    static class FileSearcher extends SimpleFileVisitor<Path> {
+    static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
         private List<Path> list = new ArrayList<>();
 
@@ -133,7 +133,7 @@ public final class Classification2 {
         Pattern patternF = Pattern.compile("\\[(.+?)\\]");
         Pattern patternD = Pattern.compile("[あかさたなはまやらわ]");
 
-        FileSearcher(Path root) {
+        MyFileVisitor(Path root) {
             this.root = root;
         }
 
@@ -158,12 +158,6 @@ public final class Classification2 {
                     list.add(dir);
                 }
             }
-            return CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFileFailed(Path file, IOException exc) {
-            System.err.println(exc);
             return CONTINUE;
         }
 

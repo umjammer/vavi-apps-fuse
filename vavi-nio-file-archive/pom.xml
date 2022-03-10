@@ -5,7 +5,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.6</version>
+    <version>0.1.7</version>
   </parent>
 
   <artifactId>vavi-nio-file-archive</artifactId>
@@ -18,6 +18,13 @@
   <issueManagement>
     <url>https://github.com/umjammer/vavi-nio-file-archive/issues</url>
   </issueManagement>
+
+  <repositories>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
+  </repositories>
 
   <dependencies>
     <dependency>
@@ -35,12 +42,12 @@
       <!-- java-fs archive -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-util-archive</artifactId>
-      <version>1.0.8</version>
+      <version>1.1.0</version>
     </dependency>
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-util-archive-sandbox</artifactId>
-      <version>1.0.2</version>
+      <version>1.0.4</version>
     </dependency>
 
     <dependency>
@@ -61,6 +68,23 @@
     <dependency>
       <groupId>org.junit.platform</groupId>
       <artifactId>junit-platform-commons</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>vavi</groupId>
+      <artifactId>vavi-net-fuse</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>vavi</groupId>
+      <artifactId>vavi-net-fuse</artifactId>
+      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
   </dependencies>

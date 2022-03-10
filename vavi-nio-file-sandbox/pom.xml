@@ -7,7 +7,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.6</version>
+    <version>0.1.7</version>
   </parent>
 
   <artifactId>vavi-nio-file-sandbox</artifactId>
@@ -21,19 +21,50 @@
     <url>https://github.com/umjammer/vavi-nio-file-sandbox/issues</url>
   </issueManagement>
 
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.10</version>
+        <executions>
+          <execution>
+            <id>copy</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>vavi</groupId>
+                  <artifactId>vavi-image-ffmpeg</artifactId>
+                  <version>1.0.9</version>
+                  <type>dylib</type>
+                  <overWrite>false</overWrite>
+                  <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+                  <destFileName>libFfmpegResampleOpWrapper.dylib</destFileName>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
   <repositories>
     <repository>
-      <id>central</id>
-      <name>bintray</name>
-      <url>https://jcenter.bintray.com</url>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
+    <repository>
+      <id>github</id>
+      <name>GitHub umjammer Apache Maven Packages</name>
+      <url>https://maven.pkg.github.com/umjammer/*</url>
     </repository>
     <repository>
       <id>umjammer-mvn-repo</id>
       <url>https://raw.github.com/umjammer/umjammer/mvn-repo/</url>
-      <snapshots>
-        <enabled>true</enabled>
-        <updatePolicy>always</updatePolicy>
-      </snapshots>
     </repository>
     <repository>
       <id>seasar</id>
@@ -51,7 +82,32 @@
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
-      <version>1.1.0</version>
+      <version>1.1.6</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jsoup</groupId>
+      <artifactId>jsoup</artifactId>
+      <version>1.14.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jdom</groupId>
+      <artifactId>jdom</artifactId>
+      <version>2.0.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>jaxen</groupId>
+      <artifactId>jaxen</artifactId>
+      <version>1.2.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>net.sf.saxon</groupId>
+      <artifactId>Saxon-HE</artifactId>
+      <version>11.2</version>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
@@ -71,28 +127,41 @@
     </dependency>
 
     <dependency>
+      <groupId>com.rainerhahnekamp</groupId>
+      <artifactId>sneakythrow</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-onedrive</artifactId>
-      <version>0.1.6</version>
+      <version>0.1.7</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-onedrive4</artifactId>
-      <version>0.1.6</version>
+      <version>0.1.7</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-googledrive</artifactId>
-      <version>0.1.6</version>
+      <version>0.1.7</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-util-archive</artifactId>
-      <version>1.0.6</version>
+      <version>1.1.0</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>vavi-image</artifactId>
+      <version>1.0.9</version>
       <scope>test</scope>
     </dependency>
 
@@ -113,14 +182,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>klab-commons-csv</artifactId>
-      <version>2.0.2</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.github.Querz</groupId>
-      <artifactId>NBT</artifactId>
-      <version>4.0</version>
+      <version>2.0.3</version>
       <scope>test</scope>
     </dependency>
 
@@ -128,6 +190,25 @@
       <groupId>org.cryptomator</groupId>
       <artifactId>fuse-nio-adapter</artifactId>
       <version>1.2.3</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>vavi-util-screenscraping</artifactId>
+      <version>1.0.9</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.2.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>${vavi-nio-file.groupId}</groupId>
+      <artifactId>vavi-nio-file</artifactId>
+      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
   </dependencies>

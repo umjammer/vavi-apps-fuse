@@ -37,7 +37,7 @@ public final class ArchiveFileSystemRepository extends FileSystemRepositoryBase 
     }
 
     /**
-     * @param uri "archive:file:/tmp/jar/exam.jar!/img/sample.png"
+     * @param uri "archive:file:/tmp/jar/exam.jar!/img/sample.png", space: use %20
      */
     @Nonnull
     @Override
@@ -48,8 +48,11 @@ public final class ArchiveFileSystemRepository extends FileSystemRepositoryBase 
             // currently only support "file"
             throw new IllegalArgumentException(file.toString());
         }
-        // TODO virtual relative directory from rawSchemeSpecificParts[1]
+        if (!file.getRawSchemeSpecificPart().startsWith("/")) {
+            file = URI.create(file.getScheme() + ":" + System.getProperty("user.dir") + "/" + file.getRawSchemeSpecificPart());
+        }
 
+        // TODO how about after '!' ?
         Archive archive = Archives.getArchive(Paths.get(file).toFile());
 
         ArchiveFileStore fileStore = new ArchiveFileStore(factoryProvider.getAttributesFactory());

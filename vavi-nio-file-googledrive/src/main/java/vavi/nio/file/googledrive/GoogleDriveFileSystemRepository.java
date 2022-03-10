@@ -16,11 +16,12 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
+import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.services.drive.Drive;
 
 import vavi.net.auth.WithTotpUserCredential;
-import vavi.net.auth.oauth2.google.GoogleAppCredential;
-import vavi.net.auth.oauth2.google.GoogleLocalAppCredential;
+import vavi.net.auth.oauth2.google.GoogleOAuth2AppCredential;
+import vavi.net.auth.oauth2.google.GoogleLocalOAuth2AppCredential;
 import vavi.net.auth.oauth2.google.GoogleOAuth2;
 import vavi.net.auth.web.google.GoogleLocalUserCredential;
 
@@ -64,18 +65,26 @@ public final class GoogleDriveFileSystemRepository extends FileSystemRepositoryB
         }
 
         // 2. app credential
-        GoogleAppCredential appCredential = null;
+        GoogleOAuth2AppCredential appCredential = null;
 
         if (env.containsKey(GoogleDriveFileSystemProvider.ENV_APP_CREDENTIAL)) {
-            appCredential = GoogleAppCredential.class.cast(env.get(GoogleDriveFileSystemProvider.ENV_APP_CREDENTIAL));
+            appCredential = GoogleOAuth2AppCredential.class.cast(env.get(GoogleDriveFileSystemProvider.ENV_APP_CREDENTIAL));
         }
 
         if (appCredential == null) {
-            appCredential = new GoogleLocalAppCredential(); // TODO use props
+            appCredential = new GoogleLocalOAuth2AppCredential("googledrive"); // TODO use props
         }
 
         // 3. process
-        Drive drive = new GoogleOAuth2(appCredential).authorize(userCredential);
+        Credential credential = new GoogleOAuth2(appCredential).authorize(userCredential);
+        Drive drive = new Drive.Builder(GoogleOAuth2.getHttpTransport(), GoogleOAuth2.getJsonFactory(), credential)
+                .setHttpRequestInitializer(httpRequest -> {
+                    credential.initialize(httpRequest);
+                    httpRequest.setConnectTimeout(30 * 1000);
+                    httpRequest.setReadTimeout(30 * 1000);
+                })
+                .setApplicationName(appCredential.getClientId())
+                .build();
         GoogleDriveFileStore fileStore = new GoogleDriveFileStore(drive, factoryProvider.getAttributesFactory());
         return new GoogleDriveFileSystemDriver(fileStore, factoryProvider, drive, env);
     }

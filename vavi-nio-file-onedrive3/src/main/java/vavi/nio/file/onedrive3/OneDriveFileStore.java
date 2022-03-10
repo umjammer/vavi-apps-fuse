@@ -9,8 +9,9 @@ package vavi.nio.file.onedrive3;
 import java.io.IOException;
 import java.nio.file.FileStore;
 
-import org.nuxeo.onedrive.client.OneDriveDrive;
-import org.nuxeo.onedrive.client.OneDriveDrive.Metadata;
+import org.nuxeo.onedrive.client.types.Drive;
+import org.nuxeo.onedrive.client.types.Quota;
+import org.nuxeo.onedrive.client.types.Drive.Metadata;
 
 import com.github.fge.filesystem.attributes.FileAttributesFactory;
 import com.github.fge.filesystem.filestore.FileStoreBase;
@@ -26,14 +27,14 @@ import com.github.fge.filesystem.filestore.FileStoreBase;
  */
 public final class OneDriveFileStore extends FileStoreBase {
 
-    private final OneDriveDrive drive;
+    private final Drive.Metadata drive;
 
     /**
      * Constructor
      *
      * @param drive the (valid) OneDrive client to use
      */
-    public OneDriveFileStore(final OneDriveDrive drive, final FileAttributesFactory factory) {
+    public OneDriveFileStore(final Drive.Metadata drive, final FileAttributesFactory factory) {
         super("onedrive", factory, false);
         this.drive = drive;
     }
@@ -47,7 +48,7 @@ public final class OneDriveFileStore extends FileStoreBase {
      */
     @Override
     public long getTotalSpace() throws IOException {
-        final Metadata quota = getMetadata();
+        final Quota quota = getQuota();
         return quota == null ? 0 : quota.getTotal();
     }
 
@@ -69,7 +70,7 @@ public final class OneDriveFileStore extends FileStoreBase {
      */
     @Override
     public long getUsableSpace() throws IOException {
-        final Metadata quota = getMetadata();
+        final Quota quota = getQuota();
         if (quota == null) {
             return 0;
         } else {
@@ -93,7 +94,7 @@ public final class OneDriveFileStore extends FileStoreBase {
      */
     @Override
     public long getUnallocatedSpace() throws IOException {
-        final Metadata quota = getMetadata();
+        final Quota quota = getQuota();
         if (quota == null) {
             return 0;
         } else {
@@ -102,14 +103,14 @@ public final class OneDriveFileStore extends FileStoreBase {
     }
 
     /** */
-    private Metadata cache; // TODO refresh
+    private Quota cache; // TODO refresh
 
     /** */
-    private Metadata getMetadata() throws IOException {
+    private Quota getQuota() throws IOException {
         if (cache != null) {
             return cache;
         } else {
-            cache = drive.getMetadata();
+            cache = drive.getQuota();
             return cache;
         }
     }

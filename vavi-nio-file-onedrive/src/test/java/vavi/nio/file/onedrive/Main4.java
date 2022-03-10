@@ -78,7 +78,7 @@ public class Main4 {
         Map<String, Object> env = new HashMap<>();
         env.put("ignoreAppleDouble", true);
 
-        URI uri = URI.create("onedrive:///?id=" + email);
+        URI uri = URI.create("onedrive1:///?id=" + email);
 
         FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, env);
 

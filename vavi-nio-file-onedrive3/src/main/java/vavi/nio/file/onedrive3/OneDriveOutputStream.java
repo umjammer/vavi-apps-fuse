@@ -14,9 +14,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
-import org.nuxeo.onedrive.client.OneDriveFile;
 import org.nuxeo.onedrive.client.OneDriveJsonObject;
-import org.nuxeo.onedrive.client.OneDriveUploadSession;
+import org.nuxeo.onedrive.client.UploadSession;
+import org.nuxeo.onedrive.client.types.DriveItem;
 
 import vavi.util.Debug;
 
@@ -47,15 +47,15 @@ import vavi.util.Debug;
  */
 public final class OneDriveOutputStream extends OutputStream {
 
-    private final OneDriveUploadSession upload;
+    private final UploadSession upload;
     private final Path file;
     private final AtomicBoolean close = new AtomicBoolean();
     private long offset = 0L;
     private int length;
-    private OneDriveFile.Metadata entry;
-    private Consumer<OneDriveFile.Metadata> consumer;
+    private DriveItem.Metadata entry;
+    private Consumer<DriveItem.Metadata> consumer;
 
-    public OneDriveOutputStream(final OneDriveUploadSession upload, final Path file, int length, Consumer<OneDriveFile.Metadata> consumer) {
+    public OneDriveOutputStream(final UploadSession upload, final Path file, int length, Consumer<DriveItem.Metadata> consumer) {
         this.upload = upload;
         this.file = file;
         this.length = length;
@@ -79,8 +79,8 @@ try {
         }
 Debug.printf("header %s", header);
         OneDriveJsonObject object = upload.uploadFragment(header, content);
-        if (OneDriveFile.Metadata.class.isInstance(object)) {
-            entry = OneDriveFile.Metadata.class.cast(object);
+        if (DriveItem.Metadata.class.isInstance(object)) {
+            entry = DriveItem.Metadata.class.cast(object);
 Debug.printf("Completed upload for %s", file);
         } else {
 Debug.printf(Level.FINE, "Uploaded fragment %s for file %s", header, file);

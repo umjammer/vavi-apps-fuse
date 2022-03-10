@@ -18,6 +18,9 @@ import com.microsoft.graph.http.IStatefulResponseHandler;
 import com.microsoft.graph.logger.ILogger;
 import com.microsoft.graph.serializer.ISerializer;
 
+import okhttp3.Response; // TODO WTF??? why not be encapsulated in IConnection??? who did this??? crazy!
+
+
 /**
  * Handles the stateful response from the OneDrive LRA session
  *
@@ -33,7 +36,44 @@ public class LraMonitorResponseHandler<MonitorType>
      */
     @Override
     public void configConnection(final IConnection connection) {
-        return;
+    }
+
+    @Override
+    public void configConnection(Response response) {
+    }
+
+    @Override
+    public LraMonitorResult generateResult(IHttpRequest request,
+                                           Response response,
+                                           ISerializer serializer,
+                                           ILogger logger) throws Exception {
+        // TODO all about response can be encapsulated into IConnection!
+        // why i need to write twice...
+        if (response.code() == HttpResponseCode.HTTP_ACCEPTED) {
+logger.logDebug("LRA has been accepted by the server.");
+            final LraSession session = new LraSession();
+            session.monitorUrl = response.header("Location");
+            return new LraMonitorResult(session);
+        } else if (response.code() == HttpResponseCode.HTTP_SEE_OTHER) {
+logger.logDebug("see other url.");
+            String seeOtherUrl = response.header("Location");
+            return new LraMonitorResult(seeOtherUrl);
+        } else if (response.code() == HttpResponseCode.HTTP_CREATED
+                || response.code() == HttpResponseCode.HTTP_OK) {
+logger.logDebug("LRA session is completed, drive item returned.");
+            String rawJson = response.body().string();
+            MonitorObject monitoredItem = serializer.deserializeObject(rawJson, MonitorObject.class);
+
+            return new LraMonitorResult(monitoredItem);
+        } else if (response.code() >= HttpResponseCode.HTTP_CLIENT_ERROR) {
+logger.logDebug("LRA error during monitor, see detail on result error");
+            return new LraMonitorResult(
+                    GraphServiceException.createFromConnection(request, null, serializer,
+                                                               response, logger));
+        } else {
+logger.logDebug("unhandled response code: " + response.code());
+            return null;
+        }
     }
 
     /**

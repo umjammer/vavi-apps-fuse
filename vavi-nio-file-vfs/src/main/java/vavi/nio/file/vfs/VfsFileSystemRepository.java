@@ -67,10 +67,10 @@ Debug.println("protocol: " + protocol);
 Debug.println("baseUrl: " + baseUrl);
 
         FileSystemManager manager = VFS.getManager();
-//for (String scheme : manager.getSchemes()) {
-// System.err.println("scheme: " + scheme);
-//}
         if (!manager.hasProvider(protocol)) {
+for (String scheme : manager.getSchemes()) {
+ System.err.println("scheme: " + scheme);
+}
             throw new IllegalStateException("missing provider: " + protocol);
         }
 

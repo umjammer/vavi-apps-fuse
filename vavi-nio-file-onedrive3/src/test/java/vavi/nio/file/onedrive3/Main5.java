@@ -35,13 +35,13 @@ public class Main5 {
     void test01() throws Exception {
         String email = System.getenv("TEST5_ACCOUNT");
 
-        URI uri = URI.create("onedrive:///?id=" + email);
+        URI uri = URI.create("onedrive3:///?id=" + email);
 
         Path src;
         Path dstDir;
         Path dst;
         String a, b;
-        try (FileSystem onedrivefs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP)) {
+        try (FileSystem onedrivefs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap())) {
 
             src = Paths.get("src/test/resources/Hello.java");
             dstDir = onedrivefs.getPath("/").resolve("TEST_FUSE_5");
@@ -60,7 +60,7 @@ Files.list(dstDir).forEach(System.out::println);
             a = Util.toFilenameString(Files.list(dstDir).findFirst().get());
         }
 
-        try (FileSystem onedrivefs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP)) {
+        try (FileSystem onedrivefs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap())) {
             dstDir = onedrivefs.getPath("/").resolve("TEST_FUSE_5");
             dst = dstDir.resolve("テスト 001");
 

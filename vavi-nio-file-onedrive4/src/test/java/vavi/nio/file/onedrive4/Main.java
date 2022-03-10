@@ -7,6 +7,8 @@
 package vavi.nio.file.onedrive4;
 
 import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
@@ -28,10 +30,20 @@ public class Main {
 
     @Test
     void test01() throws Exception {
-        String email = System.getenv("MICROSOFT4_TEST_ACCOUNT");
+        String email = System.getenv("MICROSOFT_TEST_ACCOUNT");
 
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        testAll(new OneDriveFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
+        testAll(new OneDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap()));
+    }
+
+    /** */
+    public static void main(String[] args) throws Exception {
+        String email = System.getenv("MICROSOFT_TEST_ACCOUNT");
+
+        URI uri = URI.create("onedrive:///?id=" + email);
+
+        FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
+        Files.list(fs.getPath("/")).forEach(System.out::println);
     }
 }

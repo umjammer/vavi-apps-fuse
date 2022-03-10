@@ -14,112 +14,129 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-
-import vavi.net.auth.oauth2.OAuth2AppCredential;
-import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
-import vavi.nio.file.onedrive.OneDriveFileSystemProvider;
-import vavi.util.properties.annotation.PropsEntity;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
 
 /**
  * onedrive classification
- *
+ * <p>
+ * if an author has three more novels, create author folder and move those into there.
+ * </p>
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2017/03/14 umjammer initial version <br>
  */
 public final class Classification {
 
+    static {
+        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
+                           "com\\.microsoft\\.graph\\.logger\\.DefaultLogger#logDebug");
+    }
+
     /**
      * @param args 0: email, 1: dir
      */
-    public static void main(final String... args) throws IOException {
-        String email = args[0];
-        String cwd = args[1];
-        boolean dryRun = true;
+    public static void main(String[] args) throws Exception {
+        Classification app = new Classification(args[0]);
+        app.exec(args[1]);
+    }
+
+    boolean dryRun = true;
+
+    FileSystem fs;
+
+    Classification(String email) throws IOException {
 
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        OAuth2AppCredential appCredential = new MicrosoftLocalAppCredential();
-        PropsEntity.Util.bind(appCredential);
-
-        Map<String, Object> env = new HashMap<>();
-        env.put(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL, appCredential);
-
-        FileSystem onedrivefs = FileSystems.newFileSystem(uri, env);
-
-        Path root = onedrivefs.getPath(cwd);
-        FileSearcher fileSearcher = new FileSearcher();
-        Files.walkFileTree(root, fileSearcher);
-        Pattern pattern = Pattern.compile("\\[(.+?)\\]");
-        Map<String, Long> authors = fileSearcher.result().stream()
-            .map(path -> pattern.matcher(path.getFileName().toString()))
-            .filter(matcher -> matcher.find())
-            .collect(Collectors.groupingBy(matcher -> matcher.group(1), Collectors.counting()));
-        authors.entrySet().stream()
-            .filter(e -> e.getValue() >= 3)
-            .forEach(e -> {
-                fileSearcher.result().stream()
-                    .filter(path -> path.getFileName().toString().indexOf("[" + e.getKey() + "]") > 0)
-                    .forEach(path -> {
-                        try {
-                            Path dir = path.getParent().resolve(e.getKey());
-                            if (!Files.exists(dir)) {
-                                System.err.println("mkdir " + dir);
-                                if (!dryRun) {
-                                    Files.createDirectory(dir);
-                                }
-                            }
-
-                            System.err.println("mv " + path + " " + dir);
-                            if (!dryRun) {
-                                Files.move(path, dir.resolve(path.getFileName()));
-                            }
-                        } catch (IOException f) {
-                            throw new IllegalStateException(f);
-                        }
-                    });
-            });
-
-        System.exit(0);
+        fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
     }
 
-    static class FileSearcher extends SimpleFileVisitor<Path> {
+    void exec(String cwd) throws IOException {
+        Path root = fs.getPath(cwd);
+        Files.walkFileTree(root, new MyFileVisitor1());
+System.err.println("\ndone counting");
+        exec2();
+System.err.println("done");
+    }
 
-        private List<Path> list = new ArrayList<>();
-
-        Pattern pattern = Pattern.compile("[あかさたなはまやらわ]");
+    class MyFileVisitor1 extends SimpleFileVisitor<Path> {
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
             if (attr.isRegularFile()) {
-                if (pattern.matcher(file.getParent().getFileName().toString()).matches()) {
-                    System.err.println(file);
-                    list.add(file);
+System.err.print(".");
+                if (filter1(file)) {
+                    func1(file);
+                    targets.add(file);
                 }
             }
             return CONTINUE;
         }
+    }
 
-        @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-            return CONTINUE;
+    static final Pattern pattern1 = Pattern.compile("[あかさたなはまやらわ]");
+
+    // novels parent is one of ka sa ta na ... only
+    boolean filter1(Path file) {
+        return pattern1.matcher(file.getParent().getFileName().toString()).matches();
+    }
+
+    static final Pattern pattern2 = Pattern.compile("\\[(.+?)\\]");
+
+    Map<String, Integer> counter = new HashMap<>();
+
+    List<Path> targets = new ArrayList<>();
+
+    /** counter */
+    void func1(Path file) {
+        Matcher matcher = pattern2.matcher(file.getFileName().toString());
+        if (matcher.find()) {
+            String author = matcher.group(1);
+            if (counter.get(author) == null) {
+                counter.put(author, 1);
+            } else {
+                counter.put(author, counter.get(author) + 1);
+            }
         }
+    }
 
-        @Override
-        public FileVisitResult visitFileFailed(Path file, IOException exc) {
-            System.err.println(exc);
-            return CONTINUE;
-        }
+    void exec2() {
+        targets.stream()
+            .forEach(file -> {
+                Matcher matcher = pattern2.matcher(file.getFileName().toString());
+                if (matcher.find()) {
+                    func2(file, matcher.group(1));
+                }
+            });
+    }
 
-        List<Path> result() {
-            return list;
+    /** */
+    void func2(Path file, String author) {
+        try {
+            if (counter.get(author) >= 3) {
+System.err.println("author " + author);
+                Path dir = file.getParent().resolve(author);
+                if (!Files.exists(dir)) {
+System.err.println("mkdir " + dir);
+                    if (!dryRun) {
+                            Files.createDirectory(dir);
+                    }
+                }
+
+System.err.println("mv " + file + " " + dir);
+                if (!dryRun) {
+                    Files.move(file, dir.resolve(file.getFileName()));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

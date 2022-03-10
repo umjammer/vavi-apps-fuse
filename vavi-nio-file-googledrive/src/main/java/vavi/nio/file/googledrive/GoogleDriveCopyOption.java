@@ -17,6 +17,9 @@ import java.nio.file.CopyOption;
  */
 public enum GoogleDriveCopyOption implements CopyOption {
 
+    /**
+     * you can use for OCR image files.
+     */
     EXPORT_AS_GDOCS("application/vnd.google-apps.document");
 
     /** */

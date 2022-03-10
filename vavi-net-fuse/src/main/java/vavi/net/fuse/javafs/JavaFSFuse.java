@@ -69,6 +69,12 @@ Debug.println("umount...");
                 mountPoint = null;
 Debug.println("umount done");
             }
+        } catch (IllegalStateException e) {
+            if (e.getMessage().contains("Tried to unmount a filesystem which is not mounted")) {
+Debug.println("already umount");
+            } else {
+                throw e;
+            }
         } catch (IOException e) {
 Debug.println(Level.WARNING, "umount: " + e);
             throw e;

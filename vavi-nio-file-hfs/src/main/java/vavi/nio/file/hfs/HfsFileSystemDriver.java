@@ -19,7 +19,6 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
-import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,19 +53,16 @@ public final class HfsFileSystemDriver extends ExtendedFileSystemDriverBase {
 
     private final HFSCommonFileSystemHandler handler;
 
-    private boolean ignoreAppleDouble = false;
-
     /**
      * @param env
      */
-    @SuppressWarnings("unchecked")
     public HfsFileSystemDriver(final FileStore fileStore,
             final FileSystemFactoryProvider provider,
             final HFSCommonFileSystemHandler handler,
             final Map<String, ?> env) throws IOException {
         super(fileStore, provider);
+        setEnv(env);
         this.handler = handler;
-        ignoreAppleDouble = (Boolean) ((Map<String, Object>) env).getOrDefault("ignoreAppleDouble", Boolean.FALSE);
     }
 
     /** */
@@ -88,8 +84,10 @@ public final class HfsFileSystemDriver extends ExtendedFileSystemDriverBase {
         if (path.getNameCount() == 0) {
             return handler.getRoot();
         } else {
-            FSEntry entry = handler.getEntry(toPathString(path));
+//Debug.println(Arrays.toString(toPathString(path).replaceFirst("^/", "").split("/", -1)));
+            FSEntry entry = handler.getEntry(toPathString(path).replaceFirst("^/", "").split("/", -1));
             if (entry != null) {
+//Debug.println("entry: " + entry.getName() + ", " + isFolder(entry));
                 return entry;
             } else {
                 throw new NoSuchFileException(path.toString());
@@ -142,17 +140,6 @@ public final class HfsFileSystemDriver extends ExtendedFileSystemDriverBase {
         throw new UnsupportedOperationException("this file system is read only");
     }
 
-    /**
-     * Check access modes for a path on this filesystem
-     * <p>
-     * If no modes are provided to check for, this simply checks for the
-     * existence of the path.
-     * </p>
-     *
-     * @param path the path to check
-     * @param modes the modes to check for, if any
-     * @see FileSystemProvider#checkAccess(Path, AccessMode...)
-     */
     @Override
     protected void checkAccessImpl(final Path path, final AccessMode... modes) throws IOException {
         final FSEntry entry = getEntry(path);
@@ -169,18 +156,15 @@ public final class HfsFileSystemDriver extends ExtendedFileSystemDriverBase {
         }
     }
 
-    @Override
-    public void close() throws IOException {
-        handler.close();
-    }
-
-    /**
-     * @throws IOException if you use this with javafs (jnr-fuse), you should throw {@link NoSuchFileException} when the file not found.
-     */
     @Nonnull
     @Override
     protected Object getPathMetadataImpl(final Path path) throws IOException {
         return getEntry(path);
+    }
+
+    @Override
+    public void close() throws IOException {
+        handler.close();
     }
 
     /** */

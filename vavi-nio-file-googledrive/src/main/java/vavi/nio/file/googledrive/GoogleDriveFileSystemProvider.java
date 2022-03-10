@@ -23,6 +23,8 @@ public final class GoogleDriveFileSystemProvider extends FileSystemProviderBase 
 
     public static final String ENV_APP_CREDENTIAL = "app_credential";
 
+    public static final String ENV_USE_SYSTEM_WATCHER = "use_system_watcher";
+
     public GoogleDriveFileSystemProvider() {
         super(new GoogleDriveFileSystemRepository());
     }

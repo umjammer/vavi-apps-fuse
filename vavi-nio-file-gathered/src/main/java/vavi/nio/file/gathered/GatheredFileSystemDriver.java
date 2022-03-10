@@ -19,15 +19,11 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
-import java.nio.file.spi.FileSystemProvider;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.annotation.Nonnull;
-import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
@@ -44,7 +40,6 @@ import static vavi.nio.file.Util.toPathString;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2019/03/30 umjammer initial version <br>
  */
-@ParametersAreNonnullByDefault
 public final class GatheredFileSystemDriver extends ExtendedFileSystemDriverBase {
 
     /** should be unaccessible from outer */
@@ -66,7 +61,6 @@ public final class GatheredFileSystemDriver extends ExtendedFileSystemDriverBase
         }
     }
 
-    @Nonnull
     @Override
     public InputStream newInputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
         final Object entry = getPathMetadata(path);
@@ -79,14 +73,12 @@ public final class GatheredFileSystemDriver extends ExtendedFileSystemDriverBase
         return Files.newInputStream(Path.class.cast(entry));
     }
 
-    @Nonnull
     @Override
     public OutputStream newOutputStream(final Path path, final Set<? extends OpenOption> options) throws IOException {
         // TODO we can implement using Files
         throw new UnsupportedOperationException("newOutputStream is not supported by the file system");
     }
 
-    @Nonnull
     @Override
     public DirectoryStream<Path> newDirectoryStream(final Path dir,
                                                     final DirectoryStream.Filter<? super Path> filter) throws IOException {
@@ -117,31 +109,14 @@ public final class GatheredFileSystemDriver extends ExtendedFileSystemDriverBase
         throw new UnsupportedOperationException("move is not supported by the file system");
     }
 
-    /**
-     * Check access modes for a path on this filesystem
-     * <p>
-     * If no modes are provided to check for, this simply checks for the
-     * existence of the path.
-     * </p>
-     *
-     * @param path the path to check
-     * @param modes the modes to check for, if any
-     * @see FileSystemProvider#checkAccess(Path, AccessMode...)
-     */
     @Override
     protected void checkAccessImpl(final Path path, final AccessMode... modes) throws IOException {
         // TODO currently check read only?
     }
 
-    @Override
-    public void close() throws IOException {
-        // TODO: what to do here? gathered fs does not implement Closeable :(
-    }
-
     /**
      * @throws IOException you should throw {@link NoSuchFileException} when the file not found.
      */
-    @Nonnull
     @Override
     protected Object getPathMetadataImpl(final Path path) throws IOException {
 //Debug.println("path: " + path);
@@ -150,6 +125,11 @@ public final class GatheredFileSystemDriver extends ExtendedFileSystemDriverBase
         } else {
             return toLocalPath(path);
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        // TODO: what to do here? gathered fs does not implement Closeable :(
     }
 
     /** */

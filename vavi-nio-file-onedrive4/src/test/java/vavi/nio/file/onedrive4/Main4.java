@@ -73,7 +73,7 @@ public class Main4 {
 
     //
 
-    public static void main(final String... args) throws IOException {
+    public static void main(String[] args) throws IOException {
         String email = args[1];
 
         Map<String, Object> env = new HashMap<>();
@@ -83,13 +83,13 @@ public class Main4 {
 
         FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, env);
 
-//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
+        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
 //        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
 
         Map<String, Object> options = new HashMap<>();
         options.put("fsname", "onedrive_fs" + "@" + System.currentTimeMillis());
         options.put("noappledouble", null);
-        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, true);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, false);
         options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
 
         Fuse.getFuse().mount(fs, args[0], options);

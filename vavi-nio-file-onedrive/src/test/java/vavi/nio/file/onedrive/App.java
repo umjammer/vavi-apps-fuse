@@ -19,6 +19,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import com.budhash.cliche.Command;
+import com.budhash.cliche.Param;
+import com.budhash.cliche.ShellFactory;
 import com.google.common.collect.Maps;
 
 import vavi.net.auth.WithTotpUserCredential;
@@ -30,9 +33,6 @@ import vavi.util.properties.annotation.PropsEntity;
 
 import static vavi.net.auth.oauth2.OAuth2AppCredential.wrap;
 
-import asg.cliche.Command;
-import asg.cliche.Param;
-import asg.cliche.ShellFactory;
 import de.tuberlin.onedrivesdk.OneDriveException;
 import de.tuberlin.onedrivesdk.OneDriveFactory;
 import de.tuberlin.onedrivesdk.OneDriveSDK;

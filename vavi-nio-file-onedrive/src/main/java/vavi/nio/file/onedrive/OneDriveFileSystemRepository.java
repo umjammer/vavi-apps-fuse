@@ -44,7 +44,7 @@ import de.tuberlin.onedrivesdk.networking.OneDriveAuthenticationException;
 public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase {
 
     public OneDriveFileSystemRepository() {
-        super("onedrive", new OneDriveFileSystemFactoryProvider());
+        super("onedrive1", new OneDriveFileSystemFactoryProvider());
     }
 
     /**
@@ -88,7 +88,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
             OneDriveSDK client = OneDriveFactory.createOneDriveSDK(appCredential.getClientId(),
                                                                    appCredential.getClientSecret(),
                                                                    appCredential.getRedirectUrl(),
-                                                                   OneDriveScope.OFFLINE_ACCESS);
+                                                                   OneDriveScope.valueOfByMicrosoftScopeString(appCredential.getScope()));
             String url = client.getAuthenticationURL();
 
             MicrosoftOAuth2 oauth2 = new MicrosoftOAuth2(wrap(appCredential, url), userCredential.getId());
@@ -123,7 +123,7 @@ Debug.println("refreshToken: timeout?");
             return new OneDriveFileSystemDriver(fileStore, factoryProvider, client, env);
 
         } catch (OneDriveException e) {
-            throw new IllegalStateException(e);
+            throw new IOException(e);
         }
     }
 }

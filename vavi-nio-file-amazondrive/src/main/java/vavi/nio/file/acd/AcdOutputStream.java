@@ -42,6 +42,7 @@ import org.yetiz.lib.acd.Entity.FolderInfo;
  * </p>
  */
 // TODO: more complex than the input stuff; check again (.abort(), etc)
+// TODO to be eliminated
 public final class AcdOutputStream extends OutputStream {
 
     private final AtomicBoolean closeCalled = new AtomicBoolean(false);

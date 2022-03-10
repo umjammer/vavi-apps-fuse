@@ -41,7 +41,7 @@ public class TestAozora {
 //result.forEach(System.err::println);
 
         Path root = Paths.get(cwd);
-        FileSearcher fileSearcher = new FileSearcher();
+        MyFileVisitor fileSearcher = new MyFileVisitor();
         Files.walkFileTree(root, fileSearcher);
         fileSearcher.result().stream().filter(path -> {
             final String name = path.getFileName().toString();
@@ -75,7 +75,7 @@ public class TestAozora {
         }
     }
 
-    static class FileSearcher extends SimpleFileVisitor<Path> {
+    static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
         private List<Path> list = new ArrayList<>();
 

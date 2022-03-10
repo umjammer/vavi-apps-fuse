@@ -26,7 +26,7 @@ import com.github.fge.filesystem.filestore.FileStoreBase;
  */
 public final class VfsFileStore extends FileStoreBase {
 
-    private final FileObject root; // TODO
+    private final FileObject root; // TODO how to get quota
 
     /**
      * Constructor

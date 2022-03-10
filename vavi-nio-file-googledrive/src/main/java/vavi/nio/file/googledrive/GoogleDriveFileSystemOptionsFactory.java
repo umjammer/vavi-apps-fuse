@@ -23,6 +23,8 @@ public class GoogleDriveFileSystemOptionsFactory extends FileSystemOptionsFactor
         addLinkOption(LinkOption.NOFOLLOW_LINKS);
         addCopyOption(GoogleDriveCopyOption.EXPORT_AS_GDOCS);
         addReadOpenOption(GoogleDriveOpenOption.EXPORT_WITH_GDOCS_DOCX);
+        addReadOpenOption(GoogleDriveOpenOption.EXPORT_WITH_GDOCS_XLSX);
+        addWriteOpenOption(GoogleDriveOpenOption.INPORT_AS_NEW_REVISION);
     }
 }
 

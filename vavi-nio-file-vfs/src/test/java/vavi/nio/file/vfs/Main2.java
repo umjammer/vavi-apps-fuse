@@ -44,7 +44,7 @@ public class Main2 {
 
         URI uri = URI.create(String.format("vfs:sftp://%s@%s%s?keyPath=%s&passphrase=%s", username, host, path, keyPath, passPhrase));
 
-        FileSystem fs = new VfsFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP);
+        FileSystem fs = new VfsFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
         testLargeFile(fs, null);
     }

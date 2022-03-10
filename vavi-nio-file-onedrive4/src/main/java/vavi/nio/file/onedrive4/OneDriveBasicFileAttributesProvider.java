@@ -22,6 +22,8 @@ import javax.annotation.Nonnull;
 import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider;
 import com.microsoft.graph.models.extensions.DriveItem;
 
+import vavi.nio.file.onedrive4.OneDriveFileAttributesFactory.Metadata;
+
 
 /**
  * {@link BasicFileAttributes} implementation for OneDrive
@@ -37,8 +39,8 @@ public final class OneDriveBasicFileAttributesProvider extends BasicFileAttribut
 
     private final DriveItem entry;
 
-    public OneDriveBasicFileAttributesProvider(@Nonnull final DriveItem entry) throws IOException {
-        this.entry = Objects.requireNonNull(entry);
+    public OneDriveBasicFileAttributesProvider(@Nonnull final Metadata entry) throws IOException {
+        this.entry = Objects.requireNonNull(entry).driveItem;
     }
 
     /**
@@ -54,7 +56,7 @@ public final class OneDriveBasicFileAttributesProvider extends BasicFileAttribut
      */
     @Override
     public FileTime lastModifiedTime() {
-        return FileTime.fromMillis(entry.lastModifiedDateTime.getTimeInMillis());
+        return FileTime.fromMillis(entry.lastModifiedDateTime.toInstant().toEpochMilli());
     }
 
     /**

@@ -5,7 +5,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.6</version>
+    <version>0.1.7</version>
   </parent>
 
   <artifactId>vavi-nio-file-onedrive4</artifactId>
@@ -32,7 +32,7 @@
     </dependency>
 
     <dependency>
-      <groupId>com.github.umjammer.vavi-net-auth</groupId>
+      <groupId>${vavi-net-auth.groupId}</groupId>
       <artifactId>vavi-net-auth-microsoft</artifactId>
       <version>${vavi-net-auth.version}</version>
     </dependency>
@@ -41,7 +41,18 @@
       <!-- java-fs onedrive (microsoft graph) -->
       <groupId>com.microsoft.graph</groupId>
       <artifactId>microsoft-graph</artifactId>
-      <version>1.4.0</version>
+      <version>2.0.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.guava</groupId>
+          <artifactId>guava</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>vavi</groupId>
+      <artifactId>vavi-nio-file-commons</artifactId>
     </dependency>
 
     <dependency>
@@ -67,7 +78,6 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-params</artifactId>
-      <version>5.3.0</version>
       <scope>test</scope>
     </dependency>
 

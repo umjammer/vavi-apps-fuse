@@ -16,12 +16,13 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import org.nuxeo.onedrive.client.Drives;
 import org.nuxeo.onedrive.client.JavaNetRequestExecutor;
 import org.nuxeo.onedrive.client.OneDriveAPI;
 import org.nuxeo.onedrive.client.OneDriveBasicAPI;
-import org.nuxeo.onedrive.client.OneDriveDrive;
 import org.nuxeo.onedrive.client.RequestExecutor;
 import org.nuxeo.onedrive.client.RequestHeader;
+import org.nuxeo.onedrive.client.types.Drive;
 
 import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
@@ -44,7 +45,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
 
     /** */
     public OneDriveFileSystemRepository() {
-        super("onedrive", new OneDriveFileSystemFactoryProvider());
+        super("onedrive3", new OneDriveFileSystemFactoryProvider());
     }
 
     /**
@@ -84,7 +85,8 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         }
 
         // 3. process
-        String accessToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
+        MicrosoftGraphOAuth2 oAuth2 = new MicrosoftGraphOAuth2(appCredential, true);
+        String accessToken = oAuth2.authorize(userCredential);
 //Debug.println("accessToken: " + accessToken);
 
         RequestExecutor executor = new JavaNetRequestExecutor(accessToken) {
@@ -130,8 +132,8 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
             }
         };
 
-        OneDriveDrive drive = OneDriveDrive.getDefaultDrive(client);
+        Drive.Metadata drive = Drives.getDrives(client).next();
         final OneDriveFileStore fileStore = new OneDriveFileStore(drive, factoryProvider.getAttributesFactory());
-        return new OneDriveFileSystemDriver(fileStore, factoryProvider, client, drive, env);
+        return new OneDriveFileSystemDriver(fileStore, factoryProvider, client, () -> oAuth2.close(), drive, env);
     }
 }

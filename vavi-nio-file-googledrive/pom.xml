@@ -5,7 +5,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.6</version>
+    <version>0.1.7</version>
   </parent>
 
   <artifactId>vavi-nio-file-googledrive</artifactId>
@@ -54,7 +54,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.22.2</version>
             <configuration>
               <environmentVariables>
                 <TEST4_ACCOUNT>${test4.account}</TEST4_ACCOUNT>
@@ -69,6 +68,27 @@
     </profile>
   </profiles>
 
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+          <encoding>utf-8</encoding>
+          <compilerId>eclipse</compilerId>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-compiler-eclipse</artifactId>
+            <version>2.7</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+    </plugins>
+  </build>
+
   <dependencies>
     <dependency>
       <!-- java-fs base -->
@@ -82,9 +102,20 @@
     </dependency>
 
     <dependency>
-      <groupId>com.github.umjammer.vavi-net-auth</groupId>
+      <groupId>vavi</groupId>
+      <artifactId>vavi-nio-file-commons</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>${vavi-net-auth.groupId}</groupId>
       <artifactId>vavi-net-auth-google</artifactId>
       <version>${vavi-net-auth.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.apis</groupId>
+      <artifactId>google-api-services-drive</artifactId>
+      <version>v3-rev20211017-1.32.1</version>
     </dependency>
 
     <dependency>
@@ -105,7 +136,6 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-params</artifactId>
-      <version>5.3.0</version>
       <scope>test</scope>
     </dependency>
 

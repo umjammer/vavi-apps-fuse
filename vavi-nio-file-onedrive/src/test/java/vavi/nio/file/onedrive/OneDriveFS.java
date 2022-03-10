@@ -37,7 +37,7 @@ public class OneDriveFS {
 
         String email = args[1];
 
-        URI uri = URI.create("onedrive:///?id=" + email);
+        URI uri = URI.create("onedrive1:///?id=" + email);
 
         OAuth2AppCredential appCredential = new MicrosoftLocalAppCredential();
         PropsEntity.Util.bind(appCredential);
@@ -48,7 +48,7 @@ public class OneDriveFS {
 
         FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, env);
 
-        Fuse.getFuse().mount(fs, args[0], Collections.EMPTY_MAP);
+        Fuse.getFuse().mount(fs, args[0], Collections.emptyMap());
     }
 }
 
