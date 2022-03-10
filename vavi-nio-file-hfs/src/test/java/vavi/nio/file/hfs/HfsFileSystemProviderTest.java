@@ -18,6 +18,7 @@ import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
 
 import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
@@ -33,6 +34,10 @@ import vavi.util.properties.annotation.PropsEntity;
 @PropsEntity(url = "file://${user.dir}/local.properties")
 class HfsFileSystemProviderTest {
 
+    static boolean localPropertiesExists() {
+        return Files.exists(Paths.get("local.properties"));
+    }
+
     @Test
     void test3() throws Exception {
         URL url = HfsFileSystemProviderTest.class.getResource("/test.dmg");
@@ -43,6 +48,7 @@ Debug.println("file: " + url.getPath());
     }
 
     @Test
+    @EnabledIf("localPropertiesExists")
     @Disabled("doesn't work")
     void test() throws Exception {
         Path path = Paths.get("/Users/nsano/src/vavi/vavi-nio-file-apfs/src/test/resources/apfs.dmg");
@@ -59,7 +65,9 @@ Debug.println("file: " + path);
 
     @BeforeEach
     void setup() throws IOException {
-        PropsEntity.Util.bind(this);
+        if (localPropertiesExists()) {
+            PropsEntity.Util.bind(this);
+        }
     }
 
     /** */
