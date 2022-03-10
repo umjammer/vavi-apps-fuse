@@ -100,9 +100,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.googlecode.cliche</groupId>
+      <groupId>com.github.budhash</groupId>
       <artifactId>cliche</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>153113a</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
