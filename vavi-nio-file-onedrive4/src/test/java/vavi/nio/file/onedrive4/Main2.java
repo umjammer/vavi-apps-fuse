@@ -23,6 +23,14 @@ import static vavi.nio.file.Base.testLargeFile;
  */
 public class Main2 {
 
+    static {
+        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
+                           "(" +
+                           "com\\.microsoft\\.graph\\.logger\\.DefaultLogger#logDebug" + "|" +
+                           "vavi\\.nio\\.file\\.onedrive4\\.graph\\.MyLogger#logDebug" +
+                           ")");
+    }
+
     @Test
     void test01() throws Exception {
         String email = System.getenv("MICROSOFT_TEST_ACCOUNT");

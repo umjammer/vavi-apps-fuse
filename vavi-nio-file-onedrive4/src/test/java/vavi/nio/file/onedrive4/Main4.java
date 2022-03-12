@@ -31,6 +31,14 @@ import vavi.net.fuse.Fuse;
 @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
 public class Main4 {
 
+    static {
+        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
+                           "(" +
+                           "com\\.microsoft\\.graph\\.logger\\.DefaultLogger#logDebug" + "|" +
+                           "vavi\\.nio\\.file\\.onedrive4\\.graph\\.MyLogger#logDebug" +
+                           ")");
+    }
+
     String mountPoint;
     FileSystem fs;
     Map<String, Object> options;

@@ -185,7 +185,6 @@ Debug.println("upload w/o option: " + is.available());
 
     @Override
     protected OneItem createDirectoryEntry(OneItem parentEntry, Path dir) throws IOException {
-        // TODO: how to diagnose?
         return OneItem.class.cast(asFolder(parentEntry).createFolder(toFilenameString(dir)));
     }
 
@@ -196,8 +195,6 @@ Debug.println("upload w/o option: " + is.available());
 
     @Override
     protected void removeEntry(OneItem entry, Path path) throws IOException {
-        // TODO: unknown what happens when a move operation is performed
-        // and the target already exists
         entry.delete();
     }
 

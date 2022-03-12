@@ -25,7 +25,11 @@ import static vavi.nio.file.Base.testAll;
 public class Main {
 
     static {
-        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod", "com\\.microsoft\\.graph\\.logger\\.DefaultLogger#logDebug");
+        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
+                           "(" +
+                           "com\\.microsoft\\.graph\\.logger\\.DefaultLogger#logDebug" + "|" +
+                           "vavi\\.nio\\.file\\.onedrive4\\.graph\\.MyLogger#logDebug" +
+                           ")");
     }
 
     @Test

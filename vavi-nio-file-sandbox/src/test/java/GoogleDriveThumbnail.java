@@ -46,6 +46,8 @@ import static java.nio.file.FileVisitResult.CONTINUE;
 /**
  * GoogleDriveThumbnail.
  *
+ * TODO cannot set at one
+ *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2022/01/26 umjammer initial version <br>
  */
@@ -54,6 +56,7 @@ public class GoogleDriveThumbnail {
     static byte[] duke;
 
     static String string;
+    /** isbn is ok also */
     static String asin;
 
     /**
@@ -62,6 +65,7 @@ public class GoogleDriveThumbnail {
     public static void main(String[] args) throws Exception {
 
         String email = System.getenv("GOOGLE_TEST_ACCOUNT");
+Debug.println("email: " + email);
 
         URI uri = URI.create("googledrive:///?id=" + email);
         FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
@@ -117,7 +121,7 @@ System.out.println(matcher.group(1) + " - " + matcher.group(2));
 
     // functions
 
-    /** get thumbnail and save it to local */
+    /** get thumbnail of the file and save it to local */
     static void func1(Path file) throws IOException {
         byte[] bytes = (byte[]) Files.getAttribute(file, "user:thumbnail");
         if (bytes != null && bytes.length != 0) {
@@ -205,7 +209,10 @@ System.err.println(entry.getName() + ": " + thumbnail.getWidth() + "x" + thumbna
         }
     }
 
-    /** set amazon thumbnail asin from self meta data */
+    /**
+     * set amazon thumbnail asin from self meta data
+     * GoogleDrive.app needed
+     */
     static void func3(Path file) throws Exception {
         // check existence
         byte[] bytes = (byte[]) Files.getAttribute(file, "user:thumbnail");
@@ -215,6 +222,8 @@ System.err.println("skip: " + file);
         }
 
         // exec
+        // convert path from google drive fs to default fs
+        // because "zipfs" dosn't accept googledrive as sub scheme
         Path gd = Paths.get("/Volumes/GoogleDrive/My Drive", file.toString());
         URI uri = URI.create("jar:" + gd.toUri().toString());
 Debug.println("uri: " + uri);

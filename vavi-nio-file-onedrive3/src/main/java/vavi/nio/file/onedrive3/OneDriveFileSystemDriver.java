@@ -123,7 +123,7 @@ Debug.println("NOTIFICATION: parent not found: " + e);
 
     /** */
     private static DriveItem asDriveItem(DriveItem.Metadata entry) {
-        return DriveItem.class.cast(entry.getItem());        
+        return DriveItem.class.cast(entry.getItem());
     }
 
     @Override
@@ -195,7 +195,6 @@ Debug.println("upload w/o option: " + is.available());
 
     @Override
     protected DriveItem.Metadata createDirectoryEntry(DriveItem.Metadata parentEntry, Path dir) throws IOException {
-        // TODO: how to diagnose?
         return Files.createFolder(asDriveItem(parentEntry), toFilenameString(dir));
     }
 
@@ -206,8 +205,6 @@ Debug.println("upload w/o option: " + is.available());
 
     @Override
     protected void removeEntry(DriveItem.Metadata entry, Path path) throws IOException {
-        // TODO: unknown what happens when a move operation is performed
-        // and the target already exists
         Files.delete(asDriveItem(entry));
     }
 

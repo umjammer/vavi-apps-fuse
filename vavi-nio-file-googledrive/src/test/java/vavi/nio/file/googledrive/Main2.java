@@ -28,7 +28,7 @@ public class Main2 {
      * caution! google drive api quota is small for repeating tests.
      */
     @Test
-    @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
+    @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*", disabledReason = "saving google drive quota")
     void test01() throws Exception {
         String email = System.getenv("GOOGLE_TEST_ACCOUNT");
 

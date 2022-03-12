@@ -32,14 +32,17 @@ import vavi.net.fuse.Fuse;
 @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
 public class Main4 {
 
+    static {
+        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
+                           "co\\.paralleluniverse\\.fuse\\.LoggedFuseFilesystem#log");
+    }
+
     String mountPoint;
     FileSystem fs;
     Map<String, Object> options;
 
     @BeforeEach
     public void before() throws Exception {
-        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod", "co\\.paralleluniverse\\.fuse\\.LoggedFuseFilesystem#log");
-
         mountPoint = System.getenv("TEST4_MOUNT_POINT");
         String username = URLEncoder.encode(System.getenv("TEST4_SFTP_ACCOUNT"), "utf-8");
         String passPhrase = URLEncoder.encode(System.getenv("TEST4_SFTP_PASSPHRASE"), "utf-8");
