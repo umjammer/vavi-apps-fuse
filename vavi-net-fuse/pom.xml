@@ -61,7 +61,7 @@
                 <include>**/Main4</include>
               </includes>
               <environmentVariables>
-                <TEST4_MOUNT_POINT>${test.mountPoint}</TEST4_MOUNT_POINT>
+                <FUSE_MOUNT_POINT>${fuse.mountPoint}</FUSE_MOUNT_POINT>
               </environmentVariables>
               <argLine>
                 -Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties

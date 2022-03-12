@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -50,11 +50,11 @@ import vavi.util.Debug;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2017/03/19 umjammer initial version <br>
  */
-@DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
 public class Main4 {
 
     static {
-        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod", "co\\.paralleluniverse\\.fuse\\.LoggedFuseFilesystem#log");
+        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
+                           "co\\.paralleluniverse\\.fuse\\.LoggedFuseFilesystem#log");
     }
 
     FileSystem fs;
@@ -64,7 +64,7 @@ public class Main4 {
     @BeforeEach
     public void before() throws Exception {
 
-        mountPoint = System.getenv("TEST4_MOUNT_POINT");
+        mountPoint = System.getenv("FUSE_MOUNT_POINT");
 Debug.println("mountPoint: " + mountPoint);
 
         fs = Jimfs.newFileSystem(Configuration.unix());
@@ -78,6 +78,7 @@ Debug.println("mountPoint: " + mountPoint);
     }
 
     @ParameterizedTest
+    @EnabledIfEnvironmentVariable(named = "FUSE_MOUNT_POINT", matches = ".+")
     @ValueSource(strings = {
         "vavi.net.fuse.javafs.JavaFSFuseProvider",
         "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider",
