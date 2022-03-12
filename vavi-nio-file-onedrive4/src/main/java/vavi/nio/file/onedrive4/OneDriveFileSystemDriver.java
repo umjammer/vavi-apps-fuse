@@ -403,8 +403,12 @@ Debug.println(Level.INFO, "thumbnail updated: " + sourceEntry.name + ", size: " 
                 .thumbnails()
                 .buildRequest(Arrays.asList(new QueryOption("select", "source")))
                 .get();
-        ThumbnailSet set = page.getCurrentPage().get(0);
+        if (page.getCurrentPage().size() > 0) {
+            ThumbnailSet set = page.getCurrentPage().get(0);
 Debug.println(Level.INFO, "thumbnail url: " + set.source.url);
-        return set.source.url;
+            return set.source.url;
+        } else {
+            return null;
+        }
     }
 }

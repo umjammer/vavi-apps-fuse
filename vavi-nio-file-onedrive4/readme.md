@@ -8,7 +8,7 @@ nio filsystem provider for onedrive
  * implements upload w/ monitor that *official sdk doesn't support*
  * OnedriveUploadOption for large file uploading
  * description as "user:attribute"
- * thumbnail as "user:attribute" (works but where can we see those?)
+ * thumbnail as "user:attribute"
 
 ## issue
 

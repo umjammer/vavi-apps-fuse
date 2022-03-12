@@ -47,7 +47,18 @@
           <groupId>com.google.guava</groupId>
           <artifactId>guava</artifactId>
         </exclusion>
+        <exclusion>
+          <!-- https://stackoverflow.com/a/66125163 ??? -->
+          <groupId>com.microsoft.graph</groupId>
+          <artifactId>microsoft-graph-core</artifactId>
+        </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <!-- https://stackoverflow.com/a/66125163 ??? -->
+      <groupId>com.microsoft.graph</groupId>
+      <artifactId>microsoft-graph-core</artifactId>
+      <version>1.0.8</version>
     </dependency>
 
     <dependency>
