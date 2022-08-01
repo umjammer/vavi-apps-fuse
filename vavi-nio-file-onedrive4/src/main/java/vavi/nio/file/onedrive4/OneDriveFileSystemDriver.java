@@ -19,7 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -49,7 +49,6 @@ import com.microsoft.graph.options.QueryOption;
 import com.microsoft.graph.requests.extensions.IDriveItemCollectionPage;
 import com.microsoft.graph.requests.extensions.IDriveItemCopyRequest;
 import com.microsoft.graph.requests.extensions.IThumbnailSetCollectionPage;
-
 import vavi.nio.file.Util;
 import vavi.nio.file.onedrive4.OneDriveFileAttributesFactory.Metadata;
 import vavi.nio.file.onedrive4.graph.LraMonitorProvider;
@@ -261,10 +260,8 @@ Debug.println("upload done: " + result.name);
 
         IDriveItemCollectionPage pages = client.drive().items(dirEntry.id).children().buildRequest().get();
         while (pages != null) {
-            for (final DriveItem child : pages.getCurrentPage()) {
-                list.add(child);
-//System.err.println("child: " + childPath.toRealPath().toString());
-            }
+            //System.err.println("child: " + childPath.toRealPath().toString());
+            list.addAll(pages.getCurrentPage());
             pages = pages.getNextPage() != null ? pages.getNextPage().buildRequest().get() : null;
         }
 
@@ -297,7 +294,7 @@ Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEn
         ItemReference ir = new ItemReference();
         ir.id = targetParentEntry.id;
         IDriveItemCopyRequest request = client.drive().items(sourceEntry.id).copy(toFilenameString(target), ir).buildRequest();
-        BaseRequest.class.cast(request).setHttpMethod(HttpMethod.POST); // #send() hides IDriveItemCopyRequest fields already set above.
+        ((BaseRequest) request).setHttpMethod(HttpMethod.POST); // #send() hides IDriveItemCopyRequest fields already set above.
         DriveItemCopyBody body = new DriveItemCopyBody(); // ditto
         body.name = toFilenameString(target); // ditto
         body.parentReference = ir; // ditto
@@ -401,7 +398,7 @@ Debug.println(Level.INFO, "thumbnail updated: " + sourceEntry.name + ", size: " 
     String getThumbnail(DriveItem sourceEntry) throws IOException {
         IThumbnailSetCollectionPage page = client.drive().items(sourceEntry.id)
                 .thumbnails()
-                .buildRequest(Arrays.asList(new QueryOption("select", "source")))
+                .buildRequest(Collections.singletonList(new QueryOption("select", "source")))
                 .get();
         if (page.getCurrentPage().size() > 0) {
             ThumbnailSet set = page.getCurrentPage().get(0);

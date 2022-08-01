@@ -66,7 +66,7 @@ public final class GatheredFileSystemDriver extends ExtendedFileSystemDriverBase
         final Object entry = getPathMetadata(path);
 
         // TODO: metadata driver
-        if (!Path.class.isInstance(entry) || Files.isDirectory(Path.class.cast(entry))) {
+        if (!(entry instanceof Path) || Files.isDirectory((Path) entry)) {
             throw new IsDirectoryException("path: " + path);
         }
 
@@ -166,10 +166,10 @@ public final class GatheredFileSystemDriver extends ExtendedFileSystemDriverBase
 
     /** */
     private Path toLocalPathForDir(Path path) throws IOException {
-        String subParhString = toPathString(path.subpath(1, path.getNameCount()));
-//Debug.println("subParhString:" + subParhString);
+        String subPathString = toPathString(path.subpath(1, path.getNameCount()));
+//Debug.println("subPathString: " + subPathString);
         FileSystem fileSystem = getFileSystemOf(path);
-        return fileSystem.getPath(subParhString);
+        return fileSystem.getPath(subPathString);
     }
 
     /** */

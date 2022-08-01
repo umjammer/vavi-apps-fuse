@@ -94,7 +94,7 @@ Debug.println("NOTIFICATION: maybe updated: " + path);
                     Path parent = cache.getEntry(f -> { try { return entry.getParentFolder().getId().equals(f.getId()); } catch (IOException g) { g.printStackTrace(); return false; }});
                     Path path = parent.resolve(entry.getName());
 Debug.println("NOTIFICATION: maybe created: " + path);
-                    cache.addEntry(path, OneItem.class.cast(entry));
+                    cache.addEntry(path, (OneItem) entry);
                 }
             } catch (NoSuchElementException e) {
 Debug.println("NOTIFICATION: parent not found: " + e);
@@ -106,12 +106,12 @@ Debug.println("NOTIFICATION: parent not found: " + e);
 
     /** */
     private static OneFile asFile(OneItem entry) {
-        return OneFile.class.cast(entry);
+        return (OneFile) entry;
     }
 
     /** */
     private static OneFolder asFolder(OneItem entry) {
-        return OneFolder.class.cast(entry);
+        return (OneFolder) entry;
     }
 
     @Override
@@ -185,7 +185,7 @@ Debug.println("upload w/o option: " + is.available());
 
     @Override
     protected OneItem createDirectoryEntry(OneItem parentEntry, Path dir) throws IOException {
-        return OneItem.class.cast(asFolder(parentEntry).createFolder(toFilenameString(dir)));
+        return (OneItem) asFolder(parentEntry).createFolder(toFilenameString(dir));
     }
 
     @Override
@@ -202,7 +202,7 @@ Debug.println("upload w/o option: " + is.available());
     protected OneItem copyEntry(OneItem sourceEntry, OneItem targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
         OneFile newEntry = asFile(sourceEntry).copy(asFolder(targetParentEntry), toFilenameString(target));
 Debug.println(newEntry.getParentFolder().getName() + "/" + newEntry.getName());
-        return OneItem.class.cast(newEntry);
+        return (OneItem) newEntry;
     }
 
     @Override

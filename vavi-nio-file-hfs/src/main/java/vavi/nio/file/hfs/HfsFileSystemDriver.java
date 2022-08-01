@@ -54,7 +54,7 @@ public final class HfsFileSystemDriver extends ExtendedFileSystemDriverBase {
     private final HFSCommonFileSystemHandler handler;
 
     /**
-     * @param env
+     * @param env extra parameter for this file system
      */
     public HfsFileSystemDriver(final FileStore fileStore,
             final FileSystemFactoryProvider provider,
@@ -67,12 +67,12 @@ public final class HfsFileSystemDriver extends ExtendedFileSystemDriverBase {
 
     /** */
     private boolean isFolder(FSEntry entry) {
-        return FSFolder.class.isInstance(entry);
+        return entry instanceof FSFolder;
     }
 
     /** */
     private FSFolder asFolder(FSEntry entry) {
-        return FSFolder.class.cast(entry);
+        return (FSFolder) entry;
     }
 
     /** */

@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -37,7 +37,6 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import com.google.api.services.drive.model.Revision;
 import com.google.api.services.drive.model.RevisionList;
-
 import vavi.nio.file.Util;
 import vavi.nio.file.googledrive.GoogleDriveFileAttributesFactory.Metadata;
 import vavi.util.Debug;
@@ -215,7 +214,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
 
                 File entry = new File();
                 entry.setName(toFilenameString(path));
-                entry.setParents(Arrays.asList(parentEntry.getId()));
+                entry.setParents(Collections.singletonList(parentEntry.getId()));
 
                 Drive.Files.Create creator = drive.files().create(entry, mediaContent); // why not HttpContent ???
                 MediaHttpUploader uploader = creator.getMediaHttpUploader();
@@ -247,9 +246,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
                     .setOrderBy("name_natural")
                     .execute();
 
-            for (File child : files.getFiles()) {
-                list.add(child);
-            }
+            list.addAll(files.getFiles());
 
             pageToken = files.getNextPageToken();
 //System.out.println("t: " + (System.currentTimeMillis() - t) + ", " + children.size() + ", " + (pageToken != null));
@@ -264,7 +261,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
         dirEntry.setName(toFilenameString(dir));
         dirEntry.setMimeType(MIME_TYPE_DIR);
         if (dir.toAbsolutePath().getParent().getNameCount() != 0) {
-            dirEntry.setParents(Arrays.asList(parentEntry.getId()));
+            dirEntry.setParents(Collections.singletonList(parentEntry.getId()));
         }
         return drive.files().create(dirEntry).setFields(ENTRY_FIELDS).execute();
     }
@@ -287,7 +284,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
     protected File copyEntry(File sourceEntry, File targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
         File entry = new File();
         entry.setName(toFilenameString(target));
-        entry.setParents(Arrays.asList(targetParentEntry.getId()));
+        entry.setParents(Collections.singletonList(targetParentEntry.getId()));
         if (options != null && options.stream().anyMatch(o -> o.equals(GoogleDriveCopyOption.EXPORT_AS_GDOCS))) {
             entry.setMimeType(GoogleDriveCopyOption.EXPORT_AS_GDOCS.getValue());
         }
@@ -376,7 +373,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
 
             if (revisions.getRevisions() != null) {
 Debug.println(Level.FINE, "revisions: " + revisions.getRevisions().size() + ", " + revisions.getNextPageToken());
-                revisions.getRevisions().forEach(r -> list.add(r));
+                list.addAll(revisions.getRevisions());
             }
 
             pageToken = revisions.getNextPageToken();

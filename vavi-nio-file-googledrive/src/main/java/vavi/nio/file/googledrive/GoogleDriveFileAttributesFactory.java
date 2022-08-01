@@ -19,7 +19,7 @@ import com.google.api.services.drive.model.File;
 public final class GoogleDriveFileAttributesFactory extends ExtendsdFileAttributesFactory {
 
     static class Metadata {
-        GoogleDriveFileSystemDriver driver;
+        public GoogleDriveFileSystemDriver driver;
         File file;
         Metadata(GoogleDriveFileSystemDriver driver, File file) {
             this.driver = driver;

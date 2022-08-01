@@ -272,8 +272,9 @@ try {
     public static class RevisionsUtil {
         /** sort by "modifiedTime" desc */
         public static byte[] getLatestOnly(byte[] revisions) {
+            @SuppressWarnings("unchecked")
             List<Map<String, String>> revisionList = Arrays.stream(split(revisions))
-                    .map(r -> gson.fromJson(r, Map.class))
+                    .map(r -> (Map<String, String>) gson.fromJson(r, Map.class))
                     .sorted((o1, o2) -> {
                         OffsetDateTime odt1 = OffsetDateTime.parse((String) o1.get("modifiedTime"));
                         OffsetDateTime odt2 = OffsetDateTime.parse((String) o2.get("modifiedTime"));
