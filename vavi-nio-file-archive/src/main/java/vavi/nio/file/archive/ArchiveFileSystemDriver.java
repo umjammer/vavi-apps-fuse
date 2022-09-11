@@ -6,6 +6,7 @@
 
 package vavi.nio.file.archive;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -56,10 +57,23 @@ public final class ArchiveFileSystemDriver extends ExtendedFileSystemDriverBase 
         this.archive = archive;
     }
 
+    // TODO research all archive type
+    static String toArchiveString(Path path) {
+        return path.toAbsolutePath().toString().substring(1);
+    }
+
     /** */
-    private Entry getEntry(Path path) {
-Debug.println(Level.FINE, "entry: \"" + path.toAbsolutePath().toString().substring(1) + "\"");
-        return archive.getEntry(path.toAbsolutePath().toString().substring(1));
+    private Entry getEntry(Path path) throws FileNotFoundException{
+        if (path.getNameCount() == 0) {
+Debug.println(Level.FINE, "root");
+            return null;
+        }
+Debug.println(Level.FINE, "entry: \"" + toArchiveString(path) + "\"");
+        Entry entry = archive.getEntry(toArchiveString(path));
+        if (entry == null) {
+            throw new FileNotFoundException(path.toString());
+        }
+        return entry;
     }
 
     @Override
@@ -119,11 +133,29 @@ Debug.println(Level.FINE, "entry: \"" + path.toAbsolutePath().toString().substri
 
     /** */
     private List<Path> getDirectoryEntries(final Path dir) throws IOException {
-        List<Path> list = new ArrayList<>(archive.size());
+//Debug.println("dir: " + dir + " ---------");
+        List<Path> list = new ArrayList<>();
 
         for (Entry entry : archive.entries()) {
-            Path childPath = dir.resolve(entry.getName());
-            list.add(childPath);
+            if (dir.getNameCount() == 0) {
+                String[] names = entry.getName().split("/");
+                if (names.length == 1) {
+                    Path childPath = dir.resolve(entry.getName());
+//Debug.println("root: " + childPath);
+                    list.add(childPath);
+                }
+            } else {
+                String dirString = toArchiveString(dir) + "/";
+                if (entry.getName().startsWith(dirString)) {
+                    String entryName = entry.getName().substring(dirString.length());
+                    String[] names = entryName.split("/");
+                    if (names.length == 1 && names[0].length() > 0) {
+                        Path childPath = dir.resolve(entryName);
+//Debug.println("sub : " + childPath);
+                        list.add(childPath);
+                    }
+                }
+            }
         }
 
         return list;
