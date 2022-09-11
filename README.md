@@ -1,4 +1,6 @@
-[![Release](https://jitpack.io/v/umjammer/vavi-apps-fuse.svg)](https://jitpack.io/#umjammer/vavi-apps-fuse) [![Java CI with Maven](https://github.com/umjammer/vavi-apps-fuse/workflows/Java%20CI%20with%20Maven/badge.svg)](https://github.com/umjammer/vavi-apps-fuse/actions)
+[![Release](https://jitpack.io/v/umjammer/vavi-apps-fuse.svg)](https://jitpack.io/#umjammer/vavi-apps-fuse)
+[![Java CI with Maven](https://github.com/umjammer/vavi-apps-fuse/workflows/Java%20CI%20with%20Maven/badge.svg)](https://github.com/umjammer/vavi-apps-fuse/actions)
+![Java](https://img.shields.io/badge/Java-8-b07219)
 
 # vavi-apps-fuse
 

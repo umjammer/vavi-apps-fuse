@@ -25,7 +25,7 @@
     <plugins>
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.10</version>
+        <version>3.3.0</version>
         <executions>
           <execution>
             <id>copy</id>
@@ -59,7 +59,6 @@
     </repository>
     <repository>
       <id>github</id>
-      <name>GitHub umjammer Apache Maven Packages</name>
       <url>https://maven.pkg.github.com/umjammer/*</url>
     </repository>
     <repository>
@@ -88,13 +87,13 @@
     <dependency>
       <groupId>org.jsoup</groupId>
       <artifactId>jsoup</artifactId>
-      <version>1.14.3</version>
+      <version>1.15.3</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.jdom</groupId>
-      <artifactId>jdom</artifactId>
-      <version>2.0.2</version>
+      <artifactId>jdom2</artifactId>
+      <version>2.0.6.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -106,7 +105,7 @@
     <dependency>
       <groupId>net.sf.saxon</groupId>
       <artifactId>Saxon-HE</artifactId>
-      <version>11.2</version>
+      <version>11.4</version>
       <scope>test</scope>
     </dependency>
 
@@ -135,19 +134,19 @@
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-onedrive</artifactId>
-      <version>0.1.7</version>
+      <version>0.1.8-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-onedrive4</artifactId>
-      <version>0.1.7</version>
+      <version>0.1.8-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-googledrive</artifactId>
-      <version>0.1.7</version>
+      <version>0.1.8-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
 
@@ -156,6 +155,12 @@
       <artifactId>vavi-util-archive</artifactId>
       <version>1.1.0</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.sun</groupId>
+          <artifactId>tools</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -194,9 +199,9 @@
     </dependency>
 
     <dependency>
-      <groupId>com.github.umjammer</groupId>
+      <groupId>vavi</groupId>
       <artifactId>vavi-util-screenscraping</artifactId>
-      <version>1.0.9</version>
+      <version>1.0.10</version>
       <scope>test</scope>
     </dependency>
     <dependency>

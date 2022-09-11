@@ -40,14 +40,20 @@
 
     <dependency>
       <!-- java-fs archive -->
-      <groupId>com.github.umjammer</groupId>
+      <groupId>vavi</groupId>
       <artifactId>vavi-util-archive</artifactId>
-      <version>1.1.0</version>
+      <version>1.1.1-SNAPSHOT</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.sun</groupId>
+          <artifactId>tools</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
-      <groupId>com.github.umjammer</groupId>
+      <groupId>vavi</groupId>
       <artifactId>vavi-util-archive-sandbox</artifactId>
-      <version>1.0.4</version>
+      <version>1.0.5-SNAPSHOT</version>
     </dependency>
 
     <dependency>
