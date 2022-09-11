@@ -48,7 +48,7 @@ public class GoogleDriveUserDefinedFileAttributesProvider extends UserDefinedFil
     }
 
     /** pre-listed */
-    private static final List<String> list = Arrays.stream(UserAttributes.values()).map(e -> e.name()).collect(Collectors.toList());
+    private static final List<String> list = Arrays.stream(UserAttributes.values()).map(Enum::name).collect(Collectors.toList());
 
     @Override
     public List<String> list() throws IOException {

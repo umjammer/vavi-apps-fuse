@@ -69,7 +69,7 @@ class JavaNioFileFS extends FuseStubFS {
     private final ConcurrentMap<Long, SeekableByteChannel> fileHandles = new ConcurrentHashMap<>();
 
     /**
-     * @param fileSystem
+     * @param fileSystem a file system to wrap by fuse
      */
     public JavaNioFileFS(FileSystem fileSystem, Map<String, Object> env) throws IOException {
         this.fileSystem = fileSystem;
@@ -121,7 +121,7 @@ Debug.println(Level.FINE, "getattr: " + path);
                     fileSystem.provider().readAttributes(fileSystem.getPath(path), BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
 
             if (attributes instanceof PosixFileAttributes) {
-                long mode = JnrFuseFuse.permissionsToMode(PosixFileAttributes.class.cast(attributes).permissions());
+                long mode = JnrFuseFuse.permissionsToMode(((PosixFileAttributes) attributes).permissions());
                 if (attributes.isDirectory()) {
                     stat.st_mode.set(FileStat.S_IFDIR | mode);
                     stat.st_mtim.tv_sec.set(attributes.lastModifiedTime().to(TimeUnit.SECONDS));

@@ -40,7 +40,7 @@ public class FuseJnaFuse implements Fuse {
     @Override
     public void mount(FileSystem fs, String mountPoint, Map<String, Object> env) throws IOException {
         try {
-            if (env.containsKey(ENV_SINGLE_THREAD) && Boolean.class.cast(env.get(ENV_SINGLE_THREAD))) {
+            if (env.containsKey(ENV_SINGLE_THREAD) && (Boolean) env.get(ENV_SINGLE_THREAD)) {
                 fuse = new SingleThreadJavaNioFileFS(fs, env);
 Debug.println("use single thread");
             } else {
