@@ -6,17 +6,22 @@
 
 package vavi.nio.file.archive;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
+import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -39,6 +44,14 @@ class ArchiveFileSystemProviderTest {
 
     @Property(name = "test.archive")
     String file;
+
+    @Property(name = "test.comic")
+    String comic;
+
+    @BeforeEach
+    void setup() throws Exception {
+        PropsEntity.Util.bind(this);
+    }
 
     @Test
     void test() throws Exception {
@@ -76,11 +89,23 @@ System.err.println("rawFragment: " + uri.getRawFragment());
         URL url = ArchiveFileSystemProviderTest.class.getResource("/test.lzh");
         URI uri = URI.create("archive:file:" + url.getPath());
         FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
-        Files.list(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
+        Path root = fs.getRootDirectories().iterator().next();
+        Files.list(root).forEach(System.err::println);
+        assertEquals(7, Files.list(root).count());
+    }
+
+    @Test
+    void test4() throws Exception {
+Debug.println(comic);
+        Path path = Paths.get(comic);
+Debug.println(path + ", " + Files.exists(path));
+        URI uri = URI.create("archive:" + path.toUri());
+        FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
+        Files.walk(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
     }
 
     /**
-     * @param args
+     * @param args archive
      */
     public static void main(String[] args) throws Exception {
         ArchiveFileSystemProviderTest app = new ArchiveFileSystemProviderTest();
