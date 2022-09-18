@@ -94,10 +94,10 @@
 
   <dependencies>
     <dependency>
-      <!-- fuse jnr (co.paralleluniverse) -->
-      <groupId>com.github.umjammer</groupId>
+      <!-- fuse jnr (co.paralleluniverse / com.github.umjammer) -->
+      <groupId>co.paralleluniverse</groupId>
       <artifactId>javafs</artifactId>
-      <version>0.1.6v</version>
+      <version>0.1.7v-SNAPSHOT</version>
     </dependency>
     <dependency>
       <!-- fuse jna (net.fuse-jna) -->
