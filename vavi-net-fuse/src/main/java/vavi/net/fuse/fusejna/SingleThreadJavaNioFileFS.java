@@ -44,9 +44,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
 
     @Override
     public int access(String path, int access) {
-        Future<Integer> f = multiService.submit(() -> {
-            return super.access(path, access);
-        });
+        Future<Integer> f = multiService.submit(() -> super.access(path, access));
         try {
             return f.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -56,9 +54,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
 
     @Override
     public int getattr(final String path, final StatWrapper stat) {
-        Future<Integer> f = multiService.submit(() -> {
-            return super.getattr(path, stat);
-        });
+        Future<Integer> f = multiService.submit(() -> super.getattr(path, stat));
         try {
             return f.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -68,9 +64,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
 
     @Override
     public int create(final String path, final ModeWrapper mode, final FileInfoWrapper info) {
-        Future<Integer> f = singleService.submit(() -> {
-            return super.create(path, mode, info);
-        });
+        Future<Integer> f = singleService.submit(() -> super.create(path, mode, info));
         try {
             return f.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -80,9 +74,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
 
     @Override
     public int open(final String path, final FileInfoWrapper info) {
-        Future<Integer> f = singleService.submit(() -> {
-            return super.open(path, info);
-        });
+        Future<Integer> f = singleService.submit(() -> super.open(path, info));
         try {
             return f.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -92,9 +84,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
 
     @Override
     public int read(final String path, final ByteBuffer buf, final long size, final long offset, final FileInfoWrapper info) {
-        Future<Integer> f = singleService.submit(() -> {
-            return super.read(path, buf, size, offset, info);
-        });
+        Future<Integer> f = singleService.submit(() -> super.read(path, buf, size, offset, info));
         try {
             return f.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -108,9 +98,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
                      final long size,
                      final long offset,
                      final FileInfoWrapper info) {
-        Future<Integer> f = singleService.submit(() -> {
-            return super.write(path, buf, size, offset, info);
-        });
+        Future<Integer> f = singleService.submit(() -> super.write(path, buf, size, offset, info));
         try {
             return f.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -120,9 +108,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
 
     @Override
     public int release(final String path, final FileInfoWrapper info) {
-        Future<Integer> f = singleService.submit(() -> {
-            return super.release(path, info);
-        });
+        Future<Integer> f = singleService.submit(() -> super.release(path, info));
         try {
             return f.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -132,9 +118,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
 
     @Override
     public int chmod(String path, ModeWrapper mode) {
-        Future<Integer> f = singleService.submit(() -> {
-            return super.chmod(path, mode);
-        });
+        Future<Integer> f = singleService.submit(() -> super.chmod(path, mode));
         try {
             return f.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -144,9 +128,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
 
     @Override
     public int mkdir(final String path, final ModeWrapper mode) {
-        Future<Integer> f = singleService.submit(() -> {
-            return super.mkdir(path, mode);
-        });
+        Future<Integer> f = singleService.submit(() -> super.mkdir(path, mode));
         try {
             return f.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -156,9 +138,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
 
     @Override
     public int rmdir(final String path) {
-        Future<Integer> f = singleService.submit(() -> {
-            return super.rmdir(path);
-        });
+        Future<Integer> f = singleService.submit(() -> super.rmdir(path));
         try {
             return f.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -168,9 +148,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
 
     @Override
     public int readdir(final String path, final DirectoryFiller filler) {
-        Future<Integer> f = singleService.submit(() -> {
-            return super.readdir(path, filler);
-        });
+        Future<Integer> f = singleService.submit(() -> super.readdir(path, filler));
         try {
             return f.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -180,9 +158,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
 
     @Override
     public int rename(final String path, final String newName) {
-        Future<Integer> f = singleService.submit(() -> {
-            return super.rename(path, newName);
-        });
+        Future<Integer> f = singleService.submit(() -> super.rename(path, newName));
         try {
             return f.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -192,9 +168,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
 
     @Override
     public int truncate(final String path, final long offset) {
-        Future<Integer> f = singleService.submit(() -> {
-            return super.truncate(path, offset);
-        });
+        Future<Integer> f = singleService.submit(() -> super.truncate(path, offset));
         try {
             return f.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -204,9 +178,7 @@ class SingleThreadJavaNioFileFS extends JavaNioFileFS {
 
     @Override
     public int unlink(final String path) {
-        Future<Integer> f = singleService.submit(() -> {
-            return super.unlink(path);
-        });
+        Future<Integer> f = singleService.submit(() -> super.unlink(path));
         try {
             return f.get();
         } catch (InterruptedException | ExecutionException e) {

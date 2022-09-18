@@ -171,21 +171,20 @@ Debug.println(Level.FINE, "download: " + entry.getName() + ", " + entry.getSize(
     }
 
     @Override
-    protected void whenUploadEntryExists(File sourceEntry, Path path, Set<? extends OpenOption> options) throws IOException {
+    protected void whenUploadEntryExists(File destEntry, Path path, Set<? extends OpenOption> options) throws IOException {
         if (options == null || !options.stream().anyMatch(o -> o.equals(GoogleDriveOpenOption.INPORT_AS_NEW_REVISION))) {
-            super.whenUploadEntryExists(sourceEntry, path, options);
+            super.whenUploadEntryExists(destEntry, path, options); // means throws FileAlreadyExistsException
         }
 
         File entry = new File();
 
         AbstractInputStreamContent mediaContent = new InputStreamContent(null, Files.newInputStream(path));
-        Drive.Files.Update updator = drive.files().update(sourceEntry.getId(), entry, mediaContent);
-        MediaHttpUploader uploader = updator.getMediaHttpUploader();
+        Drive.Files.Update updater = drive.files().update(destEntry.getId(), entry, mediaContent);
+        MediaHttpUploader uploader = updater.getMediaHttpUploader();
         uploader.setDirectUploadEnabled(true);
         // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
         uploader.setProgressListener(u -> { Debug.println("new revision progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()); });
-        updator.getMediaHttpUploader();
-        File newEntry = updator.setFields(ENTRY_FIELDS).execute();
+        File newEntry = updater.setFields(ENTRY_FIELDS).execute();
 Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.getSize());
         updateEntry(path, newEntry);
     }
@@ -198,11 +197,11 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
             protected File upload() throws IOException {
                 AbstractInputStreamContent mediaContent = new AbstractInputStreamContent(null) { // implements HttpContent
                     @Override
-                    public InputStream getInputStream() throws IOException {
+                    public InputStream getInputStream() {
                         return null; // never called
                     }
                     @Override
-                    public long getLength() throws IOException {
+                    public long getLength() {
                         return -1;
                     }
                     @Override
@@ -210,7 +209,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
                         return false;
                     }
                     @Override
-                    public void writeTo(OutputStream os) throws IOException {
+                    public void writeTo(OutputStream os) {
                         setOutputStream(os); // socket
                     }
                 };
@@ -331,7 +330,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
     }
 
     @Override
-    protected Object getPathMetadata(File entry) throws IOException {
+    protected Object getPathMetadata(File entry) {
         return new Metadata(this, entry);
     }
 

@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.AccessDeniedException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.LinkOption;
@@ -29,9 +28,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 
-import vavi.nio.file.Util;
-import vavi.util.Debug;
-
 import jnr.constants.platform.Errno;
 import jnr.ffi.Pointer;
 import jnr.ffi.types.mode_t;
@@ -44,10 +40,12 @@ import ru.serce.jnrfuse.struct.FileStat;
 import ru.serce.jnrfuse.struct.Flock;
 import ru.serce.jnrfuse.struct.FuseFileInfo;
 import ru.serce.jnrfuse.struct.Statvfs;
+import vavi.nio.file.Util;
+import vavi.util.Debug;
 
 
 /**
- * JavaFsFS. (jnr-fuse)
+ * JavaNioFileFS. (jnr-fuse)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/02/29 umjammer initial version <br>
@@ -71,13 +69,13 @@ class JavaNioFileFS extends FuseStubFS {
     /**
      * @param fileSystem a file system to wrap by fuse
      */
-    public JavaNioFileFS(FileSystem fileSystem, Map<String, Object> env) throws IOException {
+    public JavaNioFileFS(FileSystem fileSystem, Map<String, Object> env) {
         this.fileSystem = fileSystem;
     }
 
     @Override
     public int access(String path, int access) {
-Debug.println(Level.FINE, "access: " + path);
+Debug.println(Level.FINEST, "access: " + path);
         try {
             // TODO access
             fileSystem.provider().checkAccess(fileSystem.getPath(path));
@@ -85,9 +83,6 @@ Debug.println(Level.FINE, "access: " + path);
         } catch (NoSuchFileException e) {
 Debug.println(e);
             return -ErrorCodes.ENOENT();
-        } catch (AccessDeniedException e) {
-Debug.println(e);
-            return -ErrorCodes.EACCES();
         } catch (IOException e) {
 Debug.println(e);
             return -ErrorCodes.EACCES();
@@ -115,7 +110,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int getattr(String path, FileStat stat) {
-Debug.println(Level.FINE, "getattr: " + path);
+Debug.println(Level.FINEST, "getattr: " + path);
         try {
             BasicFileAttributes attributes =
                     fileSystem.provider().readAttributes(fileSystem.getPath(path), BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
@@ -147,7 +142,7 @@ Debug.println(Level.FINE, "getattr: " + path);
             return 0;
         } catch (NoSuchFileException e) {
             if (e.getMessage().startsWith("ignore apple double file:")) {
-Debug.println(Level.FINE, e.getMessage());
+Debug.println(Level.FINEST, e.getMessage());
                 return 0;
             } else {
 Debug.println(e);
@@ -180,7 +175,6 @@ Debug.printStackTrace(e);
 
     @Override
     public int open(String path, FuseFileInfo info) {
-Debug.println(Level.FINE, "open: " + path);
         try {
             Set<OpenOption> options = new HashSet<>();
             options.add(StandardOpenOption.READ);
@@ -188,6 +182,7 @@ Debug.println(Level.FINE, "open: " + path);
             long fh = fileHandle.incrementAndGet();
             fileHandles.put(fh, channel);
             info.fh.set(fh);
+Debug.println(Level.FINE, "open: " + path + ", fh: " + fh);
 
             return 0;
         } catch (IOException e) {
@@ -198,28 +193,29 @@ Debug.printStackTrace(e);
 
     @Override
     public int read(String path, Pointer buf, long size, long offset, FuseFileInfo info) {
-Debug.println(Level.FINE, "read: " + path + ", " + offset + ", " + size + ", " + info.fh.get());
+Debug.println(Level.FINE, "read: " + path + ", " + offset + ", " + size + ", fh: " + info.fh.get());
         try {
             if (fileHandles.containsKey(info.fh.get())) {
                 SeekableByteChannel channel = fileHandles.get(info.fh.get());
                 ByteBuffer bb = ByteBuffer.allocate(BUFFER_SIZE);
                 long pos = 0;
-Debug.printf(Level.FINE, "Attempting to read %d-%d:", offset, offset + size);
+Debug.printf(Level.FINER, "Attempting to read %d-%d:", offset, offset + size);
                 do {
                     bb.clear();
                     bb.limit((int) Math.min(bb.capacity(), size - pos));
                     int read = channel.read(bb);
                     if (read == -1) {
-Debug.println(Level.FINE, "Reached EOF");
+Debug.println(Level.FINER, "Reached EOF");
                         return (int) pos; // reached EOF TODO: wtf cast
                     } else {
-Debug.printf(Level.FINE, "Reading %d-%d", offset + pos, offset + pos + read);
+Debug.printf(Level.FINER, "Reading %d-%d", offset + pos, offset + pos + read);
                         buf.put(pos, bb.array(), 0, read);
                         pos += read;
                     }
                 } while (pos < size);
                 return (int) pos;
             } else {
+Debug.println(Level.FINE, "read: no fh: " + path);
                 return -ErrorCodes.EEXIST();
             }
         } catch (IOException e) {
@@ -230,11 +226,11 @@ Debug.printStackTrace(e);
 
     @Override
     public int readdir(String path, Pointer buf, FuseFillDir filler, @off_t long offset, FuseFileInfo info) {
-Debug.println(Level.FINE, "readdir: " + path);
+Debug.println(Level.FINER, "readdir: " + path);
         try {
             fileSystem.provider().newDirectoryStream(fileSystem.getPath(path), p -> true)
                 .forEach(p -> {
-Debug.println(Level.FINE, "p: " + p);
+Debug.println(Level.FINER, "p: " + p);
                     try {
                         filler.apply(buf, Util.toFilenameString(p), null, 0);
                     } catch (IOException e) {
@@ -293,7 +289,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int write(String path, Pointer buf, @size_t long size, @off_t long offset, FuseFileInfo info) {
-Debug.println(Level.FINE, "write: " + path + ", " + offset + ", " + size + ", " + info.fh.get());
+Debug.println(Level.FINE, "write: " + path + ", " + offset + ", " + size + ", fh: " + info.fh.get());
         try {
             if (fileHandles.containsKey(info.fh.get())) {
                 ByteBuffer bb = ByteBuffer.allocate(BUFFER_SIZE);
@@ -336,7 +332,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int statfs(String path, Statvfs stbuf) {
-Debug.println(Level.FINE, "statfs: " + path);
+Debug.println(Level.FINEST, "statfs: " + path);
         try {
             FileStore fileStore = fileSystem.getFileStores().iterator().next();
 //Debug.println("total: " + fileStore.getTotalSpace());
@@ -381,16 +377,16 @@ Debug.printStackTrace(e);
         }
     }
 
-
     @Override
     public int release(String path, FuseFileInfo info) {
-Debug.println(Level.FINE, "release: " + path);
+Debug.println(Level.FINE, "release: " + path + ", fh: " + info.fh.get());
         try {
             if (fileHandles.containsKey(info.fh.get())) {
                 Channel channel = fileHandles.get(info.fh.get());
                 channel.close();
                 return 0;
             } else {
+Debug.println(Level.FINE, "release: no fh: " + path);
                 return -ErrorCodes.EEXIST();
             }
         } catch (IOException e) {
@@ -402,8 +398,8 @@ Debug.printStackTrace(e);
     }
 
     @Override
-    public int lock(String path, FuseFileInfo fi, int cmd, Flock flock) {
-Debug.println(Level.FINE, "lock: " + path);
+    public int lock(String path, FuseFileInfo info, int cmd, Flock flock) {
+Debug.println(Level.FINE, "lock: " + path + ", fh: " + info.fh.get());
         return 0;
     }
 }

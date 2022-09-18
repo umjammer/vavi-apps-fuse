@@ -6,7 +6,6 @@
 
 package vavi.nio.file.googledrive;
 
-import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -17,7 +16,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
 import vavi.net.fuse.Base;
 import vavi.net.fuse.Fuse;
 
@@ -71,9 +69,10 @@ public class Main4 {
         fs.close();
     }
 
-    //
-
-    public static void main(String[] args) throws IOException {
+    /**
+     * @param args 0: mount point, 1: email
+     */
+    public static void main(String[] args) throws Exception {
         String email = args[1];
 
         Map<String, Object> env = new HashMap<>();
@@ -83,8 +82,9 @@ public class Main4 {
 
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, env);
 
-        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
-//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.fusejna.FuseJnaFuseProvider");
+        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
 
         Map<String, Object> options = new HashMap<>();
         options.put("fsname", "googledrive_fs" + "@" + System.currentTimeMillis());
