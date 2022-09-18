@@ -25,7 +25,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.logging.Level;
 
-import com.github.fge.filesystem.driver.CachedFileSystemDriver;
+import com.github.fge.filesystem.driver.DoubleCachedFileSystemDriver;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -53,7 +53,7 @@ import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_USE_SY
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
-public final class GoogleDriveFileSystemDriver extends CachedFileSystemDriver<File> {
+public final class GoogleDriveFileSystemDriver extends DoubleCachedFileSystemDriver<File> {
 
     private Drive drive;
 
@@ -156,13 +156,16 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     }
 
     @Override
-    protected InputStream downloadEntry(File entry, Path path, Set<? extends OpenOption> options) throws IOException {
+    protected InputStream downloadEntryImpl(File entry, Path path, Set<? extends OpenOption> options) throws IOException {
         // TODO detect automatically? (w/o options)
         if (options != null && options.stream().anyMatch(o -> o.equals(GoogleDriveOpenOption.EXPORT_WITH_GDOCS_DOCX) ||
                                                          o.equals(GoogleDriveOpenOption.EXPORT_WITH_GDOCS_XLSX))) {
             GoogleDriveOpenOption option = Util.getOneOfOptions(GoogleDriveOpenOption.class, options);
+            // export google docs, sheet ... as specified type
             return drive.files().export(entry.getId(), option.getValue()).executeMediaAsInputStream();
         } else {
+            // normal download
+Debug.println(Level.FINE, "download: " + entry.getName() + ", " + entry.getSize());
             return drive.files().get(entry.getId()).executeMediaAsInputStream();
         }
     }
