@@ -31,8 +31,13 @@ import net.fusejna.FuseFilesystem;
  */
 public class FuseJnaFuse implements Fuse {
 
-    /** */
-    public static final String ENV_NO_APPLE_DOUBLE = JavaNioFileFS.ENV_NO_APPLE_DOUBLE;
+    /** key for env, no need to specify value */
+    public static final String ENV_IGNORE_APPLE_DOUBLE = JavaNioFileFS.ENV_IGNORE_APPLE_DOUBLE;
+
+    /** TODO utility delegate */
+    static boolean isEnabled(String key, Map<String, Object> map) {
+        return Fuse.isEnabled(key, map);
+    }
 
     /** */
     private FuseFilesystem fuse;

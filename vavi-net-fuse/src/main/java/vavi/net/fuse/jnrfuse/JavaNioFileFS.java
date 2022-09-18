@@ -57,20 +57,23 @@ class JavaNioFileFS extends FuseStubFS {
     /** */
     private transient FileSystem fileSystem;
 
-    /** */
-    static final String ENV_NO_APPLE_DOUBLE = "no_apple_double";
+    /** key for env, no need to specify value */
+    static final String ENV_IGNORE_APPLE_DOUBLE = "noappledouble";
 
     /** */
     private final AtomicLong fileHandle = new AtomicLong(0);
 
     /** <file handle, channel> */
     private final ConcurrentMap<Long, SeekableByteChannel> fileHandles = new ConcurrentHashMap<>();
+    protected boolean ignoreAppleDouble;
 
     /**
      * @param fileSystem a file system to wrap by fuse
      */
     public JavaNioFileFS(FileSystem fileSystem, Map<String, Object> env) {
         this.fileSystem = fileSystem;
+        ignoreAppleDouble = JnrFuseFuse.isEnabled(ENV_IGNORE_APPLE_DOUBLE, env);
+Debug.println(Level.FINE, "ENV_IGNORE_APPLE_DOUBLE: " + ignoreAppleDouble);
     }
 
     @Override
@@ -145,7 +148,13 @@ Debug.println(Level.FINEST, "getattr: " + path);
 Debug.println(Level.FINEST, e.getMessage());
                 return 0;
             } else {
-Debug.println(e);
+                if (ignoreAppleDouble) {
+                    if (Util.isAppleDouble(path)) {
+Debug.println(Level.FINEST, e.getMessage());
+                    } else {
+Debug.println(Level.FINE, e);
+                    }
+                }
                 return -ErrorCodes.ENOENT();
             }
         } catch (IOException e) {

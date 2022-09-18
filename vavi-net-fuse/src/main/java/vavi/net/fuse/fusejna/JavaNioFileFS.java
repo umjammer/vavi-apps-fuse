@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 
+import vavi.net.fuse.Fuse;
 import vavi.nio.file.Util;
 import vavi.util.Debug;
 
@@ -54,8 +55,8 @@ class JavaNioFileFS extends FuseFilesystemAdapterAssumeImplemented {
     /** */
     protected transient FileSystem fileSystem;
 
-    /** */
-    static final String ENV_NO_APPLE_DOUBLE = "no_apple_double";
+    /** key for env, no need to specify value */
+    static final String ENV_IGNORE_APPLE_DOUBLE = "noappledouble";
 
     /** */
     private final AtomicLong fileHandle = new AtomicLong(0);
@@ -63,11 +64,15 @@ class JavaNioFileFS extends FuseFilesystemAdapterAssumeImplemented {
     /** <file handle, channel> */
     private final ConcurrentMap<Long, SeekableByteChannel> fileHandles = new ConcurrentHashMap<>();
 
+    protected boolean ignoreAppleDouble;
+
     /**
      * @param fileSystem a file system to wrap by fuse
      */
-    public JavaNioFileFS(FileSystem fileSystem, Map<String, Object> env) throws IOException {
+    public JavaNioFileFS(FileSystem fileSystem, Map<String, Object> env) {
         this.fileSystem = fileSystem;
+        ignoreAppleDouble = FuseJnaFuse.isEnabled(ENV_IGNORE_APPLE_DOUBLE, env);
+Debug.println(Level.FINE, "ENV_IGNORE_APPLE_DOUBLE: " + ignoreAppleDouble);
     }
 
     @Override
@@ -140,7 +145,13 @@ Debug.println(Level.FINE, "getattr: " + path);
 Debug.println(Level.FINE, e.getMessage());
                 return 0;
             } else {
-Debug.println(e);
+                if (ignoreAppleDouble) {
+                    if (Util.isAppleDouble(path)) {
+Debug.println(Level.FINER, e.getMessage());
+                    } else {
+Debug.println(Level.FINE, e);
+                    }
+                }
                 return -ErrorCodes.ENOENT();
             }
         } catch (IOException e) {

@@ -22,16 +22,16 @@ import java.util.ServiceLoader;
  */
 public interface Fuse extends Closeable {
 
-    /** */
+    /**  */
     String ENV_SINGLE_THREAD = "single_thread";
 
     /** should be non-blocking */
     void mount(FileSystem fs, String mountPoint, Map<String, Object> env) throws IOException;
 
-    /** */
+    /**  */
     ServiceLoader<FuseProvider> serviceLoader = ServiceLoader.load(FuseProvider.class);
 
-    /** */
+    /**  */
     static Fuse getFuse() {
         String className = System.getProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.fusejna.FuseJnaFuseProvider");
         for (FuseProvider provider : serviceLoader) {
@@ -40,6 +40,11 @@ public interface Fuse extends Closeable {
             }
         }
         throw new NoSuchElementException(className);
+    }
+
+    /** TODO location */
+    static boolean isEnabled(String key, Map<String, Object> map) {
+        return map.containsKey(key) && (map.get(key) == null || (boolean) map.get(key));
     }
 }
 
