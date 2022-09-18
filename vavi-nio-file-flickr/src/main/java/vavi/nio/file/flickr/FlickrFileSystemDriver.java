@@ -17,16 +17,14 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import com.flickr4java.flickr.Flickr;
 import com.flickr4java.flickr.FlickrException;
 import com.flickr4java.flickr.photos.Photo;
 import com.flickr4java.flickr.photos.SearchParameters;
-import com.github.fge.filesystem.driver.CachedFileSystemDriver;
+import com.github.fge.filesystem.driver.DoubleCachedFileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
-
 import vavi.nio.file.Util;
 
 
@@ -37,7 +35,7 @@ import vavi.nio.file.Util;
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class FlickrFileSystemDriver extends CachedFileSystemDriver<Photo> {
+public final class FlickrFileSystemDriver extends DoubleCachedFileSystemDriver<Photo> {
 
     private final Flickr flickr;
 
@@ -87,7 +85,7 @@ public final class FlickrFileSystemDriver extends CachedFileSystemDriver<Photo> 
     }
 
     @Override
-    protected InputStream downloadEntry(Photo entry, Path path, Set<? extends OpenOption> options) throws IOException {
+    protected InputStream downloadEntryImpl(Photo entry, Path path, Set<? extends OpenOption> options) throws IOException {
         final java.io.File downloadFile = java.io.File.createTempFile("vavi-apps-fuse-", ".download");
         return new FlickrInputStream(flickr, entry, downloadFile);
     }
