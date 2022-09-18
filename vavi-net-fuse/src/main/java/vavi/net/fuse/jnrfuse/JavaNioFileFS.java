@@ -8,7 +8,6 @@ package vavi.net.fuse.jnrfuse;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
@@ -52,7 +51,7 @@ import vavi.util.Debug;
  */
 class JavaNioFileFS extends FuseStubFS {
 
-    private static final int BUFFER_SIZE = 8192;
+    private static final int BUFFER_SIZE = 0x10000;
 
     /** */
     private transient FileSystem fileSystem;
@@ -64,7 +63,8 @@ class JavaNioFileFS extends FuseStubFS {
     private final AtomicLong fileHandle = new AtomicLong(0);
 
     /** <file handle, channel> */
-    private final ConcurrentMap<Long, SeekableByteChannel> fileHandles = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Long, SeekableByteChannel> fileHandles = new ConcurrentHashMap<>();
+
     protected boolean ignoreAppleDouble;
 
     /**
@@ -206,6 +206,7 @@ Debug.println(Level.FINE, "read: " + path + ", " + offset + ", " + size + ", fh:
         try {
             if (fileHandles.containsKey(info.fh.get())) {
                 SeekableByteChannel channel = fileHandles.get(info.fh.get());
+                channel.position(offset);
                 ByteBuffer bb = ByteBuffer.allocate(BUFFER_SIZE);
                 long pos = 0;
 Debug.printf(Level.FINER, "Attempting to read %d-%d:", offset, offset + size);
@@ -391,7 +392,7 @@ Debug.printStackTrace(e);
 Debug.println(Level.FINE, "release: " + path + ", fh: " + info.fh.get());
         try {
             if (fileHandles.containsKey(info.fh.get())) {
-                Channel channel = fileHandles.get(info.fh.get());
+                SeekableByteChannel channel = fileHandles.get(info.fh.get());
                 channel.close();
                 return 0;
             } else {
