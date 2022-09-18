@@ -26,7 +26,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.logging.Level;
 
-import com.github.fge.filesystem.driver.CachedFileSystemDriver;
+import com.github.fge.filesystem.driver.DoubleCachedFileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import com.google.common.io.ByteStreams;
 import com.microsoft.graph.concurrency.ChunkedUploadProvider;
@@ -70,7 +70,7 @@ import static vavi.nio.file.onedrive4.OneDriveFileSystemProvider.ENV_USE_SYSTEM_
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
-public final class OneDriveFileSystemDriver extends CachedFileSystemDriver<DriveItem> {
+public final class OneDriveFileSystemDriver extends DoubleCachedFileSystemDriver<DriveItem> {
 
     private final IGraphServiceClient client;
 
@@ -155,8 +155,9 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     }
 
     @Override
-    protected InputStream downloadEntry(DriveItem entry, Path path, Set<? extends OpenOption> options) throws IOException {
+    protected InputStream downloadEntryImpl(DriveItem entry, Path path, Set<? extends OpenOption> options) throws IOException {
         try {
+Debug.println("download: " + entry.name + ", " + entry.size);
             return client.drive().items(entry.id).content().buildRequest().get();
         } catch (ClientException e) {
             throw new IOException(e);

@@ -6,7 +6,7 @@
 
 package vavi.nio.file.onedrive4;
 
-import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase.ExtendsdFileAttributesFactory;
+import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase.ExtendedFileAttributesFactory;
 import com.microsoft.graph.models.extensions.DriveItem;
 
 
@@ -16,7 +16,7 @@ import com.microsoft.graph.models.extensions.DriveItem;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
-public final class OneDriveFileAttributesFactory extends ExtendsdFileAttributesFactory {
+public final class OneDriveFileAttributesFactory extends ExtendedFileAttributesFactory {
 
     static class Metadata {
         OneDriveFileSystemDriver driver;
