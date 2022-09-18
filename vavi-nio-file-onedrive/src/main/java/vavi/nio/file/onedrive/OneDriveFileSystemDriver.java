@@ -25,7 +25,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import com.github.fge.filesystem.driver.CachedFileSystemDriver;
+import com.github.fge.filesystem.driver.DoubleCachedFileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import vavi.nio.file.Util;
@@ -51,7 +51,7 @@ import de.tuberlin.onedrivesdk.uploadFile.OneUpload;
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class OneDriveFileSystemDriver extends CachedFileSystemDriver<OneItem> {
+public final class OneDriveFileSystemDriver extends DoubleCachedFileSystemDriver<OneItem> {
 
     private final OneDriveSDK client;
 
@@ -139,7 +139,7 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     }
 
     @Override
-    protected InputStream downloadEntry(OneItem entry, Path path, Set<? extends OpenOption> options) throws IOException {
+    protected InputStream downloadEntryImpl(OneItem entry, Path path, Set<? extends OpenOption> options) throws IOException {
         return asFile(entry).download().getDownloadedInputStream();
     }
 
