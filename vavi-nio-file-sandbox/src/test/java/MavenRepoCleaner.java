@@ -32,7 +32,7 @@ import static java.nio.file.FileVisitResult.CONTINUE;
 public class MavenRepoCleaner {
 
     /**
-     * @param args
+     * @param args none
      */
     public static void main(String[] args) throws IOException {
         Files.walkFileTree(Paths.get(System.getProperty("user.home"), ".m2/repository"), new MyFileVisitor());

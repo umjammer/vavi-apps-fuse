@@ -34,12 +34,15 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 import vavi.awt.image.resample.FfmpegResampleOp;
 import vavi.util.Debug;
+import vavi.util.properties.annotation.Property;
+import vavi.util.properties.annotation.PropsEntity;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
@@ -50,7 +53,16 @@ import static java.nio.file.FileVisitResult.CONTINUE;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2022/03/13 umjammer initial version <br>
  */
+@EnabledIf("localPropertiesExists")
+@PropsEntity(url = "file:local.properties")
 public class OneDriveThumbnail {
+
+    static boolean localPropertiesExists() {
+        return Files.exists(Paths.get("local.properties"));
+    }
+
+    @Property(name = "onedrive.thumbnail.start")
+    String start;
 
     static byte[] duke;
 
@@ -63,20 +75,23 @@ public class OneDriveThumbnail {
      */
     public static void main(String[] args) throws Exception {
 
+        OneDriveThumbnail app = new OneDriveThumbnail();
+        PropsEntity.Util.bind(app);
+
         String email = System.getenv("MICROSOFT_TEST_ACCOUNT");
 Debug.println("email: " + email);
 
         URI uri = URI.create("onedrive:///?id=" + email);
         FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
 
-        String start = args[0];
+//        app.start = args[0];
         string = "一般小説";
         asin = "4048523112";
 
 //        Files.createDirectories(Paths.get("tmp"));
         duke = Files.readAllBytes(Paths.get(OneDriveThumbnail.class.getResource("/duke.jpg").toURI()));
 
-        Path dir = fs.getPath(start);
+        Path dir = fs.getPath(app.start);
         Files.walkFileTree(dir, new MyFileVisitor());
 
         fs.close();

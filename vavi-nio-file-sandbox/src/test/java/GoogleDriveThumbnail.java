@@ -33,12 +33,15 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 import vavi.awt.image.resample.FfmpegResampleOp;
 import vavi.util.Debug;
+import vavi.util.properties.annotation.Property;
+import vavi.util.properties.annotation.PropsEntity;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
@@ -51,7 +54,16 @@ import static java.nio.file.FileVisitResult.CONTINUE;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2022/01/26 umjammer initial version <br>
  */
+@EnabledIf("localPropertiesExists")
+@PropsEntity(url = "file:local.properties")
 public class GoogleDriveThumbnail {
+
+    static boolean localPropertiesExists() {
+        return Files.exists(Paths.get("local.properties"));
+    }
+
+    @Property(name = "googledrive.thumbnail.start")
+    String start;
 
     static byte[] duke;
 
@@ -64,21 +76,23 @@ public class GoogleDriveThumbnail {
      */
     public static void main(String[] args) throws Exception {
 
+        GoogleDriveThumbnail app = new GoogleDriveThumbnail();
+        PropsEntity.Util.bind(app);
+
         String email = System.getenv("GOOGLE_TEST_ACCOUNT");
 Debug.println("email: " + email);
 
         URI uri = URI.create("googledrive:///?id=" + email);
         FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
 
-//        String start = args[0];
-        String start = "/Books/Novels/あさのあつこ";
-        string = "09";
-        asin = "B00M98X8SM";
+//        app.start = args[0];
+        string = "30";
+        asin = "4048523112";
 
 //        Files.createDirectories(Paths.get("tmp"));
         duke = Files.readAllBytes(Paths.get(GoogleDriveThumbnail.class.getResource("/duke.jpg").toURI()));
 
-        Path dir = fs.getPath(start);
+        Path dir = fs.getPath(app.start);
         Files.walkFileTree(dir, new MyFileVisitor());
 
         fs.close();
@@ -91,7 +105,7 @@ Debug.println("email: " + email);
             if (attr.isRegularFile()) {
                 try {
                     if (filter1(file)) {
-                        func4(file);
+                        func2(file);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -103,16 +117,16 @@ Debug.println("email: " + email);
 
     // filters
 
-    static final String ext = ".epub";
-    static final Pattern pattern = Pattern.compile("^\\(一般小説\\)\\s\\[(.+?)\\]\\s(.+?)\\" + ext + "$");
+    static final String ext = ".zip";
+    static final Pattern pattern = Pattern.compile("^\\(一般コミック(・雑誌)*\\)\\s\\[(.+?)\\]\\s(.+?)\\" + ext + "$");
 
-    /** comic zip */
+    /** {@link #pattern}, {{@link #ext} */
     static boolean filter1(Path file) {
         String filename = file.getFileName().toString();
 //System.err.println(filename);
         Matcher matcher = pattern.matcher(filename);
         if (matcher.find() && filename.contains(string)) {
-System.out.println(matcher.group(1) + " - " + matcher.group(2));
+System.out.println(matcher.group(2) + " - " + matcher.group(3));
             return true;
         } else {
             return false;
@@ -136,10 +150,10 @@ System.err.println("skip: " + file);
 
 
     static final boolean DRY_RUN = false;
-    static final boolean OVERWRITE = true;
+    static final boolean OVERWRITE = false;
 
-//    static final Pattern jpg = Pattern.compile("^.+?\\.jpg$");
-    static final Pattern jpg = Pattern.compile("^[\\w+\\/]+\\.jpe?g$");
+    static final Pattern jpg = Pattern.compile("^.+?\\.jpg$");
+//    static final Pattern jpg = Pattern.compile("^[\\w+\\/]+\\.jpe?g$");
 
     /** extract self and set first jpg as a thumbnail */
     static void func2(Path file) throws IOException {
@@ -316,6 +330,35 @@ Debug.println("image: " + bytes.length);
         } else {
             Files.setAttribute(file, "user:thumbnail", bytes);
         }
+    }
+
+    /** set local thumbnail same file name */
+    static void func5(Path file) throws Exception {
+        // check existence
+        byte[] bytes = (byte[]) Files.getAttribute(file, "user:thumbnail");
+        if (!OVERWRITE && bytes != null && bytes.length != 0) {
+System.err.println("skip: " + file);
+            return;
+        }
+
+        // exec
+        Path path = Paths.get("tmp", file.getFileName().toString().replace(ext, ".jpg"));
+Debug.println("jpeg: " + path);
+
+        InputStream in = new BufferedInputStream(Files.newInputStream(path));
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8024];
+        int l = 0;
+        while ((l = in.read(buffer)) != -1) {
+            baos.write(buffer, 0, l);
+        }
+        bytes = baos.toByteArray();
+Debug.println("image: " + bytes.length);
+        if (bytes.length < 100) {
+            throw new IllegalStateException("no image in amazon? for: " + asin);
+        }
+
+        Files.setAttribute(file, "user:thumbnail", bytes);
     }
 }
 
