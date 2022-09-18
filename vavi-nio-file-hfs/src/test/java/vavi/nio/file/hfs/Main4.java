@@ -99,9 +99,6 @@ public class Main4 {
 
         try (Fuse fuse = Fuse.getFuse()) {
             fuse.mount(app.fs, app.mountPoint, app.options);
-while (true) { // for jnrfuse
-    Thread.yield();
-}
         }
     }
 }

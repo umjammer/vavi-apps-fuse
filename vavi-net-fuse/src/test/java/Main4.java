@@ -7,16 +7,13 @@
 import java.nio.file.FileSystem;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
-
 import vavi.net.fuse.Base;
 import vavi.net.fuse.Fuse;
 import vavi.util.Debug;
@@ -94,16 +91,13 @@ System.err.println("--------------------------- " + providerClassName + " ------
     }
 
     /**
-     * @param args
+     * @param args none
      */
     public static void main(String[] args) throws Exception {
         Main4 app = new Main4();
         app.before();
 
         Fuse.getFuse().mount(app.fs, app.mountPoint, app.options);
-
-        CountDownLatch cdl = new CountDownLatch(1);
-        cdl.await();
     }
 }
 

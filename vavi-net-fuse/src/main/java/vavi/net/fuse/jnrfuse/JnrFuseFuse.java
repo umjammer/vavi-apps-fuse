@@ -13,6 +13,8 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import co.paralleluniverse.fuse.TypeMode;
 import ru.serce.jnrfuse.FuseStubFS;
@@ -39,6 +41,9 @@ public class JnrFuseFuse implements Fuse {
     /** */
     private FuseStubFS fuse;
 
+    /** non-daemon thread */
+    private ExecutorService es = Executors.newSingleThreadExecutor();
+
     @Override
     public void mount(FileSystem fs, String mountPoint, Map<String, Object> env) throws IOException {
         if (env.containsKey(ENV_SINGLE_THREAD) && (Boolean) env.get(ENV_SINGLE_THREAD)) {
@@ -47,7 +52,11 @@ Debug.println("use single thread");
         } else {
             fuse = new JavaNioFileFS(fs, env);
         }
-        fuse.mount(Paths.get(mountPoint));
+        es.submit(() -> {
+            // jnrfuse non-blocking thread is daemon
+            // so make mount blocking and make own non-daemon thread
+            fuse.mount(Paths.get(mountPoint), true);
+        });
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { try { close(); } catch (IOException e) { e.printStackTrace(); }}));
     }
 
@@ -57,6 +66,7 @@ Debug.println("use single thread");
 Debug.println("unmount...");
             fuse.umount();
             fuse = null;
+            es.shutdown();
 Debug.println("unmount done");
         }
     }
