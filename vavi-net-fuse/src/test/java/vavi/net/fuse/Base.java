@@ -6,7 +6,6 @@
 
 package vavi.net.fuse;
 
-import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,7 +14,6 @@ import java.util.Map;
 import java.util.Random;
 
 import vavi.util.Debug;
-
 import vavix.util.Checksum;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -51,7 +49,7 @@ public abstract class Base {
             Path localTmpDir = Paths.get("tmp");
             if (!Files.exists(localTmpDir)) {
 Debug.println("[_mkdir] " + localTmpDir);
-                Files.createDirectory(localTmpDir);
+                Files.createDirectories(localTmpDir);
             }
 
             // local -> remote
@@ -68,10 +66,10 @@ Debug.println("[mkdir] " + remoteDir);
             }
 Debug.println("[_rm] " + remoteDir + "/*");
             Files.list(remoteDir).forEach(p -> {
-                try {
 Debug.println("{_rm} " + p);
-                    Files.delete(p);
-                } catch (IOException e) {
+                try {
+                    assertEquals(0, exec("/bin/rm", p.toString()));
+                } catch (Exception e) {
                     throw new IllegalStateException(e);
                 }
             });
@@ -93,7 +91,7 @@ Debug.println("[cp] " + local + " " + remote);
             localTmp = Files.createTempFile(localTmpDir, "vavifuse-2-", ".tmp");
             if (Files.exists(localTmp)) {
 Debug.println("[_rm] " + localTmp);
-                Files.delete(localTmp);
+                assertEquals(0, exec("/bin/rm", localTmp.toString()));
             }
 
 Debug.println("[cp] " + remote + " " + localTmp);
@@ -111,8 +109,8 @@ Debug.println("[_rm] " + remoteDir + "/*");
             Files.list(remoteDir).forEach(p -> {
                 try {
 Debug.println("{_rm} " + p);
-                    Files.delete(p);
-                } catch (IOException e) {
+                    assertEquals(0, exec("/bin/rm", p.toString()));
+                } catch (Exception e) {
                     throw new IllegalStateException(e);
                 }
             });
@@ -122,12 +120,82 @@ Debug.println("[rmdir] " + remoteDir);
             assertFalse(Files.exists(remoteDir));
         } finally {
             if (localTmp != null && Files.exists(localTmp)) {
+                try {
 Debug.println("[_rm] " + localTmp);
-                Files.delete(localTmp);
+                    assertEquals(0, exec("/bin/rm", localTmp.toString()));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
             if (local != null && Files.exists(local)) {
 Debug.println("[_rm] " + local);
-                Files.delete(local);
+                assertEquals(0, exec("/bin/rm", local.toString()));
+            }
+        }
+    }
+
+    /** */
+    public static void testLargeFile(FileSystem fs, String mountPoint, Map<String, Object> options) throws Exception {
+        try (Fuse fuse = Fuse.getFuse()) {
+            fuse.mount(fs, mountPoint, options);
+
+            Path tmpDir = Paths.get("tmp");
+            if (!Files.exists(tmpDir)) {
+System.out.println("[mkdir -p] " + tmpDir);
+                Files.createDirectories(tmpDir);
+            }
+            Path source = Files.createTempFile(tmpDir, "vavifuse-1-", ".tmp");
+            byte[] bytes = new byte[50 * 1024 * 1024 + 12345];
+            Random random = new Random(System.currentTimeMillis());
+            random.nextBytes(bytes);
+System.out.println("[create random file] " + bytes.length);
+            Files.write(source, bytes);
+
+            Path dir = Paths.get(mountPoint,"VAVIFUSE_FS_TEST_L");
+            Path target = dir.resolve(source.getFileName());
+            if (Files.exists(dir)) {
+System.out.println("[rm -rf] " + dir);
+                assertEquals(0, exec("/bin/rm", "-rf", dir.toString()));
+            }
+
+System.out.println("[mkdir] " + dir);
+            assertEquals(0, exec("/bin/mkdir", dir.toString()));
+
+System.out.println("[cp(1)] " + source + " " + target);
+            assertEquals(0, exec("/bin/cp", source.toString(), target.toString()));
+            assertTrue(Files.exists(target));
+            assertEquals(Files.size(source), Files.size(target));
+            assertEquals(Checksum.getChecksum(source), Checksum.getChecksum(target));
+
+            Path source2 = source.getParent().resolve(source.getFileName().toString().replace("vavifuse-1-", "vavifuse-2-"));
+
+System.out.println("[cp(2)] " + target + " " + source2);
+            assertEquals(0, exec("/bin/cp", target.toString(), source2.toString()));
+            assertTrue(Files.exists(target));
+            assertEquals(Files.size(source2), Files.size(target));
+            assertEquals(Checksum.getChecksum(source2), Checksum.getChecksum(target));
+
+            Path target2 = target.getParent().resolve(target.getFileName().toString().replace("vavifuse-1-", "vavifuse-2-"));
+
+System.out.println("[cp(3)] " + target + " " + target2);
+            assertEquals(0, exec("/bin/cp", target.toString(), target2.toString()));
+            assertTrue(Files.exists(target));
+            assertEquals(Files.size(target), Files.size(target2));
+            assertEquals(Checksum.getChecksum(target), Checksum.getChecksum(target2));
+
+System.out.println("[rm] " + source2);
+            assertEquals(0, exec("/bin/rm", source2.toString()));
+System.out.println("[rm] " + target);
+            assertEquals(0, exec("/bin/rm", target.toString()));
+System.out.println("[rm] " + target2);
+            assertEquals(0, exec("/bin/rm", target2.toString()));
+
+System.out.println("[rm -rf] " + dir);
+            assertEquals(0, exec("/bin/rm", "-rf", dir.toString()));
+
+            if (Files.exists(source)) {
+System.out.println("[rm] " + source);
+                Files.delete(source);
             }
         }
     }
