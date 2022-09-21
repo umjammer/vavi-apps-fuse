@@ -37,6 +37,7 @@ public final class ArchiveFileSystemRepository extends FileSystemRepositoryBase 
     }
 
     /**
+     * TODO env: zip fail safe encoding
      * @param uri "archive:file:/tmp/jar/exam.jar!/img/sample.png", space: use %20
      */
     @Nonnull

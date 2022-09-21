@@ -25,10 +25,11 @@
   <properties>
     <vavi-net-auth.groupId>com.github.umjammer.vavi-net-auth</vavi-net-auth.groupId>
     <vavi-net-auth.version>0.1.4</vavi-net-auth.version>
-    <vavi-nio-file.groupId>com.github.umjammer </vavi-nio-file.groupId>
-    <vavi-nio-file.version>0.0.13</vavi-nio-file.version>
-    <java7-fs-base.groupId>com.github.umjammer</java7-fs-base.groupId>
-    <java7-fs-base.version>0.0.12v</java7-fs-base.version>
+    <vavi-nio-file.groupId>vavi</vavi-nio-file.groupId>
+    <vavi-nio-file.version>0.0.14-SNAPSHOT</vavi-nio-file.version>
+    <!-- com.github.fge / com.github.umjammer -->
+    <java7-fs-base.groupId>com.github.fge</java7-fs-base.groupId>
+    <java7-fs-base.version>0.0.13v-SNAPSHOT</java7-fs-base.version>
   </properties>
 
   <packaging>pom</packaging>

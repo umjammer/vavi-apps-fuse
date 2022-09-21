@@ -6,6 +6,7 @@
 
 package vavi.nio.file.acd;
 
+import com.github.fge.filesystem.driver.DoubleCachedFileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemProviderBase;
 
 
@@ -22,6 +23,8 @@ public final class AcdFileSystemProvider extends FileSystemProviderBase {
     public static final String ENV_USER_CREDENTIAL = "user_credential";
 
     public static final String ENV_APP_CREDENTIAL = "app_credential";
+
+    public static final String ENV_DISABLED_FILE_CACHE = DoubleCachedFileSystemDriver.ENV_DISABLED_FILE_CACHE;
 
     public AcdFileSystemProvider() {
         super(new AcdFileSystemRepository());

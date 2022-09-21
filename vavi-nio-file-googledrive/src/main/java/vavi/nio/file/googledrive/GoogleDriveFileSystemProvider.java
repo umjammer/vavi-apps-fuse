@@ -6,6 +6,7 @@
 
 package vavi.nio.file.googledrive;
 
+import com.github.fge.filesystem.driver.DoubleCachedFileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemProviderBase;
 
 
@@ -24,6 +25,8 @@ public final class GoogleDriveFileSystemProvider extends FileSystemProviderBase 
     public static final String ENV_APP_CREDENTIAL = "app_credential";
 
     public static final String ENV_USE_SYSTEM_WATCHER = "use_system_watcher";
+
+    public static final String ENV_DISABLED_FILE_CACHE = DoubleCachedFileSystemDriver.ENV_DISABLED_FILE_CACHE;
 
     public GoogleDriveFileSystemProvider() {
         super(new GoogleDriveFileSystemRepository());
