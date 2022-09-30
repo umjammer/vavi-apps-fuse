@@ -8,12 +8,27 @@ package vavi.nio.file.vfs;
 
 import java.net.URI;
 import java.net.URLEncoder;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.TimeZone;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import com.hierynomus.msfscc.fileinformation.FileIdBothDirectoryInformation;
+import com.hierynomus.smbj.SMBClient;
+import com.hierynomus.smbj.auth.AuthenticationContext;
+import com.hierynomus.smbj.connection.Connection;
+import com.hierynomus.smbj.session.Session;
+import com.hierynomus.smbj.share.DiskShare;
+
 import static vavi.nio.file.Base.testAll;
+
+import jcifs.CIFSContext;
+import jcifs.context.SingletonContext;
+import jcifs.smb.NtlmPasswordAuthenticator;
+import jcifs.smb.SmbFile;
 
 
 /**
@@ -50,6 +65,7 @@ public class Main {
      * </ul>
      */
     @Test
+    @Disabled
     void test01() throws Exception {
         String username = URLEncoder.encode(System.getenv("TEST_SFTP_ACCOUNT"), "utf-8");
         String passPhrase = URLEncoder.encode(System.getenv("TEST_SFTP_PASSPHRASE"), "utf-8");
@@ -78,14 +94,133 @@ public class Main {
     @Test
     @Disabled
     void test02() throws Exception {
-        String username = URLEncoder.encode(System.getenv("TEST_WEBDAV_ACCOUNT"), "utf-8");
-        String password = System.getenv("TEST_WEBDAV_PASSWORD");
-        String host = System.getenv("TEST_WEBDAV_HOST");
-        String port = System.getenv("TEST_WEBDAV_PORT");
-        String path = System.getenv("TEST_WEBDAV_PATH");
+//        String username = URLEncoder.encode(System.getenv("TEST_WEBDAV_ACCOUNT"), "utf-8");
+//        String password = System.getenv("TEST_WEBDAV_PASSWORD");
+//        String host = System.getenv("TEST_WEBDAV_HOST");
+//        String port = System.getenv("TEST_WEBDAV_PORT");
+//        String path = System.getenv("TEST_WEBDAV_PATH");
+        String username = URLEncoder.encode("umjammer@gmail.com", "utf-8");
+        String password = "e7hqz9neft9aq6p8";
+        String host = "dav.box.com";
+        String port = "443";
+        String path = "/dav";
 
         URI uri = URI.create(String.format("vfs:webdav4s://%s:%s@%s:%s%s", username, password, host, port, path));
 
         testAll(new VfsFileSystemProvider().newFileSystem(uri, Collections.emptyMap()));
+    }
+
+    /**
+     * <p>
+     * TODO doesn't work
+     *  * sandbox/vfs2-cifs ... where are you?
+     *  * github:mikhasd/commons-vfs2-smb ... now
+     * </p>
+     * <p>
+     * why smb spec. is so complicated! even sftp is secure than smb, it's works fine.
+     * f*ck smb, get out away.
+     * </p>
+     * environment variable
+     * <ul>
+     * <li> TEST_SMB_ACCOUNT
+     * <li> TEST_SMB_PASSWORD
+     * <li> TEST_SMB_HOST
+     * <li> TEST_SMB_DOMAIN
+     * <li> TEST_SMB_PATH
+     * </ul>
+     */
+    @Test
+//    @Disabled
+    void test03() throws Exception {
+        String username = System.getenv("TEST_SMB_ACCOUNT");
+        String password = System.getenv("TEST_SMB_PASSWORD");
+        String host = System.getenv("TEST_SMB_HOST");
+        String domain = System.getenv("TEST_SMB_DOMAIN");
+        String path = System.getenv("TEST_SMB_PATH");
+
+        URI uri = URI.create(String.format("vfs:smb://%s:%s@%s%s?domain=%s", username, password, host, path, domain));
+
+        testAll(new VfsFileSystemProvider().newFileSystem(uri, Collections.emptyMap()));
+    }
+
+    /**
+     * <p>
+     * github:vbauer/commons-vfs2-cifs ... use jcifs-ng, works fine!
+     * </p>
+     * <p>
+     * environment variable
+     * <ul>
+     * <li> TEST_SMB_ACCOUNT
+     * <li> TEST_SMB_PASSWORD
+     * <li> TEST_SMB_HOST
+     * <li> TEST_SMB_DOMAIN
+     * <li> TEST_SMB_PATH
+     * </ul>
+     * </p>
+     */
+    @Test
+    void test04() throws Exception {
+        String username = System.getenv("TEST_SMB_ACCOUNT");
+        String password = System.getenv("TEST_SMB_PASSWORD");
+        String host = System.getenv("TEST_SMB_HOST");
+        String domain = System.getenv("TEST_SMB_DOMAIN");
+        String path = System.getenv("TEST_SMB_PATH");
+
+        URI uri = URI.create(String.format("vfs:cifs://%s:%s@%s%s?domain=%s", username, password, host, path, domain));
+
+        testAll(new VfsFileSystemProvider().newFileSystem(uri, Collections.emptyMap()));
+    }
+
+    /**
+     * works, thaks jcifs-ng
+     * <p>
+     * TODO 2022-04-22 works but got exception
+     * @see "https://gist.github.com/umjammer/58a5fc48f4620837bae008bae9440f16"
+     */
+    @Test
+    @Disabled
+    void test_cifs() throws Exception {
+        String username = System.getenv("TEST_SMB_ACCOUNT");
+        String password = System.getenv("TEST_SMB_PASSWORD");
+        String host = System.getenv("TEST_SMB_HOST");
+        String domain = System.getenv("TEST_SMB_DOMAIN");
+        String path = System.getenv("TEST_SMB_PATH");
+
+        String url = "cifs://" + host + path;
+System.err.println(url);
+        NtlmPasswordAuthenticator auth = new NtlmPasswordAuthenticator(domain, username, password);
+        CIFSContext context = SingletonContext.getInstance().withCredentials(auth);
+        SmbFile smbFile = new SmbFile(url, context);
+System.err.println(smbFile.getPath() + ", " +
+            LocalDateTime.ofInstant(Instant.ofEpochMilli(smbFile.getLastModified()), TimeZone.getDefault().toZoneId()));
+        smbFile.close();
+        context.close();
+    }
+
+    /**
+     * smbj
+     */
+    @Test
+    @Disabled
+    void test_smbj() throws Exception {
+        String username = System.getenv("TEST_SMB_ACCOUNT");
+        String password = System.getenv("TEST_SMB_PASSWORD");
+        String host = System.getenv("TEST_SMB_HOST");
+        String domain = System.getenv("TEST_SMB_DOMAIN");
+//        String path = System.getenv("TEST_SMB_PATH");
+
+        try (SMBClient client = new SMBClient();
+             Connection connection = client.connect(host)) {
+
+            AuthenticationContext ac = new AuthenticationContext(username, password.toCharArray(), domain);
+            Session session = connection.authenticate(ac);
+
+            // Connect to Share
+            try (DiskShare share = (DiskShare) session.connectShare("nsano")) {
+                for (FileIdBothDirectoryInformation f : share.list("mnt")) {
+                    System.out.println("File : " + f.getFileName());
+                }
+            }
+        }
     }
 }

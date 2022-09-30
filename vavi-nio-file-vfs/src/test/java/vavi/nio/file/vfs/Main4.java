@@ -81,6 +81,20 @@ public class Main4 {
         fs.close();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "vavi.net.fuse.javafs.JavaFSFuseProvider",
+        "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider",
+        "vavi.net.fuse.fusejna.FuseJnaFuseProvider",
+    })
+    public void test02(String providerClassName) throws Exception {
+        System.setProperty("vavi.net.fuse.FuseProvider.class", providerClassName);
+
+        Base.testLargeFile(fs, mountPoint, options);
+
+        fs.close();
+    }
+
     //
 
     /**
@@ -97,8 +111,9 @@ public class Main4 {
 
         FileSystem fs = new VfsFileSystemProvider().newFileSystem(uri, env);
 
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.fusejna.FuseJnaFuseProvider");
 //        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
-//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
+        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
 
         Map<String, Object> options = new HashMap<>();
         options.put("fsname", "vfs_fs" + "@" + System.currentTimeMillis());

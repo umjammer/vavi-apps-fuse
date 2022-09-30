@@ -42,7 +42,9 @@ public class SmbVfsAuthenticator implements VfsAuthenticator {
     private static class SmbVfsCredential extends VfsCredential {
 
         @Property(name = "smb.domain.{0}")
-        private String domain;
+        private String domain = "WORKGROUP";
+
+        private String scheme;
 
         public SmbVfsCredential(String alias) {
             super(alias);
@@ -55,7 +57,10 @@ public class SmbVfsAuthenticator implements VfsAuthenticator {
             super(uri);
             try {
                 Map<String, String[]> params = HttpUtil.splitQuery(uri);
-                this.domain = params.get("domain")[0];
+                if (params.containsKey("domain")) {
+                    this.domain = params.get("domain")[0];
+                }
+                scheme = uri.getScheme();
             } catch (IOException e) {
                 throw new IllegalStateException(e);
             }
@@ -63,13 +68,13 @@ public class SmbVfsAuthenticator implements VfsAuthenticator {
 
         @Override
         public String getClientId() {
-            return "smb";
+            return scheme;
         }
 
         @Override
         public String buildBaseUrl() {
             StringBuilder sb = new StringBuilder();
-            sb.append(getClientId());
+            sb.append(scheme);
             sb.append("://");
             if (host != null) {
                 sb.append(host);
@@ -105,6 +110,7 @@ Debug.println("credential: by uri");
 
         FileSystemOptions options = new FileSystemOptions();
         StaticUserAuthenticator auth = new StaticUserAuthenticator(c.domain, c.username, c.password);
+Debug.println("auth: " + auth);
         DefaultFileSystemConfigBuilder.getInstance().setUserAuthenticator(options, auth);
         return options;
     }
