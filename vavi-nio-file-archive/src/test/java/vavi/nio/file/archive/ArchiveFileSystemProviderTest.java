@@ -15,17 +15,24 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
 import vavi.util.Debug;
+import vavi.util.archive.zip.JdkZipArchive;
+import vavi.util.archive.zip.JdkZipArchiveSpi;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
 /**
@@ -47,6 +54,9 @@ class ArchiveFileSystemProviderTest {
 
     @Property(name = "test.comic")
     String comic;
+
+    @Property(name = "test.ms932")
+    String ms932;
 
     @BeforeEach
     void setup() throws Exception {
@@ -99,8 +109,38 @@ System.err.println("rawFragment: " + uri.getRawFragment());
 Debug.println(comic);
         Path path = Paths.get(comic);
 Debug.println(path + ", " + Files.exists(path));
+Debug.println("archive:" + path.toUri());
         URI uri = URI.create("archive:" + path.toUri());
         FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
+        Files.walk(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
+    }
+
+    @Test
+    @DisplayName("env, failsafe encoding not set")
+    void test51() throws Exception {
+        Path path = Paths.get("src/test/resources/ms932.zip");
+Debug.println(path + ", " + Files.exists(path));
+        URI uri = URI.create("archive:" + path.toUri());
+        IOException e = assertThrows(IOException.class, () -> {
+            FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
+            Files.walk(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
+        });
+Debug.println("exception cause: " + e.getMessage());
+        assertInstanceOf(IllegalArgumentException.class, e.getCause());
+        assertEquals("MALFORMED", e.getCause().getMessage());
+    }
+
+    @Test
+    @DisplayName("env, failsafe encoding")
+    void test52() throws Exception {
+        System.setProperty(JdkZipArchive.ZIP_ENCODING, "utf-8");
+        Path path = Paths.get("src/test/resources/ms932.zip");
+//        Path path = Paths.get(ms932);
+Debug.println(path + ", " + Files.exists(path));
+        Map<String, Object> env = new HashMap<>();
+        env.put(ArchiveFileSystemProvider.ENV_KEY_FAILSAFE_ENCODING, "ms932");
+        URI uri = URI.create("archive:" + path.toUri());
+        FileSystem fs = FileSystems.newFileSystem(uri, env);
         Files.walk(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
     }
 

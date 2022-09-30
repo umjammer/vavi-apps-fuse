@@ -14,11 +14,14 @@ import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,16 +65,24 @@ public final class ArchiveFileSystemDriver extends ExtendedFileSystemDriverBase 
         return path.toAbsolutePath().toString().substring(1);
     }
 
+    /** for the case archive#entries() does not return dirs */
+    private Map<Path, Set<Path>> directories = new HashMap<>();
+
     /** */
     private Entry getEntry(Path path) throws FileNotFoundException{
         if (path.getNameCount() == 0) {
 Debug.println(Level.FINE, "root");
-            return null;
+            return null; // TODO null means dir
         }
 Debug.println(Level.FINE, "entry: \"" + toArchiveString(path) + "\"");
         Entry entry = archive.getEntry(toArchiveString(path));
         if (entry == null) {
-            throw new FileNotFoundException(path.toString());
+Debug.println(Level.FINE, directories.get(path.getParent()));
+            if (path.getParent() != null && directories.get(path.getParent()) != null && directories.get(path.getParent()).contains(path)) {
+                return null; // TODO null means dir
+            } else {
+                throw new FileNotFoundException(path.toString());
+            }
         }
         return entry;
     }
@@ -133,26 +144,42 @@ Debug.println(Level.FINE, "entry: \"" + toArchiveString(path) + "\"");
 
     /** */
     private List<Path> getDirectoryEntries(final Path dir) throws IOException {
-//Debug.println("dir: " + dir + " ---------");
+Debug.println(Level.FINER, "dir: " + dir + " ---------");
         List<Path> list = new ArrayList<>();
 
+        if (!directories.containsKey(dir)) {
+            directories.put(dir, new HashSet<>());
+        }
+
         for (Entry entry : archive.entries()) {
+//Debug.println(Level.FINE, "entry: " + entry.getName() + ", root?: " + (dir.getNameCount() == 0));
             if (dir.getNameCount() == 0) {
+
                 String[] names = entry.getName().split("/");
-                if (names.length == 1) {
-                    Path childPath = dir.resolve(entry.getName());
-//Debug.println("root: " + childPath);
+                Path childPath = dir.resolve(names[0]);
+                if (!list.contains(childPath))
                     list.add(childPath);
+                if (names.length > 1) {
+                    directories.get(dir).add(childPath);
+Debug.println(Level.FINER, "root +: " + childPath);
+                } else {
+Debug.println(Level.FINER, "root *: " + childPath);
                 }
             } else {
                 String dirString = toArchiveString(dir) + "/";
                 if (entry.getName().startsWith(dirString)) {
                     String entryName = entry.getName().substring(dirString.length());
                     String[] names = entryName.split("/");
-                    if (names.length == 1 && names[0].length() > 0) {
-                        Path childPath = dir.resolve(entryName);
-//Debug.println("sub : " + childPath);
-                        list.add(childPath);
+                    if (names[0].length() > 0) { // exclude self?
+                        Path childPath = dir.resolve(names[0]);
+                        if (!list.contains(childPath))
+                            list.add(childPath);
+                        if (names.length > 1) {
+                            directories.get(dir).add(childPath);
+Debug.println(Level.FINER, dir + " +: " + childPath);
+                        } else {
+Debug.println(Level.FINER, dir + " *: " + childPath);
+                        }
                     }
                 }
             }

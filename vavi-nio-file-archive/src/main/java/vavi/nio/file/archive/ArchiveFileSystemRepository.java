@@ -37,7 +37,6 @@ public final class ArchiveFileSystemRepository extends FileSystemRepositoryBase 
     }
 
     /**
-     * TODO env: zip fail safe encoding
      * @param uri "archive:file:/tmp/jar/exam.jar!/img/sample.png", space: use %20
      */
     @Nonnull
@@ -54,7 +53,7 @@ public final class ArchiveFileSystemRepository extends FileSystemRepositoryBase 
         }
 
         // TODO how about after '!' ?
-        Archive archive = Archives.getArchive(Paths.get(file).toFile());
+        Archive archive = Archives.getArchive(Paths.get(file).toFile(), env);
 
         ArchiveFileStore fileStore = new ArchiveFileStore(factoryProvider.getAttributesFactory());
         return new ArchiveFileSystemDriver(fileStore, factoryProvider, archive, env);
