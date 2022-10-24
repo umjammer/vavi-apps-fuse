@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static vavi.nio.file.Base.removeTree;
 
@@ -70,7 +71,7 @@ public class WatchDirectoryTest {
     @BeforeEach
     public void setUo() throws Exception {
         watchService = fs.newWatchService();
-        basePathWatchKey = basePath.register(watchService,ENTRY_CREATE);
+        basePathWatchKey = basePath.register(watchService, ENTRY_CREATE);
     }
 
     @AfterEach
@@ -90,7 +91,7 @@ public class WatchDirectoryTest {
         List<WatchEvent<?>> eventList = watchKey.pollEvents();
         assertEquals(3, eventList.size());
         for (WatchEvent<?> event : eventList) {
-            assertTrue(event.kind() == StandardWatchEventKinds.ENTRY_CREATE);
+            assertSame(event.kind(), ENTRY_CREATE);
             assertEquals(1, event.count());
         }
         Path eventPath = (Path) eventList.get(0).context();
@@ -109,7 +110,7 @@ public class WatchDirectoryTest {
         }
         assertEquals(1, eventList.size());
         for (WatchEvent<?> event : eventList) {
-            assertTrue(event.kind() == StandardWatchEventKinds.ENTRY_CREATE);
+            assertSame(event.kind(), ENTRY_CREATE);
         }
         basePathWatchKey.reset();
         generateFile(basePath.resolve("newTextFileII.txt"), 10);

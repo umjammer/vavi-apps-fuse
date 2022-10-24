@@ -172,7 +172,7 @@ Debug.println(Level.FINE, "download: " + entry.getName() + ", " + entry.getSize(
 
     @Override
     protected void whenUploadEntryExists(File destEntry, Path path, Set<? extends OpenOption> options) throws IOException {
-        if (options == null || !options.stream().anyMatch(o -> o.equals(GoogleDriveOpenOption.INPORT_AS_NEW_REVISION))) {
+        if (options == null || options.stream().noneMatch(o -> o.equals(GoogleDriveOpenOption.INPORT_AS_NEW_REVISION))) {
             super.whenUploadEntryExists(destEntry, path, options); // means throws FileAlreadyExistsException
         }
 

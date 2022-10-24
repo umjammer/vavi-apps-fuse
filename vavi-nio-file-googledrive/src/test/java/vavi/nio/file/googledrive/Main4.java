@@ -82,9 +82,9 @@ public class Main4 {
 
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, env);
 
-//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
+        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
 //        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.fusejna.FuseJnaFuseProvider");
-        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
 
         Map<String, Object> options = new HashMap<>();
         options.put("fsname", "googledrive_fs" + "@" + System.currentTimeMillis());
@@ -92,6 +92,7 @@ public class Main4 {
         options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
         options.put("noappledouble", null);
 //        options.put("noapplexattr", null);
+        options.put("allow_root", null);
 
         Fuse.getFuse().mount(fs, args[0], options);
     }
