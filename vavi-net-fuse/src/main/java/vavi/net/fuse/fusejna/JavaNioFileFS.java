@@ -77,7 +77,7 @@ Debug.println(Level.FINE, "ENV_IGNORE_APPLE_DOUBLE: " + ignoreAppleDouble);
 
     @Override
     public int access(final String path, final int access) {
-Debug.println(Level.FINE, "access: " + path);
+Debug.println(Level.FINER, "access: " + path);
         try {
             // TODO access
             fileSystem.provider().checkAccess(fileSystem.getPath(path));
@@ -114,7 +114,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int getattr(final String path, final StatWrapper stat) {
-Debug.println(Level.FINE, "getattr: " + path);
+Debug.println(Level.FINER, "getattr: " + path);
         try {
             BasicFileAttributes attributes =
                     fileSystem.provider().readAttributes(fileSystem.getPath(path), BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
@@ -354,7 +354,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int statfs(final String path, final StatvfsWrapper stat) {
-Debug.println(Level.FINE, "statfs: " + path);
+Debug.println(Level.FINER, "statfs: " + path);
         try {
             FileStore fileStore = fileSystem.getFileStores().iterator().next();
 //Debug.println("total: " + fileStore.getTotalSpace());

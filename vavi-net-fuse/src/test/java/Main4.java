@@ -97,6 +97,12 @@ System.err.println("--------------------------- " + providerClassName + " ------
         Main4 app = new Main4();
         app.before();
 
+        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.fusejna.FuseJnaFuseProvider");
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
+
+        app.options.put("allow_other", null);
+
         Fuse.getFuse().mount(app.fs, app.mountPoint, app.options);
     }
 }
