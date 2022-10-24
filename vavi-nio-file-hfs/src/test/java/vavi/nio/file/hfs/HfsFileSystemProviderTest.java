@@ -48,20 +48,38 @@ Debug.println("file: " + url.getPath());
     }
 
     @Test
-    @EnabledIf("localPropertiesExists")
     @Disabled("doesn't work")
     void test() throws Exception {
-        Path path = Paths.get("/Users/nsano/src/vavi/vavi-nio-file-apfs/src/test/resources/apfs.dmg");
+        Path path = Paths.get(file);
 Debug.println("file: " + path);
-        URI uri = URI.create("hfs:file:" + path);
+        URI uri = URI.create("hfs:" + path.toUri());
+Debug.println("uri: " + uri);
         FileSystem fs = new HfsFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
         Files.list(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
+    }
+
+    @Test
+    void test0() throws Exception {
+        URI fileUri = Paths.get( "src/test/resources/test.dmg").toUri();
+Debug.println("fileUri: " + fileUri);
+        URI uri = URI.create("hfs:" + fileUri + "!/CarbonOrCocoa.app");
+Debug.println("uri: " + uri);
+        String[] rawSchemeSpecificParts = uri.getRawSchemeSpecificPart().split("!");
+Debug.println("rawSchemeSpecificParts[0]: " + rawSchemeSpecificParts[0]);
+        URI file = URI.create(rawSchemeSpecificParts[0]);
+        if (!"file".equals(file.getScheme())) {
+            // currently only support "file"
+            throw new IllegalArgumentException(file.toString());
+        }
+        // TODO virtual relative directory from rawSchemeSpecificParts[1]
+
+Debug.println("file: " + Paths.get(file).toAbsolutePath());
     }
 
     //----
 
     @Property(name = "test.dmg")
-    String file;
+    String file = "src/test/resources/test.dmg";
 
     @BeforeEach
     void setup() throws IOException {
