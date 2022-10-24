@@ -1,5 +1,9 @@
 # vavi-net-fuse
 
+integrated fuse filesystem mounter.
+
+this is the api, implementation is provided as SPI.
+
 ## providers
 
 | fs                 | list | upload | download | copy | move | rm | mkdir | cache | watch |  library |
@@ -11,3 +15,8 @@
 ## TODO
 
  * ~~https://github.com/cryptomator/fuse-nio-adapter~~
+ * spotlight
+   * https://stackoverflow.com/a/2335565
+   * https://wiki.samba.org/index.php/Spotlight_with_Elasticsearch_Backend
+   * https://gitlab.com/samba-team/samba/-/blob/master/source3/rpcclient/cmd_spotlight.c
+ * `Path#toFile()` UnsupportedOperationException ... mount fs as fuse then `toFile`

@@ -33,9 +33,9 @@
 
     <dependency>
       <!-- java-fs hfs (catacombae:) -->
-      <groupId>com.github.umjammer</groupId>
+      <groupId>catacombae</groupId>
       <artifactId>hfsexplorer</artifactId>
-      <version>0.23.2</version>
+      <version>0.23.3-SNAPSHOT</version>
       <exclusions>
         <exclusion>
           <groupId>com.sun</groupId>

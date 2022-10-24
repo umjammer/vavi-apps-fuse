@@ -34,6 +34,14 @@
 | fuse (fuse-jna)    | ✅    | ✅   | ✅       | ✅    | ✅    | ✅  | ✅   | ✅   |       | [sub module](vavi-net-fuse) | [fuse-jna](https://github.com/EtiennePerot/fuse-jna) |
 | fuse (jnr-fuse)    | ✅    | ✅   | ✅       | ✅    | ✅    | ✅  | ✅   | ✅   |       | [sub module](vavi-net-fuse) | [jnr-fuse](https://github.com/SerCeMan/jnr-fuse) |
 
+## Usage
+
+```java
+    URI uri = URI.create("googledrive:///?id=you@gmail.com");
+    FileSystems fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
+    Fuse.getFuse().mount(fs, "/your/mout/point", Collections.emptyMap());
+```
+
 ## Installation
 
 ### jars
@@ -80,4 +88,7 @@ https://github.com/umjammer/vavi-apps-fuse/wiki/Libraries
  * ~~credential from uri~~
  * ~~https://github.com/cryptomator/fuse-nio-adapter~~
  * https://github.com/mucommander/mucommander
+ * trash,recent
+ * https://github.com/googleapis/java-storage-nio (official !!!)
+ * https://github.com/unsound/jfuse (jni)
 
