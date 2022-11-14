@@ -107,16 +107,16 @@ public final class Classification2 {
     private static String toKana(String text) throws IOException{
         StringBuilder sb = new StringBuilder();
         StringTagger tagger = StringTagger.getInstance();
-        Token[] token = tagger.analyze(text);
-        if (token != null) {
-            for (int i = 0; i < token.length; i++) {
+        Token[] tokens = tagger.analyze(text);
+        if (tokens != null) {
+            for (Token token : tokens) {
 //System.err.println(token[i].toString() + "\t("
 //           + token[i].getBasicString() + ")" + "\t" + token[i].getPos()
 //           + "(" + token[i].start() + "," + token[i].end() + ","
 //           + token[i].length() + ")\t" + token[i].getReading() + "\t"
 //           + token[i].getPronunciation());
-                if (token[i].getReading() != null && !token[i].getPos().startsWith("記号")) {
-                    sb.append(token[i].getReading());
+                if (token.getReading() != null && !token.getPos().startsWith("記号")) {
+                    sb.append(token.getReading());
                 }
             }
         }
