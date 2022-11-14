@@ -34,11 +34,14 @@ import org.jdom2.input.SAXBuilder;
 import org.jdom2.output.XMLOutputter;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
+import org.junit.jupiter.api.condition.EnabledIf;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
 
 import vavi.util.Debug;
+import vavi.util.properties.annotation.Property;
+import vavi.util.properties.annotation.PropsEntity;
 import vavi.xml.util.XPathDebugger;
 
 import net.sf.saxon.dom.DOMNodeList;
@@ -52,13 +55,23 @@ import net.sf.saxon.om.NodeInfo;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2022/02/28 umjammer initial version <br>
  */
+@EnabledIf("localPropertiesExists")
+@PropsEntity(url = "file:local.properties")
 public class EpubManipulator {
+
+    @Property(name = "epub.file")
+    String file;
+
+    static boolean localPropertiesExists() {
+        return Files.exists(Paths.get("local.properties"));
+    }
 
     /**
      * @param args dir
      */
     public static void main(String[] args) throws Exception {
         EpubManipulator app = new EpubManipulator();
+        PropsEntity.Util.bind(app);
         app.exec();
     }
 
@@ -68,7 +81,7 @@ public class EpubManipulator {
       Path dir = Paths.get("tmp");
 //      Files.createDirectories(dir);
 
-      Path target = dir.resolve("(一般小説) [馳星周] マンゴー・レイン (角川文庫).epub");
+      Path target = dir.resolve(file);
 //      Files.copy(src, target, StandardCopyOption.REPLACE_EXISTING);
       URI uri = URI.create("jar:" + target.toUri());
 Debug.println("uri: " + uri);

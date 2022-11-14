@@ -35,6 +35,14 @@ import vavi.util.Debug;
  */
 public class WebHookApiTest {
 
+    static {
+        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
+                           "(" +
+                           "com\\.microsoft\\.graph\\.logger\\.DefaultLogger#logDebug" + "|" +
+                           "vavi\\.nio\\.file\\.onedrive4\\.graph\\.MyLogger#logDebug" +
+                           ")");
+    }
+
     static final String VAVI_APPS_WEBHOOK_SECRET = System.getenv("VAVI_APPS_WEBHOOK_SECRET");
     static String websocketBaseUrl = System.getenv("VAVI_APPS_WEBHOOK_WEBSOCKET_BASE_URL");
     static String websocketPath = System.getenv("VAVI_APPS_WEBHOOK_WEBSOCKET_MICROSOFT_PATH");

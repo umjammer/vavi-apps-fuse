@@ -29,10 +29,11 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import com.github.fge.filesystem.driver.DoubleCachedFileSystemDriver;
+import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import org.nuxeo.onedrive.client.CopyOperation;
 import org.nuxeo.onedrive.client.Files;
 import org.nuxeo.onedrive.client.OneDriveAPI;
@@ -42,10 +43,6 @@ import org.nuxeo.onedrive.client.UploadSession;
 import org.nuxeo.onedrive.client.types.Drive;
 import org.nuxeo.onedrive.client.types.DriveItem;
 import org.nuxeo.onedrive.client.types.FileSystemInfo;
-
-import com.github.fge.filesystem.driver.CachedFileSystemDriver;
-import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
-
 import vavi.nio.file.Util;
 import vavi.util.Debug;
 
@@ -61,7 +58,7 @@ import static vavi.nio.file.onedrive3.OneDriveFileSystemProvider.ENV_USE_SYSTEM_
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class OneDriveFileSystemDriver extends CachedFileSystemDriver<DriveItem.Metadata> {
+public final class OneDriveFileSystemDriver extends DoubleCachedFileSystemDriver<DriveItem.Metadata> {
 
     private final OneDriveAPI client;
     private final Drive.Metadata drive;
@@ -123,7 +120,7 @@ Debug.println("NOTIFICATION: parent not found: " + e);
 
     /** */
     private static DriveItem asDriveItem(DriveItem.Metadata entry) {
-        return DriveItem.class.cast(entry.getItem());        
+        return DriveItem.class.cast(entry.getItem());
     }
 
     @Override
@@ -142,7 +139,7 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     }
 
     @Override
-    protected InputStream downloadEntry(DriveItem.Metadata entry, Path path, Set<? extends OpenOption> options) throws IOException {
+    protected InputStream downloadEntryImpl(DriveItem.Metadata entry, Path path, Set<? extends OpenOption> options) throws IOException {
         return new BufferedInputStream(Files.download(asDriveItem(entry)), Util.BUFFER_SIZE);
     }
 
@@ -195,7 +192,6 @@ Debug.println("upload w/o option: " + is.available());
 
     @Override
     protected DriveItem.Metadata createDirectoryEntry(DriveItem.Metadata parentEntry, Path dir) throws IOException {
-        // TODO: how to diagnose?
         return Files.createFolder(asDriveItem(parentEntry), toFilenameString(dir));
     }
 
@@ -206,8 +202,6 @@ Debug.println("upload w/o option: " + is.available());
 
     @Override
     protected void removeEntry(DriveItem.Metadata entry, Path path) throws IOException {
-        // TODO: unknown what happens when a move operation is performed
-        // and the target already exists
         Files.delete(asDriveItem(entry));
     }
 

@@ -18,14 +18,14 @@ import java.nio.file.Path;
 import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.logging.Level;
 
-import com.github.fge.filesystem.driver.CachedFileSystemDriver;
+import com.github.fge.filesystem.driver.DoubleCachedFileSystemDriver;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -37,7 +37,6 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
 import com.google.api.services.drive.model.Revision;
 import com.google.api.services.drive.model.RevisionList;
-
 import vavi.nio.file.Util;
 import vavi.nio.file.googledrive.GoogleDriveFileAttributesFactory.Metadata;
 import vavi.util.Debug;
@@ -54,7 +53,7 @@ import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_USE_SY
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
-public final class GoogleDriveFileSystemDriver extends CachedFileSystemDriver<File> {
+public final class GoogleDriveFileSystemDriver extends DoubleCachedFileSystemDriver<File> {
 
     private Drive drive;
 
@@ -157,33 +156,35 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     }
 
     @Override
-    protected InputStream downloadEntry(File entry, Path path, Set<? extends OpenOption> options) throws IOException {
+    protected InputStream downloadEntryImpl(File entry, Path path, Set<? extends OpenOption> options) throws IOException {
         // TODO detect automatically? (w/o options)
         if (options != null && options.stream().anyMatch(o -> o.equals(GoogleDriveOpenOption.EXPORT_WITH_GDOCS_DOCX) ||
                                                          o.equals(GoogleDriveOpenOption.EXPORT_WITH_GDOCS_XLSX))) {
             GoogleDriveOpenOption option = Util.getOneOfOptions(GoogleDriveOpenOption.class, options);
+            // export google docs, sheet ... as specified type
             return drive.files().export(entry.getId(), option.getValue()).executeMediaAsInputStream();
         } else {
+            // normal download
+Debug.println(Level.FINE, "download: " + entry.getName() + ", " + entry.getSize());
             return drive.files().get(entry.getId()).executeMediaAsInputStream();
         }
     }
 
     @Override
-    protected void whenUploadEntryExists(File sourceEntry, Path path, Set<? extends OpenOption> options) throws IOException {
-        if (options == null || !options.stream().anyMatch(o -> o.equals(GoogleDriveOpenOption.INPORT_AS_NEW_REVISION))) {
-            super.whenUploadEntryExists(sourceEntry, path, options);
+    protected void whenUploadEntryExists(File destEntry, Path path, Set<? extends OpenOption> options) throws IOException {
+        if (options == null || options.stream().noneMatch(o -> o.equals(GoogleDriveOpenOption.INPORT_AS_NEW_REVISION))) {
+            super.whenUploadEntryExists(destEntry, path, options); // means throws FileAlreadyExistsException
         }
 
         File entry = new File();
 
         AbstractInputStreamContent mediaContent = new InputStreamContent(null, Files.newInputStream(path));
-        Drive.Files.Update updator = drive.files().update(sourceEntry.getId(), entry, mediaContent);
-        MediaHttpUploader uploader = updator.getMediaHttpUploader();
+        Drive.Files.Update updater = drive.files().update(destEntry.getId(), entry, mediaContent);
+        MediaHttpUploader uploader = updater.getMediaHttpUploader();
         uploader.setDirectUploadEnabled(true);
         // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
         uploader.setProgressListener(u -> { Debug.println("new revision progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()); });
-        updator.getMediaHttpUploader();
-        File newEntry = updator.setFields(ENTRY_FIELDS).execute();
+        File newEntry = updater.setFields(ENTRY_FIELDS).execute();
 Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.getSize());
         updateEntry(path, newEntry);
     }
@@ -196,11 +197,11 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
             protected File upload() throws IOException {
                 AbstractInputStreamContent mediaContent = new AbstractInputStreamContent(null) { // implements HttpContent
                     @Override
-                    public InputStream getInputStream() throws IOException {
+                    public InputStream getInputStream() {
                         return null; // never called
                     }
                     @Override
-                    public long getLength() throws IOException {
+                    public long getLength() {
                         return -1;
                     }
                     @Override
@@ -208,14 +209,14 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
                         return false;
                     }
                     @Override
-                    public void writeTo(OutputStream os) throws IOException {
+                    public void writeTo(OutputStream os) {
                         setOutputStream(os); // socket
                     }
                 };
 
                 File entry = new File();
                 entry.setName(toFilenameString(path));
-                entry.setParents(Arrays.asList(parentEntry.getId()));
+                entry.setParents(Collections.singletonList(parentEntry.getId()));
 
                 Drive.Files.Create creator = drive.files().create(entry, mediaContent); // why not HttpContent ???
                 MediaHttpUploader uploader = creator.getMediaHttpUploader();
@@ -247,9 +248,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
                     .setOrderBy("name_natural")
                     .execute();
 
-            for (File child : files.getFiles()) {
-                list.add(child);
-            }
+            list.addAll(files.getFiles());
 
             pageToken = files.getNextPageToken();
 //System.out.println("t: " + (System.currentTimeMillis() - t) + ", " + children.size() + ", " + (pageToken != null));
@@ -264,7 +263,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
         dirEntry.setName(toFilenameString(dir));
         dirEntry.setMimeType(MIME_TYPE_DIR);
         if (dir.toAbsolutePath().getParent().getNameCount() != 0) {
-            dirEntry.setParents(Arrays.asList(parentEntry.getId()));
+            dirEntry.setParents(Collections.singletonList(parentEntry.getId()));
         }
         return drive.files().create(dirEntry).setFields(ENTRY_FIELDS).execute();
     }
@@ -287,7 +286,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
     protected File copyEntry(File sourceEntry, File targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
         File entry = new File();
         entry.setName(toFilenameString(target));
-        entry.setParents(Arrays.asList(targetParentEntry.getId()));
+        entry.setParents(Collections.singletonList(targetParentEntry.getId()));
         if (options != null && options.stream().anyMatch(o -> o.equals(GoogleDriveCopyOption.EXPORT_AS_GDOCS))) {
             entry.setMimeType(GoogleDriveCopyOption.EXPORT_AS_GDOCS.getValue());
         }
@@ -331,7 +330,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
     }
 
     @Override
-    protected Object getPathMetadata(File entry) throws IOException {
+    protected Object getPathMetadata(File entry) {
         return new Metadata(this, entry);
     }
 
@@ -376,7 +375,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
 
             if (revisions.getRevisions() != null) {
 Debug.println(Level.FINE, "revisions: " + revisions.getRevisions().size() + ", " + revisions.getNextPageToken());
-                revisions.getRevisions().forEach(r -> list.add(r));
+                list.addAll(revisions.getRevisions());
             }
 
             pageToken = revisions.getNextPageToken();

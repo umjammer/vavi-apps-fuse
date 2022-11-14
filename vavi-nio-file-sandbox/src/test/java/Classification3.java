@@ -38,41 +38,52 @@ public final class Classification3 {
     public static void main(final String... args) throws IOException {
         String email = args[0];
         String cwd = args[1];
-        boolean dryRun = false;
 
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        FileSystem onedrivefs = FileSystems.newFileSystem(uri, Collections.emptyMap());
+        FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.emptyMap());
 
-        Path root = onedrivefs.getPath(cwd);
+        Path root = fileSystem.getPath(cwd);
+
+        Classification3 app = new Classification3();
+        app.classify(root);
+
+        fileSystem.close();
+    }
+
+    boolean dryRun = false;
+
+    /** if author directory exists then move it into */
+    void classify(Path root) throws IOException {
         MyFileVisitor fileSearcher = new MyFileVisitor();
         Files.walkFileTree(root, fileSearcher);
         Pattern pattern = Pattern.compile("\\[(.+?)\\]");
         fileSearcher.result().stream()
-            .filter(path -> pattern.matcher(path.getFileName().toString()).find())
-            .forEach(path -> {
-                try {
-                    Matcher matcher = pattern.matcher(Util.toFilenameString(path));
-                    String author;
-                    if (matcher.find()) {
-                        author = matcher.group(1);
-                    } else {
-                        throw new IllegalStateException("not match: " + path);
-                    }
-
-                    Path dir = path.getParent().resolve(author);
-                    if (Files.exists(dir)) {
-                        System.err.println("mv " + path + " " + dir);
-                        if (!dryRun) {
-                            Files.move(path, dir.resolve(path.getFileName()));
+                .filter(path -> pattern.matcher(path.getFileName().toString()).find())
+                .forEach(path -> {
+                    try {
+                        Matcher matcher = pattern.matcher(Util.toFilenameString(path));
+                        String author;
+                        if (matcher.find()) {
+                            author = matcher.group(1);
+                        } else {
+                            throw new IllegalStateException("not match: " + path);
                         }
+
+                        Path dir = path.getParent().resolve(author);
+                        if (Files.exists(dir)) {
+System.err.println("mv " + path + " " + dir);
+                            if (!dryRun) {
+                                Files.move(path, dir.resolve(path.getFileName()));
+                            }
+                        }
+                    } catch (IOException f) {
+                        System.err.println(f);
                     }
-                } catch (IOException f) {
-                    System.err.println(f);
-                }
-            });
+                });
     }
 
+    /** */
     static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
         private List<Path> list = new ArrayList<>();

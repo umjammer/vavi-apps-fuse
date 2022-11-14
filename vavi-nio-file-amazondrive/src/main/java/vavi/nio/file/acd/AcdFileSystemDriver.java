@@ -17,17 +17,15 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import com.github.fge.filesystem.driver.DoubleCachedFileSystemDriver;
+import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import org.yetiz.lib.acd.ACD;
 import org.yetiz.lib.acd.ACDSession;
 import org.yetiz.lib.acd.Entity.FolderInfo;
 import org.yetiz.lib.acd.Entity.NodeInfo;
 import org.yetiz.lib.acd.api.v1.Nodes;
-
-import com.github.fge.filesystem.driver.CachedFileSystemDriver;
-import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import static vavi.nio.file.Util.toFilenameString;
 import static vavi.nio.file.Util.toPathString;
@@ -40,7 +38,7 @@ import static vavi.nio.file.Util.toPathString;
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class AcdFileSystemDriver extends CachedFileSystemDriver<NodeInfo> {
+public final class AcdFileSystemDriver extends DoubleCachedFileSystemDriver<NodeInfo> {
 
     private final ACD drive;
     private ACDSession session;
@@ -77,7 +75,7 @@ public final class AcdFileSystemDriver extends CachedFileSystemDriver<NodeInfo> 
     }
 
     @Override
-    protected InputStream downloadEntry(NodeInfo entry, Path path, Set<? extends OpenOption> options) throws IOException {
+    protected InputStream downloadEntryImpl(NodeInfo entry, Path path, Set<? extends OpenOption> options) throws IOException {
         return drive.getFile(entry.getId());
     }
 

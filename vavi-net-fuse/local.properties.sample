@@ -1,1 +1,1 @@
-test.mountPoint=/Users/you/mnt/fuse
+fuse.mountPoint=/Users/you/mnt/fuse

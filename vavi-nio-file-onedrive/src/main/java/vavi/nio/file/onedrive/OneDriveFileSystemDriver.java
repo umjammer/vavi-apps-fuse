@@ -21,13 +21,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
-import com.github.fge.filesystem.driver.CachedFileSystemDriver;
+import com.github.fge.filesystem.driver.DoubleCachedFileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
-
+import de.tuberlin.onedrivesdk.OneDriveException;
+import de.tuberlin.onedrivesdk.OneDriveSDK;
+import de.tuberlin.onedrivesdk.common.OneItem;
+import de.tuberlin.onedrivesdk.file.OneFile;
+import de.tuberlin.onedrivesdk.folder.OneFolder;
+import de.tuberlin.onedrivesdk.uploadFile.OneUpload;
 import vavi.nio.file.Util;
 import vavi.util.Debug;
 
@@ -35,13 +39,6 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static vavi.nio.file.Util.toFilenameString;
 import static vavi.nio.file.Util.toPathString;
 import static vavi.nio.file.onedrive.OneDriveFileSystemProvider.ENV_USE_SYSTEM_WATCHER;
-
-import de.tuberlin.onedrivesdk.OneDriveException;
-import de.tuberlin.onedrivesdk.OneDriveSDK;
-import de.tuberlin.onedrivesdk.common.OneItem;
-import de.tuberlin.onedrivesdk.file.OneFile;
-import de.tuberlin.onedrivesdk.folder.OneFolder;
-import de.tuberlin.onedrivesdk.uploadFile.OneUpload;
 
 
 /**
@@ -51,7 +48,7 @@ import de.tuberlin.onedrivesdk.uploadFile.OneUpload;
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
 @ParametersAreNonnullByDefault
-public final class OneDriveFileSystemDriver extends CachedFileSystemDriver<OneItem> {
+public final class OneDriveFileSystemDriver extends DoubleCachedFileSystemDriver<OneItem> {
 
     private final OneDriveSDK client;
 
@@ -94,7 +91,7 @@ Debug.println("NOTIFICATION: maybe updated: " + path);
                     Path parent = cache.getEntry(f -> { try { return entry.getParentFolder().getId().equals(f.getId()); } catch (IOException g) { g.printStackTrace(); return false; }});
                     Path path = parent.resolve(entry.getName());
 Debug.println("NOTIFICATION: maybe created: " + path);
-                    cache.addEntry(path, OneItem.class.cast(entry));
+                    cache.addEntry(path, (OneItem) entry);
                 }
             } catch (NoSuchElementException e) {
 Debug.println("NOTIFICATION: parent not found: " + e);
@@ -106,12 +103,12 @@ Debug.println("NOTIFICATION: parent not found: " + e);
 
     /** */
     private static OneFile asFile(OneItem entry) {
-        return OneFile.class.cast(entry);
+        return (OneFile) entry;
     }
 
     /** */
     private static OneFolder asFolder(OneItem entry) {
-        return OneFolder.class.cast(entry);
+        return (OneFolder) entry;
     }
 
     @Override
@@ -139,7 +136,7 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     }
 
     @Override
-    protected InputStream downloadEntry(OneItem entry, Path path, Set<? extends OpenOption> options) throws IOException {
+    protected InputStream downloadEntryImpl(OneItem entry, Path path, Set<? extends OpenOption> options) throws IOException {
         return asFile(entry).download().getDownloadedInputStream();
     }
 
@@ -185,8 +182,7 @@ Debug.println("upload w/o option: " + is.available());
 
     @Override
     protected OneItem createDirectoryEntry(OneItem parentEntry, Path dir) throws IOException {
-        // TODO: how to diagnose?
-        return OneItem.class.cast(asFolder(parentEntry).createFolder(toFilenameString(dir)));
+        return (OneItem) asFolder(parentEntry).createFolder(toFilenameString(dir));
     }
 
     @Override
@@ -196,8 +192,6 @@ Debug.println("upload w/o option: " + is.available());
 
     @Override
     protected void removeEntry(OneItem entry, Path path) throws IOException {
-        // TODO: unknown what happens when a move operation is performed
-        // and the target already exists
         entry.delete();
     }
 
@@ -205,7 +199,7 @@ Debug.println("upload w/o option: " + is.available());
     protected OneItem copyEntry(OneItem sourceEntry, OneItem targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
         OneFile newEntry = asFile(sourceEntry).copy(asFolder(targetParentEntry), toFilenameString(target));
 Debug.println(newEntry.getParentFolder().getName() + "/" + newEntry.getName());
-        return OneItem.class.cast(newEntry);
+        return (OneItem) newEntry;
     }
 
     @Override

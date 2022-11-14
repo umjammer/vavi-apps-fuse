@@ -7,7 +7,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.7</version>
+    <version>0.1.8</version>
   </parent>
 
   <artifactId>vavi-net-fuse</artifactId>
@@ -56,12 +56,13 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
+            <version>3.0.0-M7</version>
             <configuration>
               <includes>
                 <include>**/Main4</include>
               </includes>
               <environmentVariables>
-                <TEST4_MOUNT_POINT>${test.mountPoint}</TEST4_MOUNT_POINT>
+                <FUSE_MOUNT_POINT>${fuse.mountPoint}</FUSE_MOUNT_POINT>
               </environmentVariables>
               <argLine>
                 -Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties
@@ -79,6 +80,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+        <version>3.2.2</version>
         <executions>
           <execution>
             <goals>
@@ -92,16 +94,16 @@
 
   <dependencies>
     <dependency>
-      <!-- fuse jnr (co.paralleluniverse) -->
+      <!-- fuse jnr (co.paralleluniverse / com.github.umjammer) -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>javafs</artifactId>
-      <version>0.1.6v</version>
+      <version>0.1.7v</version>
     </dependency>
     <dependency>
       <!-- fuse jna (net.fuse-jna) -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>fuse-jna</artifactId>
-      <version>1.0.4v</version>
+      <version>1.0.5v</version>
     </dependency>
     <dependency>
       <groupId>com.github.serceman</groupId>
@@ -112,7 +114,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
-      <version>1.1.6</version>
+      <version>1.1.8</version>
     </dependency>
 
     <dependency>
@@ -144,7 +146,7 @@
     <dependency>
       <groupId>com.google.jimfs</groupId>
       <artifactId>jimfs</artifactId>
-      <version>1.1</version>
+      <version>1.2</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

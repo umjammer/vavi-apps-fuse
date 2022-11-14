@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -51,7 +52,7 @@ public final class VfsFileSystemRepository extends FileSystemRepositoryBase {
         String uriString = uri.toString();
         URI subUri = URI.create(uriString.substring(uriString.indexOf(':') + 1));
         String protocol = subUri.getScheme();
-Debug.println("protocol: " + protocol);
+Debug.println(Level.FINE, "protocol: " + protocol);
 
         Map<String, String> params = getParamsMap(subUri);
         String alias = params.get(VfsFileSystemProvider.PARAM_ALIAS);
@@ -64,12 +65,14 @@ Debug.println("protocol: " + protocol);
         if (subUri.getPath() != null) {
             baseUrl += subUri.getPath();
         }
-Debug.println("baseUrl: " + baseUrl);
+Debug.println(Level.FINE, "baseUrl: " + baseUrl);
 
         FileSystemManager manager = VFS.getManager();
         if (!manager.hasProvider(protocol)) {
-for (String scheme : manager.getSchemes()) {
- System.err.println("scheme: " + scheme);
+if (Debug.isLoggable(Level.FINE)) {
+ for (String scheme : manager.getSchemes()) {
+  System.err.println("scheme: " + scheme);
+ }
 }
             throw new IllegalStateException("missing provider: " + protocol);
         }

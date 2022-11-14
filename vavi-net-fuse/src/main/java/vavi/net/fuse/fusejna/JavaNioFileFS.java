@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 
+import vavi.net.fuse.Fuse;
 import vavi.nio.file.Util;
 import vavi.util.Debug;
 
@@ -44,7 +45,7 @@ import net.fusejna.util.FuseFilesystemAdapterAssumeImplemented;
 
 
 /**
- * JavaFsFS. (fuse-jna)
+ * JavaNioFileFS. (fuse-jna)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/02/29 umjammer initial version <br>
@@ -54,8 +55,8 @@ class JavaNioFileFS extends FuseFilesystemAdapterAssumeImplemented {
     /** */
     protected transient FileSystem fileSystem;
 
-    /** */
-    static final String ENV_NO_APPLE_DOUBLE = "no_apple_double";
+    /** key for env, no need to specify value */
+    static final String ENV_IGNORE_APPLE_DOUBLE = "noappledouble";
 
     /** */
     private final AtomicLong fileHandle = new AtomicLong(0);
@@ -63,16 +64,20 @@ class JavaNioFileFS extends FuseFilesystemAdapterAssumeImplemented {
     /** <file handle, channel> */
     private final ConcurrentMap<Long, SeekableByteChannel> fileHandles = new ConcurrentHashMap<>();
 
+    protected boolean ignoreAppleDouble;
+
     /**
-     * @param fileSystem
+     * @param fileSystem a file system to wrap by fuse
      */
-    public JavaNioFileFS(FileSystem fileSystem, Map<String, Object> env) throws IOException {
+    public JavaNioFileFS(FileSystem fileSystem, Map<String, Object> env) {
         this.fileSystem = fileSystem;
+        ignoreAppleDouble = FuseJnaFuse.isEnabled(ENV_IGNORE_APPLE_DOUBLE, env);
+Debug.println(Level.FINE, "ENV_IGNORE_APPLE_DOUBLE: " + ignoreAppleDouble);
     }
 
     @Override
     public int access(final String path, final int access) {
-Debug.println(Level.FINE, "access: " + path);
+Debug.println(Level.FINER, "access: " + path);
         try {
             // TODO access
             fileSystem.provider().checkAccess(fileSystem.getPath(path));
@@ -109,13 +114,13 @@ Debug.printStackTrace(e);
 
     @Override
     public int getattr(final String path, final StatWrapper stat) {
-Debug.println(Level.FINE, "getattr: " + path);
+Debug.println(Level.FINER, "getattr: " + path);
         try {
             BasicFileAttributes attributes =
                     fileSystem.provider().readAttributes(fileSystem.getPath(path), BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
 
             if (attributes instanceof PosixFileAttributes) {
-                boolean[] m = FuseJnaFuse.permissionsToMode(PosixFileAttributes.class.cast(attributes).permissions());
+                boolean[] m = FuseJnaFuse.permissionsToMode(((PosixFileAttributes) attributes).permissions());
                 if (attributes.isDirectory()) {
                     stat.setMode(NodeType.DIRECTORY, m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7], m[8])
                         .setAllTimesSec(attributes.lastModifiedTime().to(TimeUnit.SECONDS));
@@ -140,7 +145,13 @@ Debug.println(Level.FINE, "getattr: " + path);
 Debug.println(Level.FINE, e.getMessage());
                 return 0;
             } else {
-Debug.println(e);
+                if (ignoreAppleDouble) {
+                    if (Util.isAppleDouble(path)) {
+Debug.println(Level.FINER, e.getMessage());
+                    } else {
+Debug.println(Level.FINE, e);
+                    }
+                }
                 return -ErrorCodes.ENOENT();
             }
         } catch (IOException e) {
@@ -343,7 +354,7 @@ Debug.printStackTrace(e);
 
     @Override
     public int statfs(final String path, final StatvfsWrapper stat) {
-Debug.println(Level.FINE, "statfs: " + path);
+Debug.println(Level.FINER, "statfs: " + path);
         try {
             FileStore fileStore = fileSystem.getFileStores().iterator().next();
 //Debug.println("total: " + fileStore.getTotalSpace());

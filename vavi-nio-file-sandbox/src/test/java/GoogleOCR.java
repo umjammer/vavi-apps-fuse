@@ -19,7 +19,7 @@ import java.util.zip.ZipInputStream;
 import vavi.nio.file.googledrive.GoogleDriveCopyOption;
 import vavi.nio.file.googledrive.GoogleDriveOpenOption;
 import vavi.util.archive.Entry;
-import vavi.util.archive.zip.ZipArchive;
+import vavi.util.archive.zip.JdkZipArchive;
 
 
 /**
@@ -83,7 +83,7 @@ System.err.println("fs: " + fs);
             Files.copy(file, tmp);
 System.err.println("copy: " + file + " to " + tmp);
         }
-        ZipArchive archive = new ZipArchive(tmp.toFile());
+        JdkZipArchive archive = new JdkZipArchive(tmp.toFile());
         for (Entry entry : archive.entries()) {
             Path path = dir.resolve(entry.getName());
             if (!Files.exists(path.getParent())) {
@@ -96,7 +96,7 @@ System.err.println("copy: " + file + " to " + tmp);
                     Files.copy(archive.getInputStream(entry), path);
                 }
 System.err.println("extract: " + path);
-                try { Thread.sleep(300); } catch (InterruptedException e) {} 
+                try { Thread.sleep(300); } catch (InterruptedException ignored) {}
             } else {
 System.err.println("skip: " + path);
             }
@@ -122,7 +122,7 @@ System.err.println("rm: " + tmp);
                     if (!Files.exists(ocr)) {
                         Path x = Files.copy(p, ocr, GoogleDriveCopyOption.EXPORT_AS_GDOCS);
 System.err.println("ocr: " + x);
-                        try { Thread.sleep(1000); } catch (InterruptedException e) {} 
+                        try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
                     } else {
 System.err.println("skip ocr: " + fn);
                     }
@@ -144,7 +144,6 @@ System.err.println("skip ocr: " + fn);
                 ZipEntry entry;
                 while ((entry = zis.getNextEntry()) != null) {
                      if (entry.getName().equals("word/document.xml")) {
-                         @SuppressWarnings("resource")
                          Scanner scanner = new Scanner(zis);
                          while (scanner.hasNextLine()) {
                              String line = scanner.nextLine();

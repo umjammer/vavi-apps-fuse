@@ -62,7 +62,13 @@ public final class HfsFileSystemRepository extends FileSystemRepositoryBase {
     }
 
     /**
-     * @param uri "hfs:/tmp/dmg/exam.dmg!/img/sample.png"
+     * @param uri "hfs:file:///tmp/dmg/exam.dmg!/img/sample.png"
+     *                 ~~~~~~~~~~~~~~~~~~~~~~~~ ~~~~~~~~~~~~~~~
+     *                         |                   |
+     *                         |                   +- not implemented yet
+     *                         |
+     *                         +- this part should be a proper uri,
+     *                            it's better to do `Paths.get(file).toUri().toString()`
      */
     @Nonnull
     @Override
@@ -75,7 +81,7 @@ public final class HfsFileSystemRepository extends FileSystemRepositoryBase {
         }
         // TODO virtual relative directory from rawSchemeSpecificParts[1]
 
-Debug.println("file: " + Paths.get(file).toAbsolutePath());
+Debug.println(Level.FINE, "file: " + Paths.get(file).toAbsolutePath());
 
         HFSCommonFileSystemHandler fsHandler = loadFSWithUDIFAutodetect(Paths.get(file).toAbsolutePath().toString());
 

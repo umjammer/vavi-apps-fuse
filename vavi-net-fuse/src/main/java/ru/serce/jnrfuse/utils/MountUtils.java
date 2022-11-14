@@ -7,7 +7,7 @@ import ru.serce.jnrfuse.FuseException;
 
 
 /**
- * ad-hoc replacement, i'm not sure this works on jdk9 or above.
+ * ad-hoc replacement, i'm not sure if this works on jdk9 or above.
  */
 public class MountUtils {
     /**

@@ -53,7 +53,7 @@ public final class ArchiveFileSystemRepository extends FileSystemRepositoryBase 
         }
 
         // TODO how about after '!' ?
-        Archive archive = Archives.getArchive(Paths.get(file).toFile());
+        Archive archive = Archives.getArchive(Paths.get(file).toFile(), env);
 
         ArchiveFileStore fileStore = new ArchiveFileStore(factoryProvider.getAttributesFactory());
         return new ArchiveFileSystemDriver(fileStore, factoryProvider, archive, env);

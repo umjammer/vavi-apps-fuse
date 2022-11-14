@@ -8,7 +8,7 @@ nio filsystem provider for onedrive
  * implements upload w/ monitor that *official sdk doesn't support*
  * OnedriveUploadOption for large file uploading
  * description as "user:attribute"
- * thumbnail as "user:attribute" (works but where can we see those?)
+ * thumbnail as "user:attribute"
 
 ## issue
 
@@ -18,7 +18,7 @@ because after `com.microsoft.graph:microsoft-graph:2.0.2`,
 the sdk deprecated `com.microsoft.graph.http.IConnection`
 and start using `okhttp3.Response` instead of it.
 this is not oop. (beginner should not use generics and method reference)
-`IConnection` is designed for library independency.
+`IConnection` is designed for library independence.
 why the official sdk doesn't implement okhttp3 library as `IConnection`?
 for performance reason? i don't think so. because
 network transportation is very slower than wrapping object.

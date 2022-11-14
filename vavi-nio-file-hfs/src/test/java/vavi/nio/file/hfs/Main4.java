@@ -92,16 +92,13 @@ public class Main4 {
     public static void main(String[] args) throws Exception {
 //        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
 //        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
-        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.fusejna.FuseJnaFuseProvider");
+        System.setProperty("//vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.fusejna.FuseJnaFuseProvider");
 
         Main4 app = new Main4();
         app.before();
 
         try (Fuse fuse = Fuse.getFuse()) {
             fuse.mount(app.fs, app.mountPoint, app.options);
-while (true) { // for jnrfuse
-    Thread.yield();
-}
         }
     }
 }

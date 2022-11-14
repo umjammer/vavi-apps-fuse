@@ -42,11 +42,11 @@ public class JavaFSFuse implements Fuse {
         Map<String, String> env_ = null;
         if (env != null) {
             if (env.containsKey(ENV_READ_ONLY)) {
-                readOnly = Boolean.valueOf(String.valueOf(env.get(ENV_READ_ONLY)));
+                readOnly = Boolean.parseBoolean(String.valueOf(env.get(ENV_READ_ONLY)));
                 env.remove(ENV_READ_ONLY);
             }
             if (env.containsKey(ENV_DEBUG)) {
-                debug = Boolean.valueOf(String.valueOf(env.get(ENV_DEBUG)));
+                debug = Boolean.parseBoolean(String.valueOf(env.get(ENV_DEBUG)));
                 env.remove(ENV_DEBUG);
             }
             env_ = new HashMap<>();

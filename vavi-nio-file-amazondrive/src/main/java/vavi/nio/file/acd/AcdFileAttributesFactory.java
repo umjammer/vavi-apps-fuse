@@ -8,7 +8,7 @@ package vavi.nio.file.acd;
 
 import org.yetiz.lib.acd.Entity.NodeInfo;
 
-import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase.ExtendsdFileAttributesFactory;
+import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase.ExtendedFileAttributesFactory;
 
 
 /**
@@ -17,7 +17,7 @@ import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase.ExtendsdFil
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
-public final class AcdFileAttributesFactory extends ExtendsdFileAttributesFactory {
+public final class AcdFileAttributesFactory extends ExtendedFileAttributesFactory {
 
     public AcdFileAttributesFactory() {
         setMetadataClass(NodeInfo.class);

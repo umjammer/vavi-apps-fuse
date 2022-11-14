@@ -4,7 +4,7 @@
   <parent>
     <artifactId>vavi-apps-fuse</artifactId>
     <groupId>vavi</groupId>
-    <version>0.1.7</version>
+    <version>0.1.8</version>
   </parent>
 
   <artifactId>vavi-nio-file-vfs</artifactId>
@@ -125,7 +125,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-jdk14</artifactId>
-      <version>1.7.5</version>
+      <version>1.7.36</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

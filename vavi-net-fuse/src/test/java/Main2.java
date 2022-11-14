@@ -5,6 +5,7 @@
  */
 
 import java.nio.file.FileSystem;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,34 +21,13 @@ import vavi.util.Debug;
 
 
 /**
- * Test4. (jimfs, fuse)
+ * Test2. (jimfs, fuse)
  * <p>
- * upload
- * <ul>
- * <li> create
- * <li> write
- * <li> chmod
- * <li> chmod
- * <li> chmod
- * <li> flush
- * <li> lock
- * <li> release
- * </ul>
- * download
- * <ul>
- * <li> open
- * <li> read
- * <li> flush
- * <li> lock
- * <li> release
- * </ul>
- *
- * TODO read is not called because of cache???
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2017/03/19 umjammer initial version <br>
  */
-public class Main4 {
+public class Main2 {
 
     static {
         System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
@@ -85,7 +65,7 @@ Debug.println("mountPoint: " + mountPoint);
         System.setProperty("vavi.net.fuse.FuseProvider.class", providerClassName);
 System.err.println("--------------------------- " + providerClassName + " ---------------------------");
 
-        Base.testFuse(fs, mountPoint, options);
+        Base.testLargeFile(fs, mountPoint, options);
 
         fs.close();
     }
@@ -94,14 +74,8 @@ System.err.println("--------------------------- " + providerClassName + " ------
      * @param args none
      */
     public static void main(String[] args) throws Exception {
-        Main4 app = new Main4();
+        Main2 app = new Main2();
         app.before();
-
-        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
-//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.fusejna.FuseJnaFuseProvider");
-//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
-
-        app.options.put("allow_other", null);
 
         Fuse.getFuse().mount(app.fs, app.mountPoint, app.options);
     }

@@ -24,6 +24,21 @@ import static vavi.nio.file.Base.testAll;
  */
 public class Main {
 
+    static {
+        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
+                "(" +
+                "org\\.slf4j\\.impl\\.JDK14LoggerAdapter#(log|info)" +
+                "|" +
+                "sun\\.util\\.logging\\.LoggingSupport#log" +
+                "|" +
+                "sun\\.util\\.logging\\.PlatformLogger#fine" +
+                "|" +
+                "jdk\\.internal\\.event\\.EventHelper#logX509CertificateEvent" +
+                "|" +
+                "sun\\.util\\.logging\\.PlatformLogger.JavaLoggerProxy#doLog" +
+                ")");
+    }
+
     /**
      * environment variable
      * <ul>
@@ -44,7 +59,7 @@ public class Main {
 
         URI uri = URI.create(String.format("vfs:sftp://%s@%s%s?keyPath=%s&passphrase=%s", username, host, path, keyPath, passPhrase));
 
-        testAll(new VfsFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
+        testAll(new VfsFileSystemProvider().newFileSystem(uri, Collections.emptyMap()));
     }
 
     /**
@@ -71,6 +86,6 @@ public class Main {
 
         URI uri = URI.create(String.format("vfs:webdav4s://%s:%s@%s:%s%s", username, password, host, port, path));
 
-        testAll(new VfsFileSystemProvider().newFileSystem(uri, Collections.EMPTY_MAP));
+        testAll(new VfsFileSystemProvider().newFileSystem(uri, Collections.emptyMap()));
     }
 }

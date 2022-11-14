@@ -7,7 +7,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.7</version>
+    <version>0.1.8</version>
   </parent>
 
   <artifactId>vavi-nio-file-sandbox</artifactId>
@@ -21,11 +21,43 @@
     <url>https://github.com/umjammer/vavi-nio-file-sandbox/issues</url>
   </issueManagement>
 
+  <profiles>
+    <profile>
+      <!-- mvn -P MavenRepoCleaner antrun:run -Dinfile='file' -->
+      <id>MavenRepoCleaner</id>
+      <build>
+        <plugins>
+          <plugin>
+            <!-- GOOD: fork: OK, test jars: OK, user args, default args: OK -->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.1.0</version>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <java classname="MavenRepoCleaner" fork="true">
+                  <classpath>
+                    <path refid="maven.compile.classpath"/>
+                    <path refid="maven.test.classpath"/>
+                  </classpath>
+                  <jvmarg value="-Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties"/>
+                </java>
+              </target>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
-        <version>2.10</version>
+        <version>3.3.0</version>
         <executions>
           <execution>
             <id>copy</id>
@@ -59,7 +91,6 @@
     </repository>
     <repository>
       <id>github</id>
-      <name>GitHub umjammer Apache Maven Packages</name>
       <url>https://maven.pkg.github.com/umjammer/*</url>
     </repository>
     <repository>
@@ -67,8 +98,8 @@
       <url>https://raw.github.com/umjammer/umjammer/mvn-repo/</url>
     </repository>
     <repository>
-      <id>seasar</id>
-      <url>https://www.seasar.org/maven/maven2/</url>
+      <id>gitlab-maven</id>
+      <url>https://gitlab.com/api/v4/projects/18523814/packages/maven</url>
     </repository>
   </repositories>
 
@@ -82,19 +113,14 @@
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
-      <version>1.1.6</version>
+      <version>1.1.8</version>
+      <scope>test</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.jsoup</groupId>
-      <artifactId>jsoup</artifactId>
-      <version>1.14.3</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.jdom</groupId>
-      <artifactId>jdom</artifactId>
-      <version>2.0.2</version>
+      <artifactId>jdom2</artifactId>
+      <version>2.0.6.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -104,9 +130,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>net.sf.saxon</groupId>
-      <artifactId>Saxon-HE</artifactId>
-      <version>11.2</version>
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>vavi-util-serdes</artifactId>
+      <version>1.0.3</version>
       <scope>test</scope>
     </dependency>
 
@@ -135,33 +161,45 @@
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-onedrive</artifactId>
-      <version>0.1.7</version>
+      <version>0.1.8</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-onedrive4</artifactId>
-      <version>0.1.7</version>
+      <version>0.1.8</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-googledrive</artifactId>
-      <version>0.1.7</version>
+      <version>0.1.8</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>vavi</groupId>
+      <artifactId>vavi-nio-file-archive</artifactId>
+      <version>0.1.8</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-util-archive</artifactId>
-      <version>1.1.0</version>
+      <version>1.1.1</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.sun</groupId>
+          <artifactId>tools</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-image</artifactId>
-      <version>1.0.9</version>
+      <version>1.0.10</version>
       <scope>test</scope>
     </dependency>
 
@@ -175,7 +213,7 @@
     <dependency>
       <groupId>sen</groupId>
       <artifactId>sen</artifactId>
-      <version>1.1</version>
+      <version>1.2.2.2</version>
       <scope>test</scope>
     </dependency>
 
@@ -186,29 +224,32 @@
       <scope>test</scope>
     </dependency>
 
+<!--
     <dependency>
       <groupId>org.cryptomator</groupId>
       <artifactId>fuse-nio-adapter</artifactId>
-      <version>1.2.3</version>
+      <version>1.2.8</version>
       <scope>test</scope>
     </dependency>
+-->
 
     <dependency>
-      <groupId>com.github.umjammer</groupId>
+      <groupId>vavi</groupId>
       <artifactId>vavi-util-screenscraping</artifactId>
-      <version>1.0.9</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-      <version>1.2.3</version>
+      <version>1.0.11</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>${vavi-nio-file.groupId}</groupId>
       <artifactId>vavi-nio-file</artifactId>
       <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <version>1.7.36</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -31,8 +31,13 @@ import net.fusejna.FuseFilesystem;
  */
 public class FuseJnaFuse implements Fuse {
 
-    /** */
-    public static final String ENV_NO_APPLE_DOUBLE = JavaNioFileFS.ENV_NO_APPLE_DOUBLE;
+    /** key for env, no need to specify value */
+    public static final String ENV_IGNORE_APPLE_DOUBLE = JavaNioFileFS.ENV_IGNORE_APPLE_DOUBLE;
+
+    /** TODO utility delegate */
+    static boolean isEnabled(String key, Map<String, Object> map) {
+        return Fuse.isEnabled(key, map);
+    }
 
     /** */
     private FuseFilesystem fuse;
@@ -40,7 +45,7 @@ public class FuseJnaFuse implements Fuse {
     @Override
     public void mount(FileSystem fs, String mountPoint, Map<String, Object> env) throws IOException {
         try {
-            if (env.containsKey(ENV_SINGLE_THREAD) && Boolean.class.cast(env.get(ENV_SINGLE_THREAD))) {
+            if (env.containsKey(ENV_SINGLE_THREAD) && (Boolean) env.get(ENV_SINGLE_THREAD)) {
                 fuse = new SingleThreadJavaNioFileFS(fs, env);
 Debug.println("use single thread");
             } else {

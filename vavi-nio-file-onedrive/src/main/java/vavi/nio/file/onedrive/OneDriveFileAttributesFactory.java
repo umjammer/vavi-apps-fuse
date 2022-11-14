@@ -6,7 +6,7 @@
 
 package vavi.nio.file.onedrive;
 
-import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase.ExtendsdFileAttributesFactory;
+import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase.ExtendedFileAttributesFactory;
 
 import de.tuberlin.onedrivesdk.common.OneItem;
 
@@ -17,7 +17,7 @@ import de.tuberlin.onedrivesdk.common.OneItem;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
-public final class OneDriveFileAttributesFactory extends ExtendsdFileAttributesFactory {
+public final class OneDriveFileAttributesFactory extends ExtendedFileAttributesFactory {
 
     public OneDriveFileAttributesFactory() {
         setMetadataClass(OneItem.class);

@@ -7,10 +7,6 @@
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.cryptomator.frontend.fuse.mount.EnvironmentVariables;
-import org.cryptomator.frontend.fuse.mount.FuseMountFactory;
-import org.cryptomator.frontend.fuse.mount.Mount;
-import org.cryptomator.frontend.fuse.mount.Mounter;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -36,18 +32,18 @@ public class Test5 {
 //        Path remote = fs.getRootDirectories().iterator().next();
         Path remote = Paths.get("/tmp");
 
-        Path mountPoint = Paths.get(mp);
-        Mounter mounter = FuseMountFactory.getMounter();
-        EnvironmentVariables envVars = EnvironmentVariables.create()
-                .withFlags(mounter.defaultMountFlags())
-                .withMountPoint(mountPoint)
-                .withRevealCommand("nautilus")
-                .build();
-        Mount mnt = mounter.mount(remote, envVars);
-        mnt.revealInFileManager();
-        System.out.println("Wait for it...");
-        System.in.read();
-        mnt.unmountForced();
+//        Path mountPoint = Paths.get(mp);
+//        Mounter mounter = FuseMountFactory.getMounter();
+//        EnvironmentVariables envVars = EnvironmentVariables.create()
+//                .withFlags(mounter.defaultMountFlags())
+//                .withMountPoint(mountPoint)
+//                .withRevealCommand("nautilus")
+//                .build();
+//        Mount mnt = mounter.mount(remote, envVars);
+//        mnt.revealInFileManager();
+//        System.out.println("Wait for it...");
+//        System.in.read();
+//        mnt.unmountForced();
     }
 }
 
