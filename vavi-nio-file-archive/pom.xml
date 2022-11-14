@@ -40,9 +40,9 @@
 
     <dependency>
       <!-- java-fs archive -->
-      <groupId>vavi</groupId>
+      <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-util-archive</artifactId>
-      <version>1.1.2-SNAPSHOT</version>
+      <version>1.1.1</version>
       <exclusions>
         <exclusion>
           <groupId>com.sun</groupId>

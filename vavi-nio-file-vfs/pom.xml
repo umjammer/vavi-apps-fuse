@@ -69,12 +69,12 @@
     <dependency>
       <groupId>com.github.vbauer</groupId>
       <artifactId>commons-vfs2-cifs</artifactId>
-      <version>1.2.1-SNAPSHOT</version>
+      <version>1.2.0</version>
     </dependency>
     <dependency>
       <groupId>com.github.mikhasd</groupId>
       <artifactId>commons-vfs2-smb</artifactId>
-      <version>1.0.1-SNAPSHOT</version>
+      <version>1.0.0</version>
     </dependency>
 
    <dependency>
