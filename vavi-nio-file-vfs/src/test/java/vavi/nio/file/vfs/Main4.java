@@ -33,8 +33,11 @@ import vavi.net.fuse.Fuse;
 public class Main4 {
 
     static {
-        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
-                           "co\\.paralleluniverse\\.fuse\\.LoggedFuseFilesystem#log");
+        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod", "(" +
+                "co\\.paralleluniverse\\.fuse\\.LoggedFuseFilesystem#log" + "|" +
+                "org\\.apache\\.commons\\.logging\\.impl\\.Jdk14Logger#(log|info|warn)" + "|" +
+                "org\\.apache\\.commons\\.vfs2\\.provider\\.sftp\\.SftpClientFactory\\$JSchLogger#log"
+                + ")");
     }
 
     String mountPoint;
@@ -84,7 +87,16 @@ public class Main4 {
     //
 
     /**
+     * <pre>
+     * ~/.vavifuse/credentials.properties
+     * vfs.username.sftp=host_account
+     * vfs.host.sftp=hots_name
+     * ssh.keyPath.sftp=/Users/you/.ssh/id_rsa
+     * ssh.passphrase.sftp=pass_phrase
+     * </pre>
+     *
      * @param args 0: alias, args 1: mount point (should be replaced by alias)
+     *             e.g. `sftp /Users/you/mnt/hostFoo_%s`
      */
     public static void main(final String... args) throws IOException {
         String alias = args[0];
@@ -99,6 +111,7 @@ public class Main4 {
 
 //        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
 //        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
+        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.fusejna.FuseJnaFuseProvider");
 
         Map<String, Object> options = new HashMap<>();
         options.put("fsname", "vfs_fs" + "@" + System.currentTimeMillis());
@@ -106,6 +119,7 @@ public class Main4 {
         options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
         // vfs io uses ThreadLocal to keep internal info when read/write, so this option must be set
         options.put(vavi.net.fuse.Fuse.ENV_SINGLE_THREAD, true);
+        options.put("allow_root", null);
 
         Fuse.getFuse().mount(fs, mountPoint, options);
     }
