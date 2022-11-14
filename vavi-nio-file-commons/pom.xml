@@ -5,7 +5,7 @@
   <parent>
     <artifactId>vavi-apps-fuse</artifactId>
     <groupId>vavi</groupId>
-    <version>0.1.7</version>
+    <version>0.1.8</version>
   </parent>
 
   <artifactId>vavi-nio-file-commons</artifactId>

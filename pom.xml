@@ -4,7 +4,7 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.1.7</version>
+  <version>0.1.8</version>
 
   <modules>
     <module>vavi-nio-file-commons</module>
@@ -99,13 +99,13 @@
       <dependency>
         <groupId>vavi</groupId>
         <artifactId>vavi-nio-file-commons</artifactId>
-        <version>0.1.7</version>
+        <version>0.1.8</version>
       </dependency>
 
       <dependency>
         <groupId>vavi</groupId>
         <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.7</version>
+        <version>0.1.8</version>
       </dependency>
 
       <dependency>
@@ -133,13 +133,13 @@
       <dependency>
         <groupId>vavi</groupId>
         <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.7</version>
+        <version>0.1.8</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>vavi</groupId>
         <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.7</version>
+        <version>0.1.8</version>
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>
