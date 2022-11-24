@@ -123,18 +123,6 @@
       <version>2.0.6.1</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>jaxen</groupId>
-      <artifactId>jaxen</artifactId>
-      <version>1.2.0</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>vavi-util-serdes</artifactId>
-      <version>1.0.3</version>
-      <scope>test</scope>
-    </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>

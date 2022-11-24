@@ -269,7 +269,7 @@ Debug.println("full-path: " + fullPath);
 Debug.println("element: " + element.getTagName());
         String asin = element.getTextContent();
 Debug.println("asin: " + asin);
-        String url = EpubManipulator.amazon(asin);
+        String url = amazon(asin);
 Debug.println("url: " + url);
 
 
@@ -306,7 +306,7 @@ System.err.println("skip: " + file);
 
         // exec
 Debug.println("asin: " + asin);
-        String url = EpubManipulator.amazon(asin);
+        String url = amazon(asin);
 Debug.println("url: " + url);
 
 
@@ -359,6 +359,15 @@ Debug.println("image: " + bytes.length);
         }
 
         Files.setAttribute(file, "user:thumbnail", bytes);
+    }
+
+    /**
+     * @see "https://www.ipentec.com/document/internet-get-amazon-product-image"
+     */
+    static String amazon(String asin) {
+        int countryCode = 9;
+        String imageType = "LZZZZZZZ";
+        return String.format("http://images-jp.amazon.com/images/P/%s.%02d.%s.jpg", asin, countryCode, imageType);
     }
 }
 
