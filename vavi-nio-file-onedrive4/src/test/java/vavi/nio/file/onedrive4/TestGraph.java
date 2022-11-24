@@ -6,7 +6,6 @@
 
 package vavi.nio.file.onedrive4;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -15,7 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
+import java.util.Collections;
 
 import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.concurrency.ChunkedUploadProvider;
@@ -37,7 +36,6 @@ import com.microsoft.graph.options.QueryOption;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 import com.microsoft.graph.requests.extensions.IDriveItemCopyRequest;
 import com.microsoft.graph.requests.extensions.IThumbnailSetCollectionPage;
-
 import vavi.net.auth.WithTotpUserCredential;
 import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
@@ -100,12 +98,7 @@ public class TestGraph {
         String accesssToken = auth2.authorize(userCredential);
 
         client = GraphServiceClient.builder()
-                .authenticationProvider(new IAuthenticationProvider() {
-                    @Override
-                    public void authenticateRequest(IHttpRequest request) {
-                        request.addHeader("Authorization", "Bearer " + accesssToken);
-                        }
-                })
+                .authenticationProvider(request -> request.addHeader("Authorization", "Bearer " + accesssToken))
                 .buildClient();
     }
 
@@ -116,9 +109,9 @@ public class TestGraph {
     void testList() throws IOException {
         client.me().drive().root().children().buildRequest().get().getCurrentPage().forEach(e -> System.err.println(e.name));
 
-        client.me().drive().root().itemWithPath(URLEncoder.encode("文書/Novels", "utf-8")).children().buildRequest().get().getCurrentPage().forEach(e -> System.err.println(e.name));
+        client.me().drive().root().itemWithPath(URLEncoder.encode("Books/Novels", "utf-8")).children().buildRequest().get().getCurrentPage().forEach(e -> System.err.println(e.name));
 
-        client.me().drive().root().itemWithPath(URLEncoder.encode("文書/Novels/あ", "utf-8")).children().buildRequest().get().getCurrentPage().forEach(e -> System.err.println(e.name));
+        client.me().drive().root().itemWithPath(URLEncoder.encode("Books/Novels/あ", "utf-8")).children().buildRequest().get().getCurrentPage().forEach(e -> System.err.println(e.name));
     }
 
     /** */
@@ -126,7 +119,7 @@ public class TestGraph {
         testDelete("test/テスト.wav");
 
         Path path = Paths.get(System.getenv("HOME"), "Music/0/rc.wav");
-        InputStream is = new FileInputStream(path.toFile());
+        InputStream is = Files.newInputStream(path.toFile().toPath());
         UploadSession uploadSession = client.drive().root().itemWithPath(URLEncoder.encode("test/テスト.wav", "utf-8")).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
         ChunkedUploadProvider<DriveItem> chunkedUploadProvider = new ChunkedUploadProvider<>(uploadSession,
                 client, is, is.available(), DriveItem.class);
@@ -170,7 +163,7 @@ public class TestGraph {
         ItemReference ir = new ItemReference();
         ir.id = dst.id;
         IDriveItemCopyRequest request = client.drive().items(src.id).copy("コピー.wav", ir).buildRequest();
-        BaseRequest.class.cast(request).setHttpMethod(HttpMethod.POST);
+        ((BaseRequest) request).setHttpMethod(HttpMethod.POST);
         DriveItemCopyBody body = new DriveItemCopyBody();
         body.name = "コピー.wav";
         body.parentReference = ir;
@@ -209,7 +202,7 @@ Debug.println("upload done");
 
         IThumbnailSetCollectionPage page = client.drive().items(sourceEntry.id)
             .thumbnails()
-            .buildRequest(Arrays.asList(new QueryOption("select", "source")))
+            .buildRequest(Collections.singletonList(new QueryOption("select", "source")))
             .get();
         ThumbnailSet set = page.getCurrentPage().get(0);
 Debug.println("set: " + StringUtil.paramString(set));

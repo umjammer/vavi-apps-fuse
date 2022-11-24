@@ -27,7 +27,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
 import javax.imageio.ImageIO;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
@@ -37,7 +36,6 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
-
 import vavi.awt.image.resample.FfmpegResampleOp;
 import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
@@ -64,6 +62,8 @@ public class GoogleDriveThumbnail {
 
     @Property(name = "googledrive.thumbnail.start")
     String start;
+    @Property(name = "googledrive.home")
+    String gdriveHome;
 
     static byte[] duke;
 
@@ -93,12 +93,12 @@ Debug.println("email: " + email);
         duke = Files.readAllBytes(Paths.get(GoogleDriveThumbnail.class.getResource("/duke.jpg").toURI()));
 
         Path dir = fs.getPath(app.start);
-        Files.walkFileTree(dir, new MyFileVisitor());
+        Files.walkFileTree(dir, app.new MyFileVisitor());
 
         fs.close();
     }
 
-    static class MyFileVisitor extends SimpleFileVisitor<Path> {
+    class MyFileVisitor extends SimpleFileVisitor<Path> {
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
@@ -136,7 +136,7 @@ System.out.println(matcher.group(2) + " - " + matcher.group(3));
     // functions
 
     /** get thumbnail of the file and save it to local */
-    static void func1(Path file) throws IOException {
+    void func1(Path file) throws IOException {
         byte[] bytes = (byte[]) Files.getAttribute(file, "user:thumbnail");
         if (bytes != null && bytes.length != 0) {
             String name = file.getFileName().toString().replace(".zip", ".jpg");
@@ -148,7 +148,6 @@ System.err.println("skip: " + file);
         }
     }
 
-
     static final boolean DRY_RUN = false;
     static final boolean OVERWRITE = false;
 
@@ -156,7 +155,7 @@ System.err.println("skip: " + file);
 //    static final Pattern jpg = Pattern.compile("^[\\w+\\/]+\\.jpe?g$");
 
     /** extract self and set first jpg as a thumbnail */
-    static void func2(Path file) throws IOException {
+    void func2(Path file) throws IOException {
         // check existence
         byte[] bytes = (byte[]) Files.getAttribute(file, "user:thumbnail");
         if (!OVERWRITE && bytes != null && bytes.length != 0) {
@@ -227,7 +226,7 @@ System.err.println(entry.getName() + ": " + thumbnail.getWidth() + "x" + thumbna
      * set amazon thumbnail asin from self meta data
      * GoogleDrive.app needed
      */
-    static void func3(Path file) throws Exception {
+    void func3(Path file) throws Exception {
         // check existence
         byte[] bytes = (byte[]) Files.getAttribute(file, "user:thumbnail");
         if (!OVERWRITE && bytes != null && bytes.length != 0) {
@@ -238,7 +237,7 @@ System.err.println("skip: " + file);
         // exec
         // convert path from google drive fs to default fs
         // because "zipfs" dosn't accept googledrive as sub scheme
-        Path gd = Paths.get("/Volumes/GoogleDrive/My Drive", file.toString());
+        Path gd = Paths.get(gdriveHome, file.toString());
         URI uri = URI.create("jar:" + gd.toUri().toString());
 Debug.println("uri: " + uri);
 
@@ -296,7 +295,7 @@ Debug.println("image: " + bytes.length);
     }
 
     /** set amazon thumbnail specify asin directly */
-    static void func4(Path file) throws Exception {
+    void func4(Path file) throws Exception {
         // check existence
         byte[] bytes = (byte[]) Files.getAttribute(file, "user:thumbnail");
         if (!OVERWRITE && bytes != null && bytes.length != 0) {

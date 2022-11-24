@@ -261,7 +261,7 @@ Debug.println("upload done: " + result.name);
 
         IDriveItemCollectionPage pages = client.drive().items(dirEntry.id).children().buildRequest().get();
         while (pages != null) {
-            //System.err.println("child: " + childPath.toRealPath().toString());
+//System.err.println("child: " + childPath.toRealPath().toString());
             list.addAll(pages.getCurrentPage());
             pages = pages.getNextPage() != null ? pages.getNextPage().buildRequest().get() : null;
         }

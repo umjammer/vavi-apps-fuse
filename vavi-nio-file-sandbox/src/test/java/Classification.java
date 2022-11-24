@@ -89,7 +89,7 @@ Debug.println(epubDir);
         fs.close();
     }
 
-    boolean dryRun = false;
+    boolean dryRun = true;
 
     /** entry point */
     void exec(Path root) throws IOException {
@@ -106,7 +106,7 @@ System.err.println("done");
         public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
             if (attr.isRegularFile()) {
 System.err.print(".");
-                if (filter2(file)) {             // <-------------- ① filtering
+                if (filter3(file)) {             // <-------------- ① filtering
                     func1(file);                 // <-------------- ② function
                     targets.add(file);
                 }
@@ -126,6 +126,11 @@ System.err.print(".");
     /** ① epub only */
     boolean filter2(Path file) {
         return file.getFileName().toString().endsWith(".epub");
+    }
+
+    /** ① specified dir only */
+    boolean filter3(Path file) {
+        return file.getParent().toString().equals(epubDir);
     }
 
     /** extract author */
