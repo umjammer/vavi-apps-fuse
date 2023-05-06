@@ -30,7 +30,7 @@ public enum GoogleDriveOpenOption implements OpenOption {
     /**
      * upload a file as new revision.
      */
-    INPORT_AS_NEW_REVISION(null);
+    IMPORT_AS_NEW_REVISION(null);
 
     /** depends on enum stuff */
     private String value;

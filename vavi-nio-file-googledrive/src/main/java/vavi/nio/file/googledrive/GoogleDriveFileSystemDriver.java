@@ -172,21 +172,10 @@ Debug.println(Level.FINE, "download: " + entry.getName() + ", " + entry.getSize(
 
     @Override
     protected void whenUploadEntryExists(File destEntry, Path path, Set<? extends OpenOption> options) throws IOException {
-        if (options == null || options.stream().noneMatch(o -> o.equals(GoogleDriveOpenOption.INPORT_AS_NEW_REVISION))) {
+        if (options == null || options.stream().noneMatch(o -> o.equals(GoogleDriveOpenOption.IMPORT_AS_NEW_REVISION))) {
             super.whenUploadEntryExists(destEntry, path, options); // means throws FileAlreadyExistsException
         }
-
-        File entry = new File();
-
-        AbstractInputStreamContent mediaContent = new InputStreamContent(null, Files.newInputStream(path));
-        Drive.Files.Update updater = drive.files().update(destEntry.getId(), entry, mediaContent);
-        MediaHttpUploader uploader = updater.getMediaHttpUploader();
-        uploader.setDirectUploadEnabled(true);
-        // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
-        uploader.setProgressListener(u -> { Debug.println("new revision progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()); });
-        File newEntry = updater.setFields(ENTRY_FIELDS).execute();
-Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.getSize());
-        updateEntry(path, newEntry);
+        // goto #uploadEntry()
     }
 
     @Override
@@ -214,6 +203,8 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
                     }
                 };
 
+                if (options == null || options.stream().noneMatch(o -> o.equals(GoogleDriveOpenOption.IMPORT_AS_NEW_REVISION))) {
+Debug.printf(Level.FINE, "new file: " + path);
                 File entry = new File();
                 entry.setName(toFilenameString(path));
                 entry.setParents(Collections.singletonList(parentEntry.getId()));
@@ -222,13 +213,27 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
                 MediaHttpUploader uploader = creator.getMediaHttpUploader();
                 uploader.setDirectUploadEnabled(true);
                 // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
-                uploader.setProgressListener(u -> { Debug.println("upload progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()); });
+                    uploader.setProgressListener(u -> {
+                        Debug.println(Level.FINE, "upload progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState());
+                    });
                 return creator.setFields(ENTRY_FIELDS).execute();
+                } else {
+Debug.printf(Level.FINE, "new revision: " + path);
+                    File entry = new File();
+
+                    File destEntry = getEntry(path);
+                    Drive.Files.Update updater = drive.files().update(destEntry.getId(), entry, mediaContent);
+                    MediaHttpUploader uploader = updater.getMediaHttpUploader();
+                    uploader.setDirectUploadEnabled(true);
+                    // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
+                    uploader.setProgressListener(u -> { Debug.println(Level.FINE, "new revision progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()); });
+                    return updater.setFields(ENTRY_FIELDS).execute();
+                }
             }
 
             @Override
             protected void onClosed(File newEntry) {
-Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.getSize());
+Debug.printf(Level.FINE, "file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.getSize());
                 updateEntry(path, newEntry);
             }
         }, Util.BUFFER_SIZE);
@@ -251,7 +256,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
             list.addAll(files.getFiles());
 
             pageToken = files.getNextPageToken();
-//System.out.println("t: " + (System.currentTimeMillis() - t) + ", " + children.size() + ", " + (pageToken != null));
+//Debug.println("t: " + (System.currentTimeMillis() - t) + ", " + children.size() + ", " + (pageToken != null));
         } while (pageToken != null);
 
         return list;

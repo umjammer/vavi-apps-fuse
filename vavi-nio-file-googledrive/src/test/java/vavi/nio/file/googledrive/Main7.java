@@ -54,7 +54,10 @@ public class Main7 {
 
         // revision 2
         // copy options don't be passed to the upload method of file system driver...
-        Files.copy(src, Files.newOutputStream(dst, GoogleDriveOpenOption.INPORT_AS_NEW_REVISION));
+        // and OutputStream#close() is important
+        try (OutputStream os = Files.newOutputStream(dst, GoogleDriveOpenOption.IMPORT_AS_NEW_REVISION)) {
+            Files.copy(src, os);
+        }
 
         byte[] in = (byte[]) Files.getAttribute(dst, "user:revisions");
         String[] revisions = RevisionsUtil.split(in);
