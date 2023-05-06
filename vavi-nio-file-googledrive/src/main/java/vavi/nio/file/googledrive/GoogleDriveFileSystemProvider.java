@@ -26,6 +26,11 @@ public final class GoogleDriveFileSystemProvider extends FileSystemProviderBase 
 
     public static final String ENV_USE_SYSTEM_WATCHER = "use_system_watcher";
 
+    /**
+     * boolean: false: disable to normalize filename
+     * @see java.nio.file.FileSystems#newFileSystem(java.net.URI, java.util.Map)
+     */
+    public static final String ENV_NORMALIZE_FILENAME = "normalize_filename";
     public static final String ENV_DISABLED_FILE_CACHE = DoubleCachedFileSystemDriver.ENV_DISABLED_FILE_CACHE;
 
     public GoogleDriveFileSystemProvider() {

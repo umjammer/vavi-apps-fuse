@@ -19,6 +19,7 @@ import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -44,6 +45,7 @@ import vavi.util.StringUtil;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static vavi.nio.file.Util.toFilenameString;
+import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_NORMALIZE_FILENAME;
 import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_USE_SYSTEM_WATCHER;
 
 
@@ -59,6 +61,9 @@ public final class GoogleDriveFileSystemDriver extends DoubleCachedFileSystemDri
 
     private GoogleDriveWatchService systemWatcher;
 
+    /** */
+    private final boolean normalizeFilename;
+
     @SuppressWarnings("unchecked")
     public GoogleDriveFileSystemDriver(FileStore fileStore,
             FileSystemFactoryProvider provider,
@@ -67,6 +72,8 @@ public final class GoogleDriveFileSystemDriver extends DoubleCachedFileSystemDri
         super(fileStore, provider);
         this.drive = drive;
         setEnv(env);
+        this.normalizeFilename = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_NORMALIZE_FILENAME, true);
+Debug.printf(Level.FINE, "env: %s: %s%n", ENV_NORMALIZE_FILENAME, normalizeFilename);
         boolean useSystemWatcher = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_USE_SYSTEM_WATCHER, false);
 
         if (useSystemWatcher) {
@@ -119,7 +126,11 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     @Override
     protected String getFilenameString(File entry) {
         try {
+            if (normalizeFilename) {
             return Util.toNormalizedString(entry.getName());
+            } else {
+                return entry.getName();
+            }
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
