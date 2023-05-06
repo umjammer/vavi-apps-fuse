@@ -73,6 +73,10 @@ public final class GoogleDriveFileSystemDriver extends DoubleCachedFileSystemDri
             systemWatcher = new GoogleDriveWatchService(drive);
             systemWatcher.setNotificationListener(this::processNotification);
         }
+
+        if (fileSearcher == null) {
+            fileSearcher = new FileSearcher(drive);
+        }
     }
 
     /** for system watcher */
@@ -348,6 +352,11 @@ Debug.printf(Level.FINE, "file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getNa
         }
     }
 
+    @Override
+    public void close() {
+        fileSearcher = null;
+    }
+
     //
     // user:attributes
     //
@@ -425,5 +434,71 @@ Debug.println(Level.INFO, "thumbnail updated: " + sourceEntry.getName() + ", siz
         File newEntry = drive.files().update(sourceEntry.getId(), entry).setFields("thumbnailLink").execute();
 Debug.println(Level.INFO, "thumbnail url: " + sourceEntry.getName() + ", url: " + newEntry.getThumbnailLink());
         return newEntry.getThumbnailLink();
+    }
+
+    //
+    // google drive specific
+    //
+
+    public static FileSearcher fileSearcher;
+
+    /** */
+    public static class FileSearcher {
+        static final String SIMPLE_ENTRY_FIELDS = "id, name, parents";
+        private final Drive drive;
+        /** folder cache <id, File> */
+        static Map<String, File> cache = new HashMap<>();
+        private FileSearcher(Drive drive) {
+            this.drive = drive;
+        }
+        /** @param root should be a google-drive file system */
+        public List<Path> search(Path root, String queryTerm) throws IOException {
+            List<Path> list = new ArrayList<>();
+            String pageToken = null;
+            do {
+                FileList files = drive.files().list()
+                        .setQ(queryTerm + " and trashed=false")
+                        .setSpaces("drive")
+                        .setPageSize(1000)
+                        .setFields("nextPageToken, files(" + SIMPLE_ENTRY_FIELDS + ")")
+                        .setPageToken(pageToken)
+                        .setOrderBy("name_natural")
+                        .execute();
+
+                files.getFiles().forEach(f -> {
+                    try {
+                        List<String> pathElements = new ArrayList<>();
+                        String pid = f.getParents().get(0);
+                        while (true) {
+                            File folder = getParent(pid);
+                            if (!hasParent(folder)) {
+                                break;
+                            }
+                            pathElements.add(0, folder.getName());
+                            pid = folder.getParents().get(0);
+                        }
+                        pathElements.add(f.getName());
+                        list.add(root.resolve(String.join(java.io.File.separator, pathElements)));
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
+
+                pageToken = files.getNextPageToken();
+            } while (pageToken != null);
+
+            return list;
+        }
+        private boolean hasParent(File file) {
+            return file.getParents() != null && file.getParents().size() != 0;
+        }
+        private File getParent(String pid) throws IOException {
+            File parent = cache.get(pid);
+            if (parent == null) {
+                parent = drive.files().get(pid).setFields(SIMPLE_ENTRY_FIELDS).execute();
+                cache.put(pid, parent);
+            }
+            return parent;
+        }
     }
 }
