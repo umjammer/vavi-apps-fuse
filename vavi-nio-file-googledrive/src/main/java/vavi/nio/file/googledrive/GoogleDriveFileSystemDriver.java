@@ -149,8 +149,8 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     @Override
     protected File getEntry(File parentEntry, Path path) throws IOException {
         try {
-            String q = "'" + parentEntry.getId() + "' in parents and name = '" + path.getFileName() + "' and trashed=false";
-//System.out.println("q: " + q);
+            String q = "'" + parentEntry.getId() + "' in parents and name = '" + getEscapedFileName(path.getFileName()) + "' and trashed=false";
+//Debug.println("q: " + q);
             FileList files = drive.files().list()
                     .setQ(q)
                     .setSpaces("drive")
@@ -168,6 +168,11 @@ Debug.println("NOTIFICATION: parent not found: " + e);
                 throw e;
             }
         }
+    }
+
+    /** */
+    String getEscapedFileName(Path fileName) {
+        return fileName.toString().replace("\\", "\\\\").replace("'", "\\'");
     }
 
     @Override
