@@ -4,17 +4,18 @@
  * Programmed by Naohide Sano
  */
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 
-import javax.mail.Folder;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.Store;
-import javax.mail.UIDFolder;
+import jakarta.mail.Folder;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
+import jakarta.mail.Store;
+import jakarta.mail.UIDFolder;
 
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
@@ -39,7 +40,7 @@ public class TestJavaMail {
     String targetFolder;
 
     /**
-     * @param args
+     * @param args 0: email, 1: folder
      */
     public static void main(String[] args) throws Exception {
         TestJavaMail app = new TestJavaMail();
@@ -71,16 +72,16 @@ public class TestJavaMail {
             System.err.println("sub folder: " + folder.getName());
             if (folder.getName().equals(targetFolder)) {
 
-                File dir = new File("tmp" + File.separator + email + File.separator + targetFolder);
-                dir.mkdirs();
+                Path dir = Paths.get("tmp", email, targetFolder);
+                Files.createDirectories(dir);
 
                 folder.open(Folder.READ_ONLY);
                 UIDFolder uf = (UIDFolder) folder;
                 for (Message message : folder.getMessages()) {
-                    File file = new File(dir, uf.getUID(message) + ".eml");
-                    if (!file.exists()) {
+                    Path file = dir.resolve(uf.getUID(message) + ".eml");
+                    if (!Files.exists(file)) {
                         System.err.printf("%s - %d\n", message.getSubject(), uf.getUID(message));
-                        message.writeTo(new FileOutputStream(file));
+                        message.writeTo(Files.newOutputStream(file));
                     }
                 }
                 folder.close(false);
