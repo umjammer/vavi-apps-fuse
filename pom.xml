@@ -5,6 +5,7 @@
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
   <version>0.1.8</version>
+  <packaging>pom</packaging>
 
   <modules>
     <module>vavi-nio-file-commons</module>
@@ -32,7 +33,6 @@
     <java7-fs-base.version>0.0.13v</java7-fs-base.version>
   </properties>
 
-  <packaging>pom</packaging>
   <name>vavi-apps-fuse</name>
   <url>https://github.com/umjammer/vavi-apps-fuse</url>
   <description>fuse for java and many file systems.</description>
@@ -42,6 +42,13 @@
   <issueManagement>
     <url>https://github.com/umjammer/vavi-apps-fuse/issues</url>
   </issueManagement>
+
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/umjammer/vavi-apps-fuse</url>
+    </repository>
+  </distributionManagement>
 
   <build>
     <pluginManagement>
@@ -73,6 +80,10 @@
     <repository>
       <id>jitpack.io</id>
       <url>https://jitpack.io</url>
+    </repository>
+    <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/umjammer/*</url>
     </repository>
   </repositories>
 

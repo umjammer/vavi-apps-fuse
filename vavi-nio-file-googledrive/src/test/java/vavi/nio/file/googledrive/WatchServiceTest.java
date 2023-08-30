@@ -47,6 +47,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -97,22 +98,18 @@ public class WatchServiceTest {
 
     @Test
     public void testRegister_fileDoesNotExist() throws IOException {
-        try {
+        assertThrows(NoSuchFileException.class, () -> {
             watcher.register(fs.getPath("/a/b/c"), ImmutableList.of(ENTRY_CREATE));
-            fail();
-        } catch (NoSuchFileException expected) {
-        }
+        });
     }
 
     @Test
     public void testRegister_fileIsNotDirectory() throws IOException {
         Path path = fs.getPath("/a.txt");
         Files.createFile(path);
-        try {
+        assertThrows(NoSuchFileException.class, () -> {
             watcher.register(path, ImmutableList.of(ENTRY_CREATE));
-            fail();
-        } catch (NotDirectoryException expected) {
-        }
+        });
     }
 
     @Test
@@ -204,14 +201,10 @@ public class WatchServiceTest {
         // see the creation of foo
         // and then the creation of foo/bar (modification of foo) since those
         // don't happen atomically
-        assertWatcherHasEvents(ImmutableList
-                .<WatchEvent<?>> of(HackedAbstractWatchService.createWatchEvent(ENTRY_CREATE, 1, fs.getPath("foo"))),
-                               // or
-                               ImmutableList.<WatchEvent<?>> of(
-                                                                HackedAbstractWatchService
-                                                                        .createWatchEvent(ENTRY_CREATE, 1, fs.getPath("foo")),
-                                                                HackedAbstractWatchService
-                                                                        .createWatchEvent(ENTRY_MODIFY, 1, fs.getPath("foo"))));
+        assertWatcherHasEvents(ImmutableList.of(HackedAbstractWatchService.createWatchEvent(ENTRY_CREATE, 1, fs.getPath("foo"))),
+                // or
+                ImmutableList.of(HackedAbstractWatchService.createWatchEvent(ENTRY_CREATE, 1, fs.getPath("foo")),
+                                 HackedAbstractWatchService.createWatchEvent(ENTRY_MODIFY, 1, fs.getPath("foo"))));
 
         Files.delete(path.resolve("foo/bar"));
         Files.delete(path.resolve("foo"));
@@ -219,14 +212,10 @@ public class WatchServiceTest {
         // polling here may either just see the deletion of foo, or may first
         // see the deletion of bar
         // (modification of foo) and then the deletion of foo
-        assertWatcherHasEvents(ImmutableList
-                .<WatchEvent<?>> of(HackedAbstractWatchService.createWatchEvent(ENTRY_DELETE, 1, fs.getPath("foo"))),
-                               // or
-                               ImmutableList.<WatchEvent<?>> of(
-                                                                HackedAbstractWatchService
-                                                                        .createWatchEvent(ENTRY_MODIFY, 1, fs.getPath("foo")),
-                                                                HackedAbstractWatchService
-                                                                        .createWatchEvent(ENTRY_DELETE, 1, fs.getPath("foo"))));
+        assertWatcherHasEvents(ImmutableList.of(HackedAbstractWatchService.createWatchEvent(ENTRY_DELETE, 1, fs.getPath("foo"))),
+                // or
+                ImmutableList.of(HackedAbstractWatchService.createWatchEvent(ENTRY_MODIFY, 1, fs.getPath("foo")),
+                                 HackedAbstractWatchService.createWatchEvent(ENTRY_DELETE, 1, fs.getPath("foo"))));
     }
 
     private void assertWatcherHasEvents(WatchEvent<?>... events) throws InterruptedException {
@@ -235,8 +224,7 @@ public class WatchServiceTest {
 
     private void assertWatcherHasEvents(List<WatchEvent<?>> expected,
                                         List<WatchEvent<?>> alternate) throws InterruptedException {
-        ensureTimeToPoll(); // otherwise we could read 1 event but not all the
-                            // events we're expecting
+        ensureTimeToPoll(); // otherwise we could read 1 event but not all the events we're expecting
         WatchKey key = watcher.take();
         List<WatchEvent<?>> keyEvents = key.pollEvents();
 

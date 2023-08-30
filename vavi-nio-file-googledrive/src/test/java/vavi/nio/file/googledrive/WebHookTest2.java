@@ -6,6 +6,7 @@
 
 package vavi.nio.file.googledrive;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
@@ -19,18 +20,15 @@ import java.util.concurrent.CountDownLatch;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.notifications.UnparsedNotification;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.Change;
 import com.google.api.services.drive.model.ChangeList;
 import com.google.api.services.drive.model.Channel;
 import com.google.api.services.drive.model.StartPageToken;
-
 import vavi.net.auth.WithTotpUserCredential;
-import vavi.net.auth.oauth2.google.GoogleOAuth2AppCredential;
 import vavi.net.auth.oauth2.google.GoogleLocalOAuth2AppCredential;
 import vavi.net.auth.oauth2.google.GoogleOAuth2;
+import vavi.net.auth.oauth2.google.GoogleOAuth2AppCredential;
 import vavi.net.auth.web.google.GoogleLocalUserCredential;
 import vavi.nio.file.watch.webhook.Notification;
 import vavi.util.Debug;
@@ -51,7 +49,7 @@ public class WebHookTest2 {
 
     static CountDownLatch countDownLatch = new CountDownLatch(1);
 
-    static class Service {
+    static class Service implements Closeable {
         Drive driveService;
         String savedStartPageToken;
         Channel channel = null;
@@ -63,19 +61,17 @@ public class WebHookTest2 {
 
             Credential credential = new GoogleOAuth2(appCredential).authorize(userCredential);
             driveService = new Drive.Builder(GoogleOAuth2.getHttpTransport(), GoogleOAuth2.getJsonFactory(), credential)
-                    .setHttpRequestInitializer(new HttpRequestInitializer() {
-                        @Override
-                        public void initialize(HttpRequest httpRequest) throws IOException {
-                            credential.initialize(httpRequest);
-                            httpRequest.setConnectTimeout(30 * 1000);
-                            httpRequest.setReadTimeout(30 * 1000);
-                        }
+                    .setHttpRequestInitializer(httpRequest -> {
+                        credential.initialize(httpRequest);
+                        httpRequest.setConnectTimeout(30 * 1000);
+                        httpRequest.setReadTimeout(30 * 1000);
                     })
                     .setApplicationName(appCredential.getClientId())
                     .build();
+            start();
         }
 
-        void start() throws IOException {
+        private void start() throws IOException {
             UUID uuid = UUID.randomUUID();
 
             notification = Notification.getNotification("googledrive.webhook.websocket", notification -> {
@@ -101,7 +97,7 @@ Debug.println("Start token: " + savedStartPageToken);
 Debug.println("channel: " + channel);
         }
 
-        void stop() throws IOException {
+        public void close() throws IOException {
             if (channel != null) {
                 driveService.channels().stop(channel).execute();
 Debug.println("channel deleted: " + channel);
@@ -140,8 +136,8 @@ Debug.println(">> change: " + change);
     /**
      * @param args 0: email
      *
-     * https://developers.google.com/drive/api/v3/reference/changes/watch
-     * https://stackoverflow.com/a/43793313/6102938
+     * @see "https://developers.google.com/drive/api/v3/reference/changes/watch"
+     * @see "https://stackoverflow.com/a/43793313/6102938"
      *  TODO needs domain authorize
      */
     public static void main(String[] args) throws Exception {
@@ -151,9 +147,7 @@ Debug.println(">> change: " + change);
 
     void test() throws Exception {
 Debug.println("Start");
-        Service service = new Service();
-        try {
-            service.start();
+        try (Service service = new Service()) {
 
             URI uri = URI.create("googledrive:///?id=" + email);
             FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
@@ -181,8 +175,6 @@ System.out.println("rm " + remote);
 
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            service.stop();
         }
 Debug.println("Done");
 //Thread.getAllStackTraces().keySet().forEach(System.err::println);

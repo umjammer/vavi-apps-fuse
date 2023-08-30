@@ -90,10 +90,6 @@
       <url>https://jitpack.io</url>
     </repository>
     <repository>
-      <id>github</id>
-      <url>https://maven.pkg.github.com/umjammer/*</url>
-    </repository>
-    <repository>
       <id>umjammer-mvn-repo</id>
       <url>https://raw.github.com/umjammer/umjammer/mvn-repo/</url>
     </repository>

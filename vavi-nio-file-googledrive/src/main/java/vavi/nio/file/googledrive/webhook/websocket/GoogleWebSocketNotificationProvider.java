@@ -22,8 +22,9 @@ import vavi.nio.file.watch.webhook.NotificationProvider;
 public class GoogleWebSocketNotificationProvider implements NotificationProvider {
 
     @Override
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public <T> Notification<T> getNotification(Consumer<T> callback, Object... args) throws IOException {
-        return Notification.class.cast(new GoogleWebSocketNotification(Consumer.class.cast(callback), args));
+        return (Notification<T>) new GoogleWebSocketNotification((Consumer) callback, args);
     }
 }
 

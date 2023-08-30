@@ -51,7 +51,8 @@ public class GoogleDriveUploader {
         try (FileSystem fs = FileSystems.newFileSystem(uri, options)) {
 
 //        String start = args[0];
-            String start = "/Volumes/nsano/Downloads/JDownloader/wip";
+//            String start = "/Volumes/nsano/Downloads/JDownloader/wip4";
+            String start = "/Users/nsano/Downloads/JDownloader/wip4";
 
             GoogleDriveUploader app = new GoogleDriveUploader();
             app.root = fs.getRootDirectories().iterator().next();
@@ -69,18 +70,19 @@ Debug.println("done: " + app.count);
     /** number of processed file */
     int count;
 
-    /** google drive root */
+    /** cloud drive root */
     Path root;
 
     /** func 1: upload as new revision */
     void func1(Path file) {
         try {
-            String normalized = Util.toFilenameString(file);
-            String query = String.format("name contains '%s'", normalized);
+            String normalized = Util.toFilenameString(file).replace("\\", "\\\\").replace("'", "\\'");
+            String query = String.format("name = '%s' and trashed=false", normalized);
             List<Path> results = fileSearcher.search(root, query);
-            Path target = null;
+            Path target;
             if (results.size() > 1) {
                 Debug.println(Level.WARNING, "ambiguous: " + query);
+results.forEach(System.err::println);
                 return;
             } else if (results.size() == 0) {
                 Debug.println(Level.WARNING, "none: " + query);
@@ -114,6 +116,7 @@ System.out.println();
             }
 
         } catch (IOException e) {
+Debug.println("ERROR: " + file);
 e.printStackTrace();
         }
     }

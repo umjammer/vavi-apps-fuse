@@ -43,8 +43,8 @@ public class WebHookTest3 {
     /**
      * @param args 0: email
      *
-     * https://developers.google.com/drive/api/v3/reference/changes/watch
-     * https://stackoverflow.com/a/43793313/6102938
+     * @see "https://developers.google.com/drive/api/v3/reference/changes/watch"
+     * @see "https://stackoverflow.com/a/43793313/6102938"
      *  TODO needs domain authorize
      */
     public static void main(String[] args) throws Exception {

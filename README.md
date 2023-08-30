@@ -90,5 +90,8 @@ https://github.com/umjammer/vavi-apps-fuse/wiki/Libraries
  * https://github.com/mucommander/mucommander
  * trash,recent
  * https://github.com/googleapis/java-storage-nio (official !!!)
+   * retry handler
+   * option
+   * SeekableByteChannel
  * https://github.com/unsound/jfuse (jni)
 

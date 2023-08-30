@@ -45,7 +45,7 @@ public class OneDriveUploadOption implements OpenOption, CopyOption {
 
     @Override
     public boolean equals(Object other) {
-        return other != null && OneDriveUploadOption.class.isInstance(other); // TODO ad-hoc
+        return other instanceof OneDriveUploadOption; // TODO ad-hoc
     }
 
     @Override

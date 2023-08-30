@@ -13,61 +13,81 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import vavi.nio.file.Util;
+import vavi.nio.file.googledrive.GoogleDriveFileSystemProvider;
 import vavi.util.Debug;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
 
 /**
- * GoogleDriveFilename.
+ * CloudDriveFilename.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2022/01/26 umjammer initial version <br>
  */
 public class GoogleDriveFilename {
 
+    static {
+        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
+                "(" +
+                "com\\.microsoft\\.graph\\.logger\\.DefaultLogger#logDebug" + "|" +
+                "vavi\\.nio\\.file\\.onedrive4\\.graph\\.MyLogger#logDebug" +
+                ")");
+    }
+
     /**
      * @param args dir
      */
     public static void main(String[] args) throws Exception {
 
-//        String email = System.getenv("GOOGLE_TEST_ACCOUNT");
-        String email = System.getenv("MICROSOFT_TEST_ACCOUNT");
+        String email = System.getenv("GOOGLE_TEST_ACCOUNT");
+//        String email = System.getenv("MICROSOFT_TEST_ACCOUNT");
 Debug.println("email: " + email);
 
-//        URI uri = URI.create("googledrive:///?id=" + email);
-        URI uri = URI.create("onedrive:///?id=" + email);
-        FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
+        URI uri = URI.create("googledrive:///?id=" + email);
+//        URI uri = URI.create("onedrive:///?id=" + email);
+        Map<String, Object> options = new HashMap<>();
+        options.put(GoogleDriveFileSystemProvider.ENV_NORMALIZE_FILENAME, false);
+        try (FileSystem fs = FileSystems.newFileSystem(uri, options)) {
 
 //        String start = args[0];
-        String start = "/Books";
+            String start = "/Music/";
 
-        GoogleDriveFilename app = new GoogleDriveFilename();
-        Path dir = fs.getPath(start);
-        Files.walkFileTree(dir, app.new MyFileVisitor());
+            GoogleDriveFilename app = new GoogleDriveFilename();
+            Path dir = fs.getPath(start);
+            Files.walkFileTree(dir, app.new MyFileVisitor());
 
-        fs.close();
+System.err.println("\ndone: " + app.done);
+        }
     }
 
     class MyFileVisitor extends SimpleFileVisitor<Path> {
+        @Override public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+            exec(dir);
+            return CONTINUE;
+        }
 
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
+        @Override public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
             if (attr.isRegularFile()) {
-                try {
-                    if (filter2(file)) {
-                        func2(file);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                exec(file);
             }
             return CONTINUE;
+        }
+
+        private void exec(Path path) {
+            try {
+                if (filter2(path)) {
+                    func2(path);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -75,20 +95,18 @@ Debug.println("email: " + email);
 
     static final Pattern pattern = Pattern.compile("^.+\\(1\\).+$");
 
-    /** {@link #pattern} */
+    /** filter 1: {@link #pattern} */
     boolean filter1(Path file) {
         String filename = file.getFileName().toString();
 //System.err.println(filename);
         Matcher matcher = pattern.matcher(filename);
-        if (matcher.find()) {
-            return true;
-        } else {
-            return false;
-        }
+        return matcher.find();
     }
 
     int count;
+    int done;
 
+    /** filter 2: only in NFD */
     boolean filter2(Path file) throws IOException {
         count++;
         String filename = file.getFileName().toString();
@@ -107,14 +125,20 @@ System.err.println();
 
     // functions
 
-    /** get thumbnail of the file and save it to local */
+    /** func 1: just print a name */
     void func1(Path file) throws IOException {
         System.out.println(file);
     }
 
+    /** func 2: to NFC */
     void func2(Path file) throws IOException {
         if (!DRY_RUN) {
-            Files.move(file, file.getParent().resolve(Util.toNormalizedString(file.getFileName().toString())));
+            // onedrive cannot move nfd to nfc, so take 2 step.
+            String normalized = Util.toNormalizedString(file.getFileName().toString());
+            Path tmp = file.getParent().resolve("RENAMING-TEMPORARY-" + normalized);
+            Files.move(file, tmp);
+            Files.move(tmp, file.getParent().resolve(normalized));
+            done++;
         }
     }
 

@@ -10,6 +10,7 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import vavi.nio.file.Util;
 
 
@@ -26,6 +27,7 @@ public class OneDriveEasyFSTest {
     // nio file filesystem convert nfd automatically, so we cant rename via java filesystem
     @Test
     @DisplayName("nfd -> nfc")
+    @EnabledIfSystemProperty(named = "vavi.test", matches = "ide")
     void test1() throws Exception {
         OneDriveEasyFS efs = new OneDriveEasyFS("snaohide@hotmail.com");
         efs.walk(efs.getRootEntry(), p -> {

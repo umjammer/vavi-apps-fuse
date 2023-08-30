@@ -104,7 +104,7 @@ Debug.println("CLOSE");
     public static class AuthorizationConfigurator extends ClientEndpointConfig.Configurator {
         @Override
         public void beforeRequest(Map<String, List<String>> headers) {
-            headers.put("Authorization", Arrays.asList("Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes())));
+            headers.put("Authorization", Collections.singletonList("Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes())));
         }
     };
 
@@ -121,13 +121,10 @@ Debug.println("CLOSE");
 
             Credential credential = new GoogleOAuth2(appCredential).authorize(userCredential);
             driveService = new Drive.Builder(GoogleOAuth2.getHttpTransport(), GoogleOAuth2.getJsonFactory(), credential)
-                    .setHttpRequestInitializer(new HttpRequestInitializer() {
-                        @Override
-                        public void initialize(HttpRequest httpRequest) throws IOException {
-                            credential.initialize(httpRequest);
-                            httpRequest.setConnectTimeout(30 * 1000);
-                            httpRequest.setReadTimeout(30 * 1000);
-                        }
+                    .setHttpRequestInitializer(httpRequest -> {
+                        credential.initialize(httpRequest);
+                        httpRequest.setConnectTimeout(30 * 1000);
+                        httpRequest.setReadTimeout(30 * 1000);
                     })
                     .setApplicationName(appCredential.getClientId())
                     .build();
@@ -200,8 +197,8 @@ Debug.println("Change found for file: " + change);
     /**
      * @param args 0: email
      *
-     * https://developers.google.com/drive/api/v3/reference/changes/watch
-     * https://stackoverflow.com/a/43793313/6102938
+     * @see "https://developers.google.com/drive/api/v3/reference/changes/watch"
+     * @see "https://stackoverflow.com/a/43793313/6102938"
      *  TODO needs domain authorize
      */
     public static void main(String[] args) throws Exception {

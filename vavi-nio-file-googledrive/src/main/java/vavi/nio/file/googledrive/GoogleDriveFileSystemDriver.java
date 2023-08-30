@@ -10,9 +10,9 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.CopyOption;
 import java.nio.file.FileStore;
-import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent.Kind;
@@ -32,7 +32,6 @@ import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.googleapis.media.MediaHttpUploader;
 import com.google.api.client.http.AbstractInputStreamContent;
-import com.google.api.client.http.InputStreamContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
@@ -57,7 +56,7 @@ import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_USE_SY
  */
 public final class GoogleDriveFileSystemDriver extends DoubleCachedFileSystemDriver<File> {
 
-    private Drive drive;
+    private final Drive drive;
 
     private GoogleDriveWatchService systemWatcher;
 
@@ -127,7 +126,7 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     protected String getFilenameString(File entry) {
         try {
             if (normalizeFilename) {
-            return Util.toNormalizedString(entry.getName());
+                return Util.toNormalizedString(entry.getName());
             } else {
                 return entry.getName();
             }
@@ -170,8 +169,8 @@ Debug.println("NOTIFICATION: parent not found: " + e);
         }
     }
 
-    /** */
-    String getEscapedFileName(Path fileName) {
+    /** for query string */
+    private String getEscapedFileName(Path fileName) {
         return fileName.toString().replace("\\", "\\\\").replace("'", "\\'");
     }
 
@@ -205,38 +204,32 @@ Debug.println(Level.FINE, "download: " + entry.getName() + ", " + entry.getSize(
             @Override
             protected File upload() throws IOException {
                 AbstractInputStreamContent mediaContent = new AbstractInputStreamContent(null) { // implements HttpContent
-                    @Override
-                    public InputStream getInputStream() {
+                    @Override public InputStream getInputStream() {
                         return null; // never called
                     }
-                    @Override
-                    public long getLength() {
+                    @Override public long getLength() {
                         return -1;
                     }
-                    @Override
-                    public boolean retrySupported() {
+                    @Override public boolean retrySupported() {
                         return false;
                     }
-                    @Override
-                    public void writeTo(OutputStream os) {
+                    @Override public void writeTo(OutputStream os) {
                         setOutputStream(os); // socket
                     }
                 };
 
                 if (options == null || options.stream().noneMatch(o -> o.equals(GoogleDriveOpenOption.IMPORT_AS_NEW_REVISION))) {
 Debug.printf(Level.FINE, "new file: " + path);
-                File entry = new File();
-                entry.setName(toFilenameString(path));
-                entry.setParents(Collections.singletonList(parentEntry.getId()));
+                    File entry = new File();
+                    entry.setName(toFilenameString(path));
+                    entry.setParents(Collections.singletonList(parentEntry.getId()));
 
-                Drive.Files.Create creator = drive.files().create(entry, mediaContent); // why not HttpContent ???
-                MediaHttpUploader uploader = creator.getMediaHttpUploader();
-                uploader.setDirectUploadEnabled(true);
-                // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
-                    uploader.setProgressListener(u -> {
-                        Debug.println(Level.FINE, "upload progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState());
-                    });
-                return creator.setFields(ENTRY_FIELDS).execute();
+                    Drive.Files.Create creator = drive.files().create(entry, mediaContent); // why not HttpContent ???
+                    MediaHttpUploader uploader = creator.getMediaHttpUploader();
+                    uploader.setDirectUploadEnabled(true);
+                    // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
+                    uploader.setProgressListener(u -> Debug.println(Level.FINE, "upload progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()));
+                    return creator.setFields(ENTRY_FIELDS).execute();
                 } else {
 Debug.printf(Level.FINE, "new revision: " + path);
                     File entry = new File();
@@ -246,7 +239,7 @@ Debug.printf(Level.FINE, "new revision: " + path);
                     MediaHttpUploader uploader = updater.getMediaHttpUploader();
                     uploader.setDirectUploadEnabled(true);
                     // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
-                    uploader.setProgressListener(u -> { Debug.println(Level.FINE, "new revision progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()); });
+                    uploader.setProgressListener(u -> Debug.println(Level.FINE, "new revision progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()));
                     return updater.setFields(ENTRY_FIELDS).execute();
                 }
             }
@@ -416,7 +409,7 @@ Debug.println(Level.FINE, "revisions: " + revisions.getRevisions().size() + ", "
 
     /** attributes user:revisions */
     void removeRevision(File entry, String revisionId) throws IOException {
-Debug.println(Level.INFO, "delete revision: " + entry.getName() + ", revision: " + revisionId);
+Debug.println(Level.FINE, "delete revision: " + entry.getName() + ", revision: " + revisionId);
         drive.revisions().delete(entry.getId(), revisionId).execute();
     }
 
@@ -436,7 +429,7 @@ Debug.println(Level.INFO, "delete revision: " + entry.getName() + ", revision: "
         entry.setContentHints(contentHints);
 
         File newEntry = drive.files().update(sourceEntry.getId(), entry).setFields("thumbnailLink").execute();
-Debug.println(Level.INFO, "thumbnail updated: " + sourceEntry.getName() + ", size: " + image.length + ", " + StringUtil.paramString(newEntry));
+Debug.println(Level.FINE, "thumbnail updated: " + sourceEntry.getName() + ", size: " + image.length + ", " + StringUtil.paramString(newEntry));
     }
 
     /**
@@ -448,7 +441,7 @@ Debug.println(Level.INFO, "thumbnail updated: " + sourceEntry.getName() + ", siz
         File entry = new File();
 
         File newEntry = drive.files().update(sourceEntry.getId(), entry).setFields("thumbnailLink").execute();
-Debug.println(Level.INFO, "thumbnail url: " + sourceEntry.getName() + ", url: " + newEntry.getThumbnailLink());
+Debug.println(Level.FINE, "thumbnail url: " + sourceEntry.getName() + ", url: " + newEntry.getThumbnailLink());
         return newEntry.getThumbnailLink();
     }
 
@@ -458,7 +451,7 @@ Debug.println(Level.INFO, "thumbnail url: " + sourceEntry.getName() + ", url: " 
 
     public static FileSearcher fileSearcher;
 
-    /** */
+    /** file searching utility for google drive */
     public static class FileSearcher {
         static final String SIMPLE_ENTRY_FIELDS = "id, name, parents";
         private final Drive drive;
@@ -467,7 +460,10 @@ Debug.println(Level.INFO, "thumbnail url: " + sourceEntry.getName() + ", url: " 
         private FileSearcher(Drive drive) {
             this.drive = drive;
         }
-        /** @param root should be a google-drive file system */
+        /**
+         * @param root should be a google-drive file system
+         * @param queryTerm contains in trashed. if you don't want to contain those, add <code>" and trashed=false"</code>
+         */
         public List<Path> search(Path root, String queryTerm) throws IOException {
             List<Path> list = new ArrayList<>();
             String pageToken = null;

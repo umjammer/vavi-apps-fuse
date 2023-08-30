@@ -21,7 +21,7 @@ import java.util.function.Consumer;
  */
 public interface Notification<T> extends Closeable {
 
-    static ServiceLoader<NotificationProvider> providers = ServiceLoader.load(NotificationProvider.class);
+    ServiceLoader<NotificationProvider> providers = ServiceLoader.load(NotificationProvider.class);
 
     /**
      * @param matcher will be compared by {@link String#contains(CharSequence)}

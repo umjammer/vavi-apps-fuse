@@ -7,6 +7,7 @@
 package vavi.nio.file.googledrive;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileVisitResult;
@@ -30,8 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * GoogleDrive attribute user:revision.
  *
- * TODO upload a file as new revision
- *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2021/10/30 umjammer initial version <br>
  */
@@ -53,7 +52,7 @@ public class Main7 {
         Thread.sleep(100);
 
         // revision 2
-        // copy options don't be passed to the upload method of file system driver...
+        // copy options are not passed to the upload method of file system driver...
         // and OutputStream#close() is important
         try (OutputStream os = Files.newOutputStream(dst, GoogleDriveOpenOption.IMPORT_AS_NEW_REVISION)) {
             Files.copy(src, os);
@@ -81,13 +80,16 @@ Arrays.stream(revisions).forEach(System.err::println);
         fs.close();
     }
 
-    //
+    // ----
 
+    /**
+     * @param args none
+     */
     public static void main(String[] args) throws IOException {
-        t1(args);
+        t1(new String[] {"/Books/"});
     }
 
-    /** list */
+    /** func 2: list */
     static void t2(String[] args) throws IOException {
         String email = System.getenv("GOOGLE_TEST_ACCOUNT");
 
@@ -107,7 +109,9 @@ Arrays.stream(revisions).forEach(System.err::println);
         fs.close();
     }
 
-    /** remove all remaining latest */
+    /**
+     * func 3: remove all remaining latest
+     */
     static void t3(String[] args) throws IOException {
         String email = System.getenv("GOOGLE_TEST_ACCOUNT");
 
@@ -115,8 +119,16 @@ Arrays.stream(revisions).forEach(System.err::println);
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
         Path path = fs.getPath("/tmp/heroku-blog-duke.png");
 
+        removeAllExceptLatest(path);
+
+        fs.close();
+    }
+
+    static void removeAllExceptLatest(Path path) throws IOException {
 System.err.println("--- before ---");
         byte[] in = (byte[]) Files.getAttribute(path, "user:revisions");
+String[] as = RevisionsUtil.split(in);
+Arrays.stream(as).forEach(System.err::println);
         byte[] out = RevisionsUtil.getLatestOnly(in);
 System.err.println("--- write ---");
 System.err.println(new String(out));
@@ -124,10 +136,8 @@ System.err.println(new String(out));
 
 System.err.println("--- after ---");
         in = (byte[]) Files.getAttribute(path, "user:revisions");
-        String[] as = RevisionsUtil.split(in);
+        as = RevisionsUtil.split(in);
 Arrays.stream(as).forEach(System.err::println);
-
-        fs.close();
     }
 
     static class MyFileVisitor extends SimpleFileVisitor<Path> {
@@ -140,17 +150,8 @@ Arrays.stream(as).forEach(System.err::println);
                     if (size > 1) {
                         System.err.println(file + ": " + size);
 
-System.err.println("--- before ---");
-                        byte[] in = (byte[]) Files.getAttribute(file, "user:revisions");
-                        byte[] out = RevisionsUtil.getLatestOnly(in);
-System.err.println("--- write ---");
-System.err.println(new String(out));
-                        Files.setAttribute(file, "user:revisions", out);
-
-System.err.println("--- after ---");
-                        in = (byte[]) Files.getAttribute(file, "user:revisions");
-                        String[] as = RevisionsUtil.split(in);
-Arrays.stream(as).forEach(System.err::println);
+                        removeAllExceptLatest(file);
+count++;
 System.err.println("\n");
                     }
                 } catch (IOException e) {
@@ -172,16 +173,20 @@ System.err.println("\n");
         }
     }
 
-    /** remove all remaining latest, tree */
+static int count;
+
+    /** func 1: remove all remaining latest, tree */
     static void t1(String[] args) throws IOException {
         String email = System.getenv("GOOGLE_TEST_ACCOUNT");
+        String start = args[0];
 
         URI uri = URI.create("googledrive:///?id=" + email);
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
-        Files.walkFileTree(fs.getPath("/Books/Comics/"), new MyFileVisitor());
+count = 0;
+        Files.walkFileTree(fs.getPath(start), new MyFileVisitor());
 
         fs.close();
-Debug.println("Done");
+Debug.println("Done: " + count);
     }
 }

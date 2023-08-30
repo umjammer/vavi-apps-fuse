@@ -52,13 +52,37 @@
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-vfs2</artifactId>
       <version>2.9.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+<dependency>
+  <groupId>com.fasterxml.jackson.core</groupId>
+  <artifactId>jackson-databind</artifactId>
+  <version>2.14.0</version>
+  <scope>test</scope>
+</dependency>
     <dependency>
       <!-- java-fs vfs2 webdav -->
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-vfs2-jackrabbit2</artifactId>
       <version>2.9.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-codec</groupId>
+          <artifactId>commons-codec</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+<dependency>
+  <groupId>commons-codec</groupId>
+  <artifactId>commons-codec</artifactId>
+  <version>1.15</version>
+  <scope>test</scope>
+</dependency>
     <dependency>
       <!-- java-fs vfs2 ssh -->
       <groupId>com.jcraft</groupId>
