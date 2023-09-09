@@ -469,7 +469,7 @@ Debug.println(Level.FINE, "thumbnail url: " + sourceEntry.getName() + ", url: " 
             String pageToken = null;
             do {
                 FileList files = drive.files().list()
-                        .setQ(queryTerm + " and trashed=false")
+                        .setQ(queryTerm)
                         .setSpaces("drive")
                         .setPageSize(1000)
                         .setFields("nextPageToken, files(" + SIMPLE_ENTRY_FIELDS + ")")
