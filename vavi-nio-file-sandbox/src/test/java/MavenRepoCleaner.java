@@ -4,6 +4,7 @@
  * Programmed by Naohide Sano
  */
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
@@ -11,11 +12,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.util.Comparator;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import vavi.util.Debug;
 
-import static com.rainerhahnekamp.sneakythrow.Sneaky.sneaked;
 import static java.nio.file.FileVisitResult.CONTINUE;
 
 
@@ -44,12 +46,28 @@ Debug.println("Done");
         @Override
         public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
             try {
-                long c1 = Files.list(dir).count();
+                long c1;
+                try (Stream<Path> files = Files.list(dir)) {
+                    c1 = files.count();
+                }
 
-                DirectoryStream<Path> iterable = Files.newDirectoryStream(dir, "*.lastUpdated");
-                long c2 = StreamSupport.stream(iterable.spliterator(), false).count();
+                // pom
+                DirectoryStream<Path> iterable = Files.newDirectoryStream(dir, "*.pom");
+                long cP = StreamSupport.stream(iterable.spliterator(), false).count();
                 iterable.close();
 
+                // contents
+                iterable = Files.newDirectoryStream(dir, "*.{jar,dylib,dll,so}");
+                long cC = StreamSupport.stream(iterable.spliterator(), false).count();
+                iterable.close();
+
+                // subdir
+                long cD;
+                try (Stream<Path> files = Files.list(dir).filter(p -> p.toFile().isDirectory())) {
+                    cD = files.count();
+                }
+
+                // garbage by 3rd parties
                 iterable = Files.newDirectoryStream(dir, ".DS_Store");
                 long c3 = StreamSupport.stream(iterable.spliterator(), false).count();
                 iterable.close();
@@ -58,34 +76,50 @@ Debug.println("Done");
                 long c4 = StreamSupport.stream(iterable.spliterator(), false).count();
                 iterable.close();
 
+                iterable = Files.newDirectoryStream(dir, "maven-metadata-jitpack.io.xml*");
+                c4 += StreamSupport.stream(iterable.spliterator(), false).count();
+                iterable.close();
+
                 if (c1 == 0) {
                     // no files
                     System.out.println("DIR0: " + dir);
 
                     Files.delete(dir);
-                } else if (c1 == c2) {
-                    // only eclipse files
-                    System.out.println("DIR1: " + dir);
+                } else if (cP == 0 && cD == 0 && c1 != c4) {
+                    // no pom
+                    System.out.println("DIRP: " + dir);
 
-                    Files.list(dir).forEach(sneaked(Files::delete));
-                    Files.delete(dir);
-                } else if (c1 == c2 + c4) {
-                    // only eclipse files 2
-                    System.out.println("DIR2: " + dir);
-
-                    Files.list(dir).forEach(sneaked(Files::delete));
-                    Files.delete(dir);
+//try (Stream<Path> files = Files.list(dir)) {
+// files.forEach(System.out::println);
+//}
+                    rm(dir);
+//                } else if (cC == 0 && cD == 0) {
+//                    // no contents
+//                    System.out.println("DIRC: " + dir);
+//
+//try (Stream<Path> files = Files.list(dir)) {
+// files.forEach(System.out::println);
+//}
+//                    rm(dir);
                 } else if (c1 == c3) {
                     // only mac files
-                    System.out.println("DIRX " + dir);
+                    System.out.println("DIRM " + dir);
 
-                    Files.list(dir).forEach(sneaked(Files::delete));
-                    Files.delete(dir);
+                    rm(dir);
                 }
             } catch (IOException e) {
-                System.err.println("ERROR: " + dir + ", " + e.getMessage());
+                System.err.println("ERROR: " + dir);
+                e.printStackTrace();
             }
             return CONTINUE;
         }
+    }
+
+    /** rm -r */
+    static void rm(Path pathToBeDeleted) throws IOException {
+        Files.walk(pathToBeDeleted)
+                .sorted(Comparator.reverseOrder())
+                .map(Path::toFile)
+                .forEach(File::delete);
     }
 }
