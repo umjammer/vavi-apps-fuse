@@ -29,6 +29,8 @@ import jcifs.CIFSContext;
 import jcifs.context.SingletonContext;
 import jcifs.smb.NtlmPasswordAuthenticator;
 import jcifs.smb.SmbFile;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariables;
 import vavi.util.Debug;
 
 
@@ -66,7 +68,13 @@ public class Main {
      * </ul>
      */
     @Test
-    @Disabled
+    @EnabledIfEnvironmentVariables({
+            @EnabledIfEnvironmentVariable(named = "TEST_SFTP_ACCOUNT", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SFTP_PASSPHRASE", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SFTP_HOST", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SFTP_KEYPATH", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SFTP_PATH", matches = ".+"),
+    })
     void test01() throws Exception {
         String username = URLEncoder.encode(System.getenv("TEST_SFTP_ACCOUNT"), "utf-8");
         String passPhrase = URLEncoder.encode(System.getenv("TEST_SFTP_PASSPHRASE"), "utf-8");
@@ -94,17 +102,19 @@ public class Main {
      */
     @Test
     @Disabled
+    @EnabledIfEnvironmentVariables({
+            @EnabledIfEnvironmentVariable(named = "TEST_WEBDAV_ACCOUNT", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_WEBDAV_PASSWORD", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_WEBDAV_HOST", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_WEBDAV_PORT", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_WEBDAV_PATH", matches = ".+"),
+    })
     void test02() throws Exception {
-//        String username = URLEncoder.encode(System.getenv("TEST_WEBDAV_ACCOUNT"), "utf-8");
-//        String password = System.getenv("TEST_WEBDAV_PASSWORD");
-//        String host = System.getenv("TEST_WEBDAV_HOST");
-//        String port = System.getenv("TEST_WEBDAV_PORT");
-//        String path = System.getenv("TEST_WEBDAV_PATH");
-        String username = URLEncoder.encode("umjammer@gmail.com", "utf-8");
-        String password = "e7hqz9neft9aq6p8";
-        String host = "dav.box.com";
-        String port = "443";
-        String path = "/dav";
+        String username = URLEncoder.encode(System.getenv("TEST_WEBDAV_ACCOUNT"), "utf-8");
+        String password = System.getenv("TEST_WEBDAV_PASSWORD");
+        String host = System.getenv("TEST_WEBDAV_HOST");
+        String port = System.getenv("TEST_WEBDAV_PORT");
+        String path = System.getenv("TEST_WEBDAV_PATH");
 
         URI uri = URI.create(String.format("vfs:webdav4s://%s:%s@%s:%s%s", username, password, host, port, path));
 
@@ -131,6 +141,13 @@ public class Main {
      * </ul>
      */
     @Test
+    @EnabledIfEnvironmentVariables({
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_ACCOUNT", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_PASSWORD", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_HOST", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_DOMAIN", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_PATH", matches = ".+"),
+    })
     void test03() throws Exception {
         String username = System.getenv("TEST_SMB_ACCOUNT");
         String password = System.getenv("TEST_SMB_PASSWORD");
@@ -159,6 +176,13 @@ public class Main {
      * </p>
      */
     @Test
+    @EnabledIfEnvironmentVariables({
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_ACCOUNT", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_PASSWORD", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_HOST", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_DOMAIN", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_PATH", matches = ".+"),
+    })
     void test04() throws Exception {
         String username = System.getenv("TEST_SMB_ACCOUNT");
         String password = System.getenv("TEST_SMB_PASSWORD");
@@ -178,6 +202,13 @@ public class Main {
      * @see "https://gist.github.com/umjammer/58a5fc48f4620837bae008bae9440f16"
      */
     @Test
+    @EnabledIfEnvironmentVariables({
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_ACCOUNT", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_PASSWORD", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_HOST", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_DOMAIN", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_PATH", matches = ".+"),
+    })
     void test_cifs() throws Exception {
         String username = System.getenv("TEST_SMB_ACCOUNT");
         String password = System.getenv("TEST_SMB_PASSWORD");
@@ -201,6 +232,13 @@ Debug.println(smbFile.getPath() + ", " +
      * - works with smbj c9ab3d8
      */
     @Test
+    @EnabledIfEnvironmentVariables({
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_ACCOUNT", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_PASSWORD", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_HOST", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_DOMAIN", matches = ".+"),
+            @EnabledIfEnvironmentVariable(named = "TEST_SMB_PATH", matches = ".+"),
+    })
     void test_smbj() throws Exception {
         String username = System.getenv("TEST_SMB_ACCOUNT");
         String password = System.getenv("TEST_SMB_PASSWORD");
