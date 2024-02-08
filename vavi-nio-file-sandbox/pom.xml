@@ -211,8 +211,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>${vavi-nio-file.groupId}</groupId>
-      <artifactId>vavi-nio-file</artifactId>
+      <groupId>${vavi-nio-file-base.groupId}</groupId>
+      <artifactId>vavi-nio-file-base</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

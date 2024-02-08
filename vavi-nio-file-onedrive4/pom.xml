@@ -22,13 +22,8 @@
   <dependencies>
     <dependency>
       <!-- java-fs base -->
-      <groupId>${java7-fs-base.groupId}</groupId>
-      <artifactId>java7-fs-base</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>${vavi-nio-file.groupId}</groupId>
-      <artifactId>vavi-nio-file</artifactId>
+      <groupId>${vavi-nio-file-base.groupId}</groupId>
+      <artifactId>vavi-nio-file-base</artifactId>
     </dependency>
 
     <dependency>
@@ -58,12 +53,6 @@
       <!-- https://stackoverflow.com/a/66125163 ??? -->
       <groupId>com.microsoft.graph</groupId>
       <artifactId>microsoft-graph-core</artifactId>
-      <version>1.0.8</version>
-    </dependency>
-
-    <dependency>
-      <groupId>vavi</groupId>
-      <artifactId>vavi-nio-file-commons</artifactId>
     </dependency>
 
     <dependency>
@@ -93,8 +82,8 @@
     </dependency>
 
     <dependency>
-      <groupId>${vavi-nio-file.groupId}</groupId>
-      <artifactId>vavi-nio-file</artifactId>
+      <groupId>${vavi-nio-file-base.groupId}</groupId>
+      <artifactId>vavi-nio-file-base</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

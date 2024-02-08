@@ -8,7 +8,6 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>vavi-nio-file-commons</module>
     <module>vavi-nio-file-googledrive</module>
     <module>vavi-nio-file-amazondrive</module>
     <module>vavi-nio-file-flickr</module>
@@ -26,11 +25,9 @@
   <properties>
     <vavi-net-auth.groupId>com.github.umjammer.vavi-net-auth</vavi-net-auth.groupId>
     <vavi-net-auth.version>0.1.6</vavi-net-auth.version>
-    <vavi-nio-file.groupId>com.github.umjammer</vavi-nio-file.groupId>
-    <vavi-nio-file.version>0.0.14</vavi-nio-file.version>
-    <!-- com.github.fge / com.github.umjammer -->
-    <java7-fs-base.groupId>com.github.umjammer</java7-fs-base.groupId>
-    <java7-fs-base.version>0.0.13v</java7-fs-base.version>
+
+    <vavi-nio-file-base.groupId>com.github.umjammer</vavi-nio-file-base.groupId> <!-- com.github.fge / com.github.umjammer -->
+    <vavi-nio-file-base.version>0.0.14v</vavi-nio-file-base.version>
   </properties>
 
   <name>vavi-apps-fuse</name>
@@ -91,26 +88,15 @@
     <dependencies>
       <dependency>
         <!-- java-fs base -->
-        <groupId>${java7-fs-base.groupId}</groupId>
-        <artifactId>java7-fs-base</artifactId>
-        <version>${java7-fs-base.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>${vavi-nio-file.groupId}</groupId>
-        <artifactId>vavi-nio-file</artifactId>
-        <version>${vavi-nio-file.version}</version>
+        <groupId>${vavi-nio-file-base.groupId}</groupId>
+        <artifactId>vavi-nio-file-base</artifactId>
+        <version>${vavi-nio-file-base.version}</version>
       </dependency>
 
       <dependency>
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>jsr305</artifactId>
         <version>1.3.9</version>
-      </dependency>
-
-      <dependency>
-        <groupId>vavi</groupId>
-        <artifactId>vavi-nio-file-commons</artifactId>
-        <version>0.1.8</version>
       </dependency>
 
       <dependency>
@@ -128,9 +114,9 @@
       </dependency>
 
       <dependency>
-        <groupId>${vavi-nio-file.groupId}</groupId>
-        <artifactId>vavi-nio-file</artifactId>
-        <version>${vavi-nio-file.version}</version>
+        <groupId>${vavi-nio-file-base.groupId}</groupId>
+        <artifactId>vavi-nio-file-base</artifactId>
+        <version>${vavi-nio-file-base.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>

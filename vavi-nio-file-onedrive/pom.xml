@@ -29,13 +29,8 @@
   <dependencies>
     <dependency>
       <!-- java-fs base -->
-      <groupId>${java7-fs-base.groupId}</groupId>
-      <artifactId>java7-fs-base</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>${vavi-nio-file.groupId}</groupId>
-      <artifactId>vavi-nio-file</artifactId>
+      <groupId>${vavi-nio-file-base.groupId}</groupId>
+      <artifactId>vavi-nio-file-base</artifactId>
     </dependency>
 
     <dependency>
@@ -49,11 +44,6 @@
       <groupId>com.github.umjammer</groupId>
       <artifactId>OneDriveJavaSDK</artifactId>
       <version>0.0.8v</version>
-    </dependency>
-
-    <dependency>
-      <groupId>vavi</groupId>
-      <artifactId>vavi-nio-file-commons</artifactId>
     </dependency>
 
     <dependency>
@@ -78,8 +68,8 @@
     </dependency>
 
     <dependency>
-      <groupId>${vavi-nio-file.groupId}</groupId>
-      <artifactId>vavi-nio-file</artifactId>
+      <groupId>${vavi-nio-file-base.groupId}</groupId>
+      <artifactId>vavi-nio-file-base</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

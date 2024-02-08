@@ -10,16 +10,16 @@
 ## Status
 
 | fs                 | list | upload | download | copy | move | rm | mkdir | cache | watch | project | library |
-|--------------------|------|--------|----------|------|------|----|-------|-------|-------|---------|---------|
+|--------------------|------|--------|----------|------|------|----|-------|-------|-------|---------|---------------------------------------------------------------------------------------------------------------------------------------------|
 | google drive (v3)  | ✅    | ✅   | ✅       | ✅    | ✅   | ✅ | ✅    | ✅     | 🚧    | [sub module](vavi-nio-file-googledrive) | [google-api-services-drive](https://developers.google.com/api-client-library/java/) |
 | one drive (v1)     | ✅    | ✅   | ✅       | ✅    | ✅   | ✅ | ✅    | ✅     | 🚧    | [sub module](vavi-nio-file-onedrive) | [OneDriveJavaSDK](https://github.com/umjammer/OneDriveJavaSDK) |
-| one drive (graph)  | ✅    | ✅   | ✅       | ✅    | ✅   | ✅ | ✅    | ✅     | 🚧    | [sub module](vavi-nio-file-onedrive3) | [msgraph-sdk-java](https://github.com/microsoftgraph/msgraph-sdk-java) |
-| one drive (graph)  | ✅    | ✅   | ✅       | ✅    | ✅   | ✅ | ✅    | ✅     | 🚧    | [sub module](vavi-nio-file-onedrive4) | [onedrive-java-client](https://github.com/iterate-ch/onedrive-java-client) |
+| one drive (graph)  | ✅    | ✅   | ✅       | ✅    | ✅   | ✅ | ✅    | ✅     | 🚧    | [sub module](vavi-nio-file-onedrive3) | [onedrive-java-client](https://github.com/iterate-ch/onedrive-java-client)                                                                      |
+| one drive (graph)  | ✅    | ✅   | ✅       | ✅    | ✅   | ✅ | ✅    | ✅     | 🚧    | [sub module](vavi-nio-file-onedrive4) | [msgraph-sdk-java](https://github.com/microsoftgraph/msgraph-sdk-java)                                                                  |
 | dropbox (v2)       | ✅    | ✅   | ✅       | ✅    | ✅   | ✅ | ✅    | ✅     | 🚧    | [java7-fs-dropbox](https://github.com/umjammer/java7-fs-dropbox) | |
 | box (v2)           | ✅    | ✅   | ✅       | ✅    | ✅   | ✅ | ✅    | ✅     | 🚧    | [java7-fs-box](https://github.com/umjammer/java7-fs-box) | |
 | vfs (sftp)         | ✅    | ✅   | ✅       | ✅    | ✅   | ✅ | ✅    | -     |       | [sub module](vavi-nio-file-vfs) | [commons-vfs2](https://commons.apache.org/proper/commons-vfs/), [jsch](http://www.jcraft.com/jsch/) |
 | vfs (smb:cifs-ng)  | ✅    | ✅   | ✅       | ✅    | ✅   | ✅ | ✅    | -     |       | [sub module](vavi-nio-file-vfs) | [commons-vfs2-cifs](https://github.com/vbauer/commons-vfs2-cifs), [jcifs-ng](https://github.com/AgNO3/jcifs-ng) |
-| vfs (smb:smbj)     | ✅    | ✅   | ?        | ✅    | 🚫   | ✅ | ✅    | -     |       | [sub module](vavi-nio-file-vfs) | [commons-vfs2-smb](https://github.com/mikhasd/commons-vfs2-smb) |
+| vfs (smb:smbj)     | ✅    | ✅   | ✅       | ✅    | ✅   | ✅ | ✅    | -     |       | [sub module](vavi-nio-file-vfs) | [commons-vfs2-smb](https://github.com/umjammer/commons-vfs2-smb)                                                                            |
 | vfs (webdav ssh)   | 🚧    |      |          |      |      |     |       |       |       | [sub module](vavi-nio-file-vfs) | [commons-vfs2-jackrabbit2](https://commons.apache.org/proper/commons-vfs/commons-vfs2-jackrabbit2/) |
 | vfs (smb:cifs)     | ✅    | ✅   | ✅       | ✅   | ✅    | ✅ | ✅    | -     |       | [sub module](vavi-nio-file-vfs) | [commons-vfs2-sandbox](https://commons.apache.org/proper/commons-vfs/commons-vfs2-sandbox/), [jcifs-ng](https://github.com/AgNO3/jcifs-ng/) |
 | archive            | ✅    | -    | ✅       | -    | -    | -   | -     | -     |       | [sub module](vavi-nio-file-archive) | [vavi-util-archive](https://github.com/umjammer/vavi-util-archive) |
@@ -95,3 +95,4 @@ https://github.com/umjammer/vavi-apps-fuse/wiki/Libraries
    * SeekableByteChannel
  * https://github.com/unsound/jfuse (jni)
 
+ * ~~separate vavi-nio-file-commons and merge into vavi-nio-file-base~~
