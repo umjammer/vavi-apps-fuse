@@ -17,22 +17,21 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.ZipException;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
-
 import vavi.util.Debug;
 import vavi.util.archive.zip.JdkZipArchive;
-import vavi.util.archive.zip.JdkZipArchiveSpi;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /**
@@ -134,8 +133,8 @@ Debug.println(path + ", " + Files.exists(path));
             fs.close();
         });
 Debug.println("exception cause: " + e.getMessage());
-        assertInstanceOf(IllegalArgumentException.class, e.getCause());
-        assertEquals("MALFORMED", e.getCause().getMessage());
+        assertInstanceOf(ZipException.class, e.getCause());
+        assertTrue(e.getCause().getMessage().contains("invalid CEN header"));
     }
 
     @Test

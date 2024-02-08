@@ -42,7 +42,7 @@
       <!-- java-fs archive -->
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-util-archive</artifactId>
-      <version>1.1.1</version>
+      <version>1.1.2</version>
       <exclusions>
         <exclusion>
           <groupId>com.sun</groupId>
@@ -51,9 +51,9 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>com.github.umjammer</groupId>
+      <groupId>com.github.umjammer</groupId> <!-- vavi / com.github.umjammer -->
       <artifactId>vavi-util-archive-sandbox</artifactId>
-      <version>1.0.5</version>
+      <version>1.0.6</version>
     </dependency>
 
     <dependency>
