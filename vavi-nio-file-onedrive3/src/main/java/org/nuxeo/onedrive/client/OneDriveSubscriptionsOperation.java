@@ -21,6 +21,7 @@ import com.eclipsesource.json.JsonObject;
  * @version 0.00 2020/07/05 umjammer initial version <br>
  */
 public class OneDriveSubscriptionsOperation {
+
     private final JsonObject jsonObject = new JsonObject();
 
     public void subscribe(String notificationUrl, String clientState) {

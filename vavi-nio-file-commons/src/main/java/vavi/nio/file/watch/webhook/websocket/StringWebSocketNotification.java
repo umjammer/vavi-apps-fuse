@@ -19,7 +19,7 @@ import vavi.util.Debug;
 /**
  * StringWebSocketNotification.
  *
- * https://stackoverflow.com/a/22090459/6102938
+ * <a href="https://stackoverflow.com/a/22090459/6102938">...</a>
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2020/07/26 umjammer initial version <br>

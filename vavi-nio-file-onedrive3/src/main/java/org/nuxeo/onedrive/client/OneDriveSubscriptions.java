@@ -21,6 +21,7 @@ import com.eclipsesource.json.ParseException;
  * @version 0.00 2020/07/05 umjammer initial version <br>
  */
 public class OneDriveSubscriptions extends OneDriveResource {
+
     private OneDriveSubscriptions(OneDriveAPI api) {
         super(api);
     }

@@ -27,6 +27,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
@@ -63,7 +64,7 @@ public final class OneDriveFileSystemDriver extends DoubleCachedFileSystemDriver
     private final OneDriveAPI client;
     private final Drive.Metadata drive;
 
-    private Runnable closer;
+    private final Runnable closer;
     private OneDriveWatchService systemWatcher;
 
     @SuppressWarnings("unchecked")
@@ -113,14 +114,14 @@ Debug.println("NOTIFICATION: maybe updated: " + path);
             } catch (NoSuchElementException e) {
 Debug.println("NOTIFICATION: parent not found: " + e);
             } catch (IOException e) {
-                e.printStackTrace();
+                Debug.printStackTrace(e);
             }
         }
     }
 
     /** */
     private static DriveItem asDriveItem(DriveItem.Metadata entry) {
-        return DriveItem.class.cast(entry.getItem());
+        return (DriveItem) entry.getItem();
     }
 
     @Override
@@ -147,19 +148,19 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     protected OutputStream uploadEntry(DriveItem.Metadata parentEntry, Path path, Set<? extends OpenOption> options) throws IOException {
         OneDriveUploadOption uploadOption = Util.getOneOfOptions(OneDriveUploadOption.class, options);
         if (uploadOption != null) {
-            // java.nio.file is highly abstracted, so here source information is lost.
+            // java.nio.file is highly abstracted, so source information is lost here.
             // but onedrive graph api requires content length for upload.
             // so reluctantly we provide {@link OneDriveUploadOption} for {@link java.nio.file.Files#copy} options.
             Path source = uploadOption.getSource();
-Debug.println("upload w/ option: " + source);
+Debug.println(Level.FINE, "upload w/ option: " + source);
             return uploadEntry(parentEntry, path, (int) java.nio.file.Files.size(source));
         } else {
-Debug.println("upload w/o option");
+Debug.println(Level.FINE, "upload w/o option");
             return new Util.OutputStreamForUploading() { // TODO used for only getting file length
                 @Override
                 protected void onClosed() throws IOException {
                     InputStream is = getInputStream();
-Debug.println("upload w/o option: " + is.available());
+Debug.println(Level.FINE, "upload w/o option: " + is.available());
                     OutputStream os = uploadEntry(parentEntry, path, is.available());
                     Util.transfer(is, os);
                     is.close();
@@ -197,7 +198,7 @@ Debug.println("upload w/o option: " + is.available());
 
     @Override
     protected boolean hasChildren(DriveItem.Metadata dirEntry, Path dir) throws IOException {
-        return getDirectoryEntries(dir, false).size() > 0;
+        return !getDirectoryEntries(dir, false).isEmpty();
     }
 
     @Override
@@ -209,14 +210,14 @@ Debug.println("upload w/o option: " + is.available());
     protected DriveItem.Metadata copyEntry(DriveItem.Metadata sourceEntry, DriveItem.Metadata targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
         CopyOperation operation = new CopyOperation();
         operation.rename(toFilenameString(target));
-Debug.println("target: " + targetParentEntry.getName());
+Debug.println(Level.FINE, "target: " + targetParentEntry.getName());
         operation.copy(asDriveItem(targetParentEntry));
         OneDriveLongRunningAction action = Files.copy(asDriveItem(sourceEntry), operation);
         action.await(statusObject -> {
-Debug.printf("Copy Progress Operation %s progress %.0f %%, status %s",
-statusObject.getOperation(),
-statusObject.getPercentage(),
-statusObject.getStatus());
+Debug.printf(Level.FINE, "Copy Progress Operation %s progress %.0f %%, status %s",
+ statusObject.getOperation(),
+ statusObject.getPercentage(),
+ statusObject.getStatus());
         });
         return getEntry(null, target);
     }

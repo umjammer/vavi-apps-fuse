@@ -72,13 +72,13 @@ public final class Renamer {
             String replace(String source);
         }
 
-        private Replacer replacer;
+        private final Replacer replacer;
 
         FileRenamer(Replacer replacer) {
             this.replacer = replacer;
         }
 
-        private class Pair {
+        private static class Pair {
             Pair(Path source, Path target) {
                 this.source = source;
                 this.target = target;
@@ -87,7 +87,7 @@ public final class Renamer {
             Path target;
         }
 
-        private List<Pair> list = new ArrayList<>();
+        private final List<Pair> list = new ArrayList<>();
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {

@@ -111,7 +111,7 @@ Debug.println("NOTIFICATION: maybe created: " + path);
             } catch (NoSuchElementException e) {
 Debug.println("NOTIFICATION: parent not found: " + e);
             } catch (IOException e) {
-                e.printStackTrace();
+                Debug.printStackTrace(e);
             }
         }
     }
@@ -155,7 +155,7 @@ Debug.println("NOTIFICATION: parent not found: " + e);
                     .setSpaces("drive")
                     .setFields("nextPageToken, files(" + ENTRY_FIELDS + ")")
                     .execute();
-            if (files.getFiles().size() > 0) {
+            if (!files.getFiles().isEmpty()) {
                 return files.getFiles().get(0);
             } else {
                 return null;
@@ -292,7 +292,7 @@ Debug.printf(Level.FINE, "file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getNa
         List<File> files = drive.files().list()
                 .setQ("'" + dirEntry.getId() + "' in parents and trashed=false")
                 .execute().getFiles();
-        return files != null && files.size() > 0;
+        return files != null && !files.isEmpty();
     }
 
     @Override
@@ -502,7 +502,7 @@ Debug.println(Level.FINE, "thumbnail url: " + sourceEntry.getName() + ", url: " 
             return list;
         }
         private boolean hasParent(File file) {
-            return file.getParents() != null && file.getParents().size() != 0;
+            return file.getParents() != null && !file.getParents().isEmpty();
         }
         private File getParent(String pid) throws IOException {
             File parent = cache.get(pid);

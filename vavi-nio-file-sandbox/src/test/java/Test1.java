@@ -114,12 +114,12 @@ Debug.println("uri: " + uri);
 
         FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
 Debug.println("fs: " + fs.getClass().getName());
-        assertInstanceOf(com.sun.nio.zipfs.ZipFileSystem.class, fs);
+        assertTrue(fs.getClass().getSimpleName().contains("ZipFileSystem"));
 
         // why second time pass test?
         fs = FileSystems.getFileSystem(uri);
 Debug.println("fs: " + fs.getClass().getName());
-        assertInstanceOf(com.sun.nio.zipfs.ZipFileSystem.class, fs);
+        assertTrue(fs.getClass().getSimpleName().contains("ZipFileSystem"));
     }
 
     @Test

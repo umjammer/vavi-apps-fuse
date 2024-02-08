@@ -8,6 +8,7 @@ package vavi.nio.file.watch.webhook.websocket;
 
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +34,7 @@ public class BasicAuthorizationConfigurator extends ClientEndpointConfig.Configu
 
     @Override
     public void beforeRequest(Map<String, List<String>> headers) {
-        headers.put("Authorization", Arrays.asList("Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes())));
+        headers.put("Authorization", Collections.singletonList("Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes())));
     }
 }
 
