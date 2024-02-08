@@ -9,6 +9,7 @@ package vavi.net.fuse.fusejna;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channel;
+import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileStore;
@@ -311,22 +312,22 @@ Debug.println(Level.FINE, "write: " + path + ", " + offset + ", " + size + ", " 
             if (fileHandles.containsKey(info.fh())) {
                 SeekableByteChannel channel = fileHandles.get(info.fh());
                 if (!info.append() && !info.nonseekable()) {
-try { // TODO ad-hoc
-                    channel.position(offset);
-} catch (IOException e) {
- if (e.getMessage().contains("@vavi")) {
-  long o = Long.parseLong(e.getMessage().substring(9, e.getMessage().length() - 1));
-  if (offset > o) {
-   Debug.println(Level.SEVERE, "write: skip bad position: " + offset);
-   throw new IOException("cannot skip last bytes send", e);
-  } else {
-   Debug.println(Level.WARNING, "write: correct bad position: " + offset + " -> " + o);
-   return Math.min((int) (o - offset), (int) size);
-  }
- } else {
-  throw e;
- }
-}
+                    try { // TODO ad-hoc
+                        channel.position(offset);
+                    } catch (IOException e) {
+                        if (e.getMessage().contains("@vavi")) {
+                            long o = Long.parseLong(e.getMessage().substring(9, e.getMessage().length() - 1));
+                            if (offset > o) {
+                                Debug.println(Level.SEVERE, "write: skip bad position: " + offset);
+                                throw new IOException("cannot skip last bytes send", e);
+                            } else {
+                                Debug.println(Level.WARNING, "write: correct bad position: " + offset + " -> " + o);
+                                return Math.min((int) (o - offset), (int) size);
+                            }
+                        } else {
+                            throw e;
+                        }
+                    }
                 }
                 int n = channel.write(buf);
                 if (n > 0) {
@@ -346,6 +347,9 @@ try { // TODO ad-hoc
             } else {
                 return -ErrorCodes.EEXIST();
             }
+        } catch (NonWritableChannelException e) {
+Debug.println(Level.FINER, "NonWritableChannelException: unmounting?");
+            return -ErrorCodes.EIO();
         } catch (IOException e) {
 Debug.printStackTrace(e);
             return -ErrorCodes.EIO();

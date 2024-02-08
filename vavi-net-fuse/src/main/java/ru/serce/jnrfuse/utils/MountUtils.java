@@ -7,11 +7,12 @@ import ru.serce.jnrfuse.FuseException;
 
 
 /**
- * ad-hoc replacement, i'm not sure if this works on jdk9 or above.
+ * ad-hoc replacement
  */
 public class MountUtils {
+
     /**
-     * Perform/force a umount at the provided Path
+     * Perform/force an umount at the provided Path
      */
     public static void umount(Path mountPoint) {
         String mountPath = mountPoint.toAbsolutePath().toString();
