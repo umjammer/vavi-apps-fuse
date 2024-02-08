@@ -36,14 +36,21 @@ public final class GoogleOCR {
      * @param args 0: email, 1: zip file, 2: extract to dir, 3: extracted dir, 4: output ocr dir
      */
     public static void main(String[] args) {
+        String email = args[0];
+        String filename = args[1];
+        String dirname = args[2];
+        String extractedDirname = args[3];
+        // specify other directory avoid ConcurrentModificationException Files#list().forEach()
+        String ocrDirname = args[4];
+
         int exitCode = 0;
         try {
             GoogleOCR app = new GoogleOCR();
-            FileSystem fs = app.prepare(args);
+            FileSystem fs = app.prepare(email);
 System.err.println("fs: " + fs);
-            app.extract(fs, args);
-            app.ocr(fs, args);
-            app.gather(fs, args);
+            app.extract(fs, filename, dirname);
+            app.ocr(fs, extractedDirname, ocrDirname);
+            app.gather(fs, ocrDirname);
         } catch (Exception e) {
             e.printStackTrace();
             exitCode = -1;
@@ -53,23 +60,15 @@ System.err.println("fs: " + fs);
         }
     }
 
-    /**
-     * @param args 0: email
-     */
-    FileSystem prepare(final String... args) throws IOException {
-        String email = args[0];
-
+    /** */
+    FileSystem prepare(String email) throws IOException {
         URI uri = URI.create("googledrive:///?id=" + email);
 
         return FileSystems.newFileSystem(uri, Collections.emptyMap());
     }
 
-    /**
-     * @param args 1: zip file, 2: extract to dir
-     */
-    void extract(FileSystem fs, final String... args) throws IOException {
-        String filename = args[1];
-        String dirname = args[2];
+    /** */
+    void extract(FileSystem fs, String filename, String dirname) throws IOException {
 //        boolean dryRun = false;
 
         Path dir = fs.getPath(dirname);
@@ -105,13 +104,8 @@ System.err.println("skip: " + path);
 System.err.println("rm: " + tmp);
     }
 
-    /**
-     * @param args 3: extracted dir, 4: output ocr dir
-     */
-    void ocr(FileSystem fs, final String... args) throws IOException {
-        String extractedDirname = args[3];
-        // specify other directory avoid ConcurrentModificationException Files#list().forEach()
-        String ocrDirname = args[4];
+    /** */
+    void ocr(FileSystem fs, String extractedDirname, String ocrDirname) throws IOException {
         Files.list(fs.getPath(extractedDirname)).forEach(p -> {
             try {
                 String fn = p.getFileName().toString();
@@ -133,11 +127,8 @@ System.err.println("skip ocr: " + fn);
         });
     }
 
-    /**
-     * @param args 4: output ocr dir
-     */
-    void gather(FileSystem fs, final String... args) throws IOException {
-        String ocrDirname = args[4];
+    /** */
+    void gather(FileSystem fs, String ocrDirname) throws IOException {
         Files.list(fs.getPath(ocrDirname)).sorted().forEach(p -> {
             try {
                 ZipInputStream zis = new ZipInputStream(Files.newInputStream(p, GoogleDriveOpenOption.EXPORT_WITH_GDOCS_DOCX));

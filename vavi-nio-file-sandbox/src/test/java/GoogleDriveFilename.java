@@ -42,22 +42,17 @@ public class GoogleDriveFilename {
     }
 
     /**
-     * @param args dir
+     * @param args url dir
      */
     public static void main(String[] args) throws Exception {
 
-        String email = System.getenv("GOOGLE_TEST_ACCOUNT");
-//        String email = System.getenv("MICROSOFT_TEST_ACCOUNT");
-Debug.println("email: " + email);
+        String url = args[0];
+        String start = args[1];
 
-        URI uri = URI.create("googledrive:///?id=" + email);
-//        URI uri = URI.create("onedrive:///?id=" + email);
+        URI uri = URI.create(url);
         Map<String, Object> options = new HashMap<>();
         options.put(GoogleDriveFileSystemProvider.ENV_NORMALIZE_FILENAME, false);
         try (FileSystem fs = FileSystems.newFileSystem(uri, options)) {
-
-//        String start = args[0];
-            String start = "/Music/";
 
             GoogleDriveFilename app = new GoogleDriveFilename();
             Path dir = fs.getPath(start);
