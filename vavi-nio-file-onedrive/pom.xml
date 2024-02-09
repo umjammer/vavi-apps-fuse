@@ -40,10 +40,10 @@
     </dependency>
 
     <dependency>
-      <!-- java-fs onedrive (de.tuberlin:onedrivesdk) -->
-      <groupId>com.github.umjammer</groupId>
+      <!-- java-fs onedrive -->
+      <groupId>com.github.umjammer</groupId> <!-- de.tuberlin:onedrivesdk / com.github.umjammer:OneDriveJavaSDK -->
       <artifactId>OneDriveJavaSDK</artifactId>
-      <version>0.0.8v</version>
+      <version>0.0.9v</version>
     </dependency>
 
     <dependency>

@@ -40,7 +40,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>31.1-jre</version>
+      <version>32.0.0-jre</version>
     </dependency>
 
     <dependency>
@@ -100,15 +100,15 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>java7-fs-dropbox</artifactId>
-      <version>0.0.17v</version>
+      <groupId>com.github.umjammer</groupId> <!-- com.github.fge / com.github.umjammer -->
+      <artifactId>vavi-nio-file-dropbox</artifactId>
+      <version>0.0.20v</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>java7-fs-box</artifactId>
-      <version>0.1.12v</version>
+      <groupId>com.github.umjammer</groupId> <!-- com.github.fge / com.github.umjammer -->
+      <artifactId>vavi-nio-file-box</artifactId>
+      <version>0.1.15v</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
