@@ -144,7 +144,7 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     protected OutputStream uploadEntry(OneItem parentEntry, Path path, Set<? extends OpenOption> options) throws IOException {
         OneDriveUploadOption uploadOption = Util.getOneOfOptions(OneDriveUploadOption.class, options);
         if (uploadOption != null) {
-            // java.nio.file is highly abstracted, so here source information is lost.
+            // java.nio.file is highly abstracted, so source information is lost here.
             // but onedrive graph api requires content length for upload.
             // so reluctantly we provide {@link OneDriveUploadOption} for {@link java.nio.file.Files#copy} options.
             Path source = uploadOption.getSource();

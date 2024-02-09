@@ -40,8 +40,11 @@ public final class GoogleDriveFileSystemRepository extends FileSystemRepositoryB
     }
 
     /**
+     * Creates a google drive file system.
      * TODO root from uri
-     * @throws NoSuchElementException
+     * @param uri {@link GoogleDriveFileSystemProvider#PARAM_ID} i.e "...&id=foo@gmail.com"
+     * @param env {@link GoogleDriveFileSystemProvider#ENV_USER_CREDENTIAL}, {@link GoogleDriveFileSystemProvider#ENV_APP_CREDENTIAL}
+     * @throws NoSuchElementException when there are lack of necessary parameters
      */
     @Nonnull
     @Override
@@ -50,7 +53,7 @@ public final class GoogleDriveFileSystemRepository extends FileSystemRepositoryB
         WithTotpUserCredential userCredential = null;
 
         if (env.containsKey(GoogleDriveFileSystemProvider.ENV_USER_CREDENTIAL)) {
-            userCredential = WithTotpUserCredential.class.cast(env.get(GoogleDriveFileSystemProvider.ENV_USER_CREDENTIAL));
+            userCredential = (WithTotpUserCredential) env.get(GoogleDriveFileSystemProvider.ENV_USER_CREDENTIAL);
         }
 
         Map<String, String> params = getParamsMap(uri);
@@ -68,7 +71,7 @@ public final class GoogleDriveFileSystemRepository extends FileSystemRepositoryB
         GoogleOAuth2AppCredential appCredential = null;
 
         if (env.containsKey(GoogleDriveFileSystemProvider.ENV_APP_CREDENTIAL)) {
-            appCredential = GoogleOAuth2AppCredential.class.cast(env.get(GoogleDriveFileSystemProvider.ENV_APP_CREDENTIAL));
+            appCredential = (GoogleOAuth2AppCredential) env.get(GoogleDriveFileSystemProvider.ENV_APP_CREDENTIAL);
         }
 
         if (appCredential == null) {

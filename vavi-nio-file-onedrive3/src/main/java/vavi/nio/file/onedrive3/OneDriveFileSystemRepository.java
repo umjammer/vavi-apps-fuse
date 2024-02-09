@@ -77,7 +77,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         OAuth2AppCredential appCredential = null;
 
         if (env.containsKey(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL)) {
-            appCredential = OAuth2AppCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL));
+            appCredential = (OAuth2AppCredential) env.get(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL);
         }
 
         if (appCredential == null) {
@@ -134,6 +134,6 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
 
         Drive.Metadata drive = Drives.getDrives(client).next();
         final OneDriveFileStore fileStore = new OneDriveFileStore(drive, factoryProvider.getAttributesFactory());
-        return new OneDriveFileSystemDriver(fileStore, factoryProvider, client, () -> oAuth2.close(), drive, env);
+        return new OneDriveFileSystemDriver(fileStore, factoryProvider, client, oAuth2::close, drive, env);
     }
 }

@@ -35,10 +35,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static vavi.nio.file.Base.removeTree;
 
 /**
- * Created by IntelliJ IDEA.
- * User: bbejeck
- * Date: 2/13/12
- * Time: 9:47 PM
+ * WatchDirectoryTest.
+ *
+ * @author bbejeck
+ * @version 2/13/12 9:47 PM
  */
 @Disabled
 public class WatchDirectoryTest {
@@ -125,8 +125,6 @@ public class WatchDirectoryTest {
         assertTrue(Files.isSameFile(watchedPath, basePath));
     }
 
-
-
     @Test
     public void testEventForSubDirectory() throws Exception {
         dir1Path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
@@ -141,13 +139,13 @@ public class WatchDirectoryTest {
             List<WatchEvent<?>> eventList = watchKey.pollEvents();
             WatchEvent<?> event = eventList.get(0);
             assertEquals(1, event.count());
-            assertTrue(event.kind() == StandardWatchEventKinds.ENTRY_CREATE);
+            assertSame(event.kind(), ENTRY_CREATE);
             assertTrue(Files.isSameFile((Path) event.context(), Paths.get("newTextFile.txt")));
             count++;
         }
     }
 
-    private static final String LINE_OF_TEXT =  "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do " +
+    private static final String LINE_OF_TEXT = "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do " +
             "eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad " +
             "minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea " +
             "commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit" +

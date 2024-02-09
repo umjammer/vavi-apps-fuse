@@ -54,7 +54,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         WithTotpUserCredential userCredential = null;
 
         if (env.containsKey(OneDriveFileSystemProvider.ENV_USER_CREDENTIAL)) {
-            userCredential = WithTotpUserCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_USER_CREDENTIAL));
+            userCredential = (WithTotpUserCredential) env.get(OneDriveFileSystemProvider.ENV_USER_CREDENTIAL);
         }
 
         Map<String, String> params = getParamsMap(uri);
@@ -72,7 +72,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         OAuth2AppCredential appCredential = null;
 
         if (env.containsKey(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL)) {
-            appCredential = OAuth2AppCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL));
+            appCredential = (OAuth2AppCredential) env.get(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL);
         }
 
         if (appCredential == null) {
@@ -84,18 +84,13 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         String accessToken = oAuth2.authorize(userCredential);
 //Debug.println("accessToken: " + accessToken);
 
-        IAuthenticationProvider authenticationProvider = new IAuthenticationProvider() {
-            @Override
-            public void authenticateRequest(IHttpRequest request) {
-                request.addHeader("Authorization", "Bearer " + accessToken);
-            }
-        };
+        IAuthenticationProvider authenticationProvider = request -> request.addHeader("Authorization", "Bearer " + accessToken);
         IGraphServiceClient graphClient = GraphServiceClient.builder()
             .authenticationProvider(authenticationProvider)
             .logger(new MyLogger())
             .buildClient();
 
         final OneDriveFileStore fileStore = new OneDriveFileStore(graphClient, factoryProvider.getAttributesFactory());
-        return new OneDriveFileSystemDriver(fileStore, factoryProvider, graphClient, () -> oAuth2.close(), env);
+        return new OneDriveFileSystemDriver(fileStore, factoryProvider, graphClient, oAuth2::close, env);
     }
 }

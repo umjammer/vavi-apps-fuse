@@ -88,7 +88,7 @@ public class VfsCredential implements UserCredential, AppCredential {
 
     @Override
     public String getScheme() {
-        return "cyberduck";
+        return "vfs";
     }
 
     @Override

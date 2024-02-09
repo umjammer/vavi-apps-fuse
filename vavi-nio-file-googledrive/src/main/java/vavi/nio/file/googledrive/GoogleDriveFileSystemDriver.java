@@ -10,15 +10,16 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.CopyOption;
 import java.nio.file.FileStore;
-import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -31,7 +32,6 @@ import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.googleapis.media.MediaHttpUploader;
 import com.google.api.client.http.AbstractInputStreamContent;
-import com.google.api.client.http.InputStreamContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.FileList;
@@ -44,6 +44,7 @@ import vavi.util.StringUtil;
 
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static vavi.nio.file.Util.toFilenameString;
+import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_NORMALIZE_FILENAME;
 import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_USE_SYSTEM_WATCHER;
 
 
@@ -55,9 +56,12 @@ import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_USE_SY
  */
 public final class GoogleDriveFileSystemDriver extends DoubleCachedFileSystemDriver<File> {
 
-    private Drive drive;
+    private final Drive drive;
 
     private GoogleDriveWatchService systemWatcher;
+
+    /** */
+    private final boolean normalizeFilename;
 
     @SuppressWarnings("unchecked")
     public GoogleDriveFileSystemDriver(FileStore fileStore,
@@ -67,11 +71,17 @@ public final class GoogleDriveFileSystemDriver extends DoubleCachedFileSystemDri
         super(fileStore, provider);
         this.drive = drive;
         setEnv(env);
+        this.normalizeFilename = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_NORMALIZE_FILENAME, true);
+Debug.printf(Level.FINE, "env: %s: %s%n", ENV_NORMALIZE_FILENAME, normalizeFilename);
         boolean useSystemWatcher = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_USE_SYSTEM_WATCHER, false);
 
         if (useSystemWatcher) {
             systemWatcher = new GoogleDriveWatchService(drive);
             systemWatcher.setNotificationListener(this::processNotification);
+        }
+
+        if (fileSearcher == null) {
+            fileSearcher = new FileSearcher(drive);
         }
     }
 
@@ -101,7 +111,7 @@ Debug.println("NOTIFICATION: maybe created: " + path);
             } catch (NoSuchElementException e) {
 Debug.println("NOTIFICATION: parent not found: " + e);
             } catch (IOException e) {
-                e.printStackTrace();
+                Debug.printStackTrace(e);
             }
         }
     }
@@ -115,7 +125,11 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     @Override
     protected String getFilenameString(File entry) {
         try {
-            return Util.toNormalizedString(entry.getName());
+            if (normalizeFilename) {
+                return Util.toNormalizedString(entry.getName());
+            } else {
+                return entry.getName();
+            }
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -134,14 +148,14 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     @Override
     protected File getEntry(File parentEntry, Path path) throws IOException {
         try {
-            String q = "'" + parentEntry.getId() + "' in parents and name = '" + path.getFileName() + "' and trashed=false";
-//System.out.println("q: " + q);
+            String q = "'" + parentEntry.getId() + "' in parents and name = '" + getEscapedFileName(path.getFileName()) + "' and trashed=false";
+//Debug.println("q: " + q);
             FileList files = drive.files().list()
                     .setQ(q)
                     .setSpaces("drive")
                     .setFields("nextPageToken, files(" + ENTRY_FIELDS + ")")
                     .execute();
-            if (files.getFiles().size() > 0) {
+            if (!files.getFiles().isEmpty()) {
                 return files.getFiles().get(0);
             } else {
                 return null;
@@ -153,6 +167,11 @@ Debug.println("NOTIFICATION: parent not found: " + e);
                 throw e;
             }
         }
+    }
+
+    /** for query string */
+    private String getEscapedFileName(Path fileName) {
+        return fileName.toString().replace("\\", "\\\\").replace("'", "\\'");
     }
 
     @Override
@@ -172,21 +191,10 @@ Debug.println(Level.FINE, "download: " + entry.getName() + ", " + entry.getSize(
 
     @Override
     protected void whenUploadEntryExists(File destEntry, Path path, Set<? extends OpenOption> options) throws IOException {
-        if (options == null || options.stream().noneMatch(o -> o.equals(GoogleDriveOpenOption.INPORT_AS_NEW_REVISION))) {
+        if (options == null || options.stream().noneMatch(o -> o.equals(GoogleDriveOpenOption.IMPORT_AS_NEW_REVISION))) {
             super.whenUploadEntryExists(destEntry, path, options); // means throws FileAlreadyExistsException
         }
-
-        File entry = new File();
-
-        AbstractInputStreamContent mediaContent = new InputStreamContent(null, Files.newInputStream(path));
-        Drive.Files.Update updater = drive.files().update(destEntry.getId(), entry, mediaContent);
-        MediaHttpUploader uploader = updater.getMediaHttpUploader();
-        uploader.setDirectUploadEnabled(true);
-        // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
-        uploader.setProgressListener(u -> { Debug.println("new revision progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()); });
-        File newEntry = updater.setFields(ENTRY_FIELDS).execute();
-Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.getSize());
-        updateEntry(path, newEntry);
+        // goto #uploadEntry()
     }
 
     @Override
@@ -196,39 +204,49 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
             @Override
             protected File upload() throws IOException {
                 AbstractInputStreamContent mediaContent = new AbstractInputStreamContent(null) { // implements HttpContent
-                    @Override
-                    public InputStream getInputStream() {
+                    @Override public InputStream getInputStream() {
                         return null; // never called
                     }
-                    @Override
-                    public long getLength() {
+                    @Override public long getLength() {
                         return -1;
                     }
-                    @Override
-                    public boolean retrySupported() {
+                    @Override public boolean retrySupported() {
                         return false;
                     }
-                    @Override
-                    public void writeTo(OutputStream os) {
+                    @Override public void writeTo(OutputStream os) {
                         setOutputStream(os); // socket
                     }
                 };
 
-                File entry = new File();
-                entry.setName(toFilenameString(path));
-                entry.setParents(Collections.singletonList(parentEntry.getId()));
+                if (options == null || options.stream().noneMatch(o -> o.equals(GoogleDriveOpenOption.IMPORT_AS_NEW_REVISION))) {
+Debug.printf(Level.FINE, "new file: " + path);
+                    File entry = new File();
+                    entry.setName(toFilenameString(path));
+                    entry.setParents(Collections.singletonList(parentEntry.getId()));
 
-                Drive.Files.Create creator = drive.files().create(entry, mediaContent); // why not HttpContent ???
-                MediaHttpUploader uploader = creator.getMediaHttpUploader();
-                uploader.setDirectUploadEnabled(true);
-                // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
-                uploader.setProgressListener(u -> { Debug.println("upload progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()); });
-                return creator.setFields(ENTRY_FIELDS).execute();
+                    Drive.Files.Create creator = drive.files().create(entry, mediaContent); // why not HttpContent ???
+                    MediaHttpUploader uploader = creator.getMediaHttpUploader();
+                    uploader.setDirectUploadEnabled(true);
+                    // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
+                    uploader.setProgressListener(u -> Debug.println(Level.FINE, "upload progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()));
+                    return creator.setFields(ENTRY_FIELDS).execute();
+                } else {
+Debug.printf(Level.FINE, "new revision: " + path);
+                    File entry = new File();
+
+                    File destEntry = getEntry(path);
+                    Drive.Files.Update updater = drive.files().update(destEntry.getId(), entry, mediaContent);
+                    MediaHttpUploader uploader = updater.getMediaHttpUploader();
+                    uploader.setDirectUploadEnabled(true);
+                    // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
+                    uploader.setProgressListener(u -> Debug.println(Level.FINE, "new revision progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()));
+                    return updater.setFields(ENTRY_FIELDS).execute();
+                }
             }
 
             @Override
             protected void onClosed(File newEntry) {
-Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.getSize());
+Debug.printf(Level.FINE, "file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.getSize());
                 updateEntry(path, newEntry);
             }
         }, Util.BUFFER_SIZE);
@@ -251,7 +269,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
             list.addAll(files.getFiles());
 
             pageToken = files.getNextPageToken();
-//System.out.println("t: " + (System.currentTimeMillis() - t) + ", " + children.size() + ", " + (pageToken != null));
+//Debug.println("t: " + (System.currentTimeMillis() - t) + ", " + children.size() + ", " + (pageToken != null));
         } while (pageToken != null);
 
         return list;
@@ -274,7 +292,7 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
         List<File> files = drive.files().list()
                 .setQ("'" + dirEntry.getId() + "' in parents and trashed=false")
                 .execute().getFiles();
-        return files != null && files.size() > 0;
+        return files != null && !files.isEmpty();
     }
 
     @Override
@@ -343,6 +361,11 @@ Debug.printf("file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEnt
         }
     }
 
+    @Override
+    public void close() {
+        fileSearcher = null;
+    }
+
     //
     // user:attributes
     //
@@ -386,7 +409,7 @@ Debug.println(Level.FINE, "revisions: " + revisions.getRevisions().size() + ", "
 
     /** attributes user:revisions */
     void removeRevision(File entry, String revisionId) throws IOException {
-Debug.println(Level.INFO, "delete revision: " + entry.getName() + ", revision: " + revisionId);
+Debug.println(Level.FINE, "delete revision: " + entry.getName() + ", revision: " + revisionId);
         drive.revisions().delete(entry.getId(), revisionId).execute();
     }
 
@@ -406,7 +429,7 @@ Debug.println(Level.INFO, "delete revision: " + entry.getName() + ", revision: "
         entry.setContentHints(contentHints);
 
         File newEntry = drive.files().update(sourceEntry.getId(), entry).setFields("thumbnailLink").execute();
-Debug.println(Level.INFO, "thumbnail updated: " + sourceEntry.getName() + ", size: " + image.length + ", " + StringUtil.paramString(newEntry));
+Debug.println(Level.FINE, "thumbnail updated: " + sourceEntry.getName() + ", size: " + image.length + ", " + StringUtil.paramString(newEntry));
     }
 
     /**
@@ -418,7 +441,76 @@ Debug.println(Level.INFO, "thumbnail updated: " + sourceEntry.getName() + ", siz
         File entry = new File();
 
         File newEntry = drive.files().update(sourceEntry.getId(), entry).setFields("thumbnailLink").execute();
-Debug.println(Level.INFO, "thumbnail url: " + sourceEntry.getName() + ", url: " + newEntry.getThumbnailLink());
+Debug.println(Level.FINE, "thumbnail url: " + sourceEntry.getName() + ", url: " + newEntry.getThumbnailLink());
         return newEntry.getThumbnailLink();
+    }
+
+    //
+    // google drive specific
+    //
+
+    public static FileSearcher fileSearcher;
+
+    /** file searching utility for google drive */
+    public static class FileSearcher {
+        static final String SIMPLE_ENTRY_FIELDS = "id, name, parents";
+        private final Drive drive;
+        /** folder cache <id, File> */
+        static Map<String, File> cache = new HashMap<>();
+        private FileSearcher(Drive drive) {
+            this.drive = drive;
+        }
+        /**
+         * @param root should be a google-drive file system
+         * @param queryTerm contains in trashed. if you don't want to contain those, add <code>" and trashed=false"</code>
+         */
+        public List<Path> search(Path root, String queryTerm) throws IOException {
+            List<Path> list = new ArrayList<>();
+            String pageToken = null;
+            do {
+                FileList files = drive.files().list()
+                        .setQ(queryTerm)
+                        .setSpaces("drive")
+                        .setPageSize(1000)
+                        .setFields("nextPageToken, files(" + SIMPLE_ENTRY_FIELDS + ")")
+                        .setPageToken(pageToken)
+                        .setOrderBy("name_natural")
+                        .execute();
+
+                files.getFiles().forEach(f -> {
+                    try {
+                        List<String> pathElements = new ArrayList<>();
+                        String pid = f.getParents().get(0);
+                        while (true) {
+                            File folder = getParent(pid);
+                            if (!hasParent(folder)) {
+                                break;
+                            }
+                            pathElements.add(0, folder.getName());
+                            pid = folder.getParents().get(0);
+                        }
+                        pathElements.add(f.getName());
+                        list.add(root.resolve(String.join(java.io.File.separator, pathElements)));
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
+
+                pageToken = files.getNextPageToken();
+            } while (pageToken != null);
+
+            return list;
+        }
+        private boolean hasParent(File file) {
+            return file.getParents() != null && !file.getParents().isEmpty();
+        }
+        private File getParent(String pid) throws IOException {
+            File parent = cache.get(pid);
+            if (parent == null) {
+                parent = drive.files().get(pid).setFields(SIMPLE_ENTRY_FIELDS).execute();
+                cache.put(pid, parent);
+            }
+            return parent;
+        }
     }
 }

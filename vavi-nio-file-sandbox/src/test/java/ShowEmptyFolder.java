@@ -4,8 +4,6 @@
  * Programmed by Naohide Sano
  */
 
-
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.DirectoryStream;

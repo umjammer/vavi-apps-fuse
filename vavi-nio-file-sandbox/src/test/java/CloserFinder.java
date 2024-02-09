@@ -40,9 +40,9 @@ public final class CloserFinder {
 
         URI uri = URI.create("onedrive:///?id=" + email);
 
-        FileSystem onedrivefs = FileSystems.newFileSystem(uri, Collections.emptyMap());
+        FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
 
-        Path root = onedrivefs.getPath(cwd);
+        Path root = fs.getPath(cwd);
         MyFileVisitor fileSearcher = new MyFileVisitor();
         Files.walkFileTree(root, fileSearcher);
         fileSearcher.result().parallelStream()
@@ -51,9 +51,9 @@ public final class CloserFinder {
                     .forEach(path2 -> {
                         try {
                             if (!path1.equals(path2)) {
-                                String filrname1 = Util.toFilenameString(path1);
-                                String filrname2 = Util.toFilenameString(path2);
-                                int d = LevenshteinDistance.calculate(filrname1, filrname2);
+                                String filename1 = Util.toFilenameString(path1);
+                                String filename2 = Util.toFilenameString(path2);
+                                int d = LevenshteinDistance.calculate(filename1, filename2);
                                 if (d > 1 && d < 5) {
                                     System.err.println(path1 + ": " + path2);
                                 }
@@ -63,6 +63,8 @@ public final class CloserFinder {
                         }
                     });
             });
+
+        fs.close();
     }
 
     static class MyFileVisitor extends SimpleFileVisitor<Path> {

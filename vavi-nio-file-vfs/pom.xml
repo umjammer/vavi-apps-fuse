@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
   <parent>
     <artifactId>vavi-apps-fuse</artifactId>
     <groupId>vavi</groupId>
-    <version>0.1.8</version>
+    <version>0.1.9</version>
   </parent>
 
   <artifactId>vavi-nio-file-vfs</artifactId>
@@ -22,6 +23,64 @@
     <jackrabbit.version>1.6.0</jackrabbit.version>
   </properties>
 
+  <profiles>
+    <profile>
+      <id>props</id>
+      <activation>
+        <file>
+          <exists>${basedir}/local.properties</exists>
+        </file>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>properties-maven-plugin</artifactId>
+            <version>1.1.0</version>
+            <executions>
+              <execution>
+                <id>read-properties</id>
+                <phase>initialize</phase>
+                <goals>
+                  <goal>read-project-properties</goal>
+                </goals>
+                <configuration>
+                  <files>
+                    <file>${basedir}/local.properties</file>
+                  </files>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.0.0</version>
+        <configuration>
+          <environmentVariables>
+            <TEST_SMB_ACCOUNT>${TEST_SMB_ACCOUNT}</TEST_SMB_ACCOUNT>
+            <TEST_SMB_DOMAIN>${TEST_SMB_DOMAIN}</TEST_SMB_DOMAIN>
+            <TEST_SMB_HOST>${TEST_SMB_HOST}</TEST_SMB_HOST>
+            <TEST_SMB_PASSWORD>${TEST_SMB_PASSWORD}</TEST_SMB_PASSWORD>
+            <TEST_SMB_PATH>${TEST_SMB_PATH}</TEST_SMB_PATH>
+          </environmentVariables>
+          <argLine>
+            -Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties
+            -Dvavi.util.logging.VaviFormatter.extraClassMethod="(org\.slf4j\.impl\.JDK14LoggerAdapter#(log|info)|sun\\.util\\.logging\\.LoggingSupport#log|sun\\.util\\.logging\\.PlatformLogger#fine|jdk\\.internal\\.event\\.EventHelper#logX509CertificateEvent|sun\\.util\\.logging\\.PlatformLogger.JavaLoggerProxy#doLog)"
+          </argLine>
+          <trimStackTrace>false</trimStackTrace>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
   <repositories>
     <repository>
       <id>wso2</id>
@@ -32,13 +91,8 @@
   <dependencies>
     <dependency>
       <!-- java-fs base -->
-      <groupId>${java7-fs-base.groupId}</groupId>
-      <artifactId>java7-fs-base</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>${vavi-nio-file.groupId}</groupId>
-      <artifactId>vavi-nio-file</artifactId>
+      <groupId>${vavi-nio-file-base.groupId}</groupId>
+      <artifactId>vavi-nio-file-base</artifactId>
     </dependency>
 
     <dependency>
@@ -52,13 +106,47 @@
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-vfs2</artifactId>
       <version>2.9.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.fasterxml.jackson.core</groupId>
+          <artifactId>jackson-databind</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.squareup.okio</groupId>
+          <artifactId>okio</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+<dependency>
+  <groupId>com.fasterxml.jackson.core</groupId>
+  <artifactId>jackson-databind</artifactId>
+  <version>2.15.1</version>
+  <scope>test</scope>
+</dependency>
+<dependency>
+  <groupId>com.squareup.okio</groupId>
+  <artifactId>okio</artifactId>
+  <version>3.4.0</version>
+  <scope>test</scope>
+</dependency>
     <dependency>
       <!-- java-fs vfs2 webdav -->
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-vfs2-jackrabbit2</artifactId>
       <version>2.9.0</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-codec</groupId>
+          <artifactId>commons-codec</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
+<dependency>
+  <groupId>commons-codec</groupId>
+  <artifactId>commons-codec</artifactId>
+  <version>1.15</version>
+  <scope>test</scope>
+</dependency>
     <dependency>
       <!-- java-fs vfs2 ssh -->
       <groupId>com.jcraft</groupId>
@@ -67,14 +155,14 @@
     </dependency>
     <!-- java-fs vfs2 smb -->
     <dependency>
-      <groupId>com.github.vbauer</groupId>
+      <groupId>com.github.umjammer</groupId> <!-- com.github.vbauer / com.github.umjammer -->
       <artifactId>commons-vfs2-cifs</artifactId>
-      <version>1.2.0</version>
+      <version>1.2.2</version>
     </dependency>
     <dependency>
-      <groupId>com.github.mikhasd</groupId>
+      <groupId>com.github.umjammer</groupId>
       <artifactId>commons-vfs2-smb</artifactId>
-      <version>1.0.0</version>
+      <version>1.0.2</version>
     </dependency>
 
    <dependency>
@@ -111,8 +199,8 @@
     </dependency>
 
     <dependency>
-      <groupId>${vavi-nio-file.groupId}</groupId>
-      <artifactId>vavi-nio-file</artifactId>
+      <groupId>${vavi-nio-file-base.groupId}</groupId>
+      <artifactId>vavi-nio-file-base</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

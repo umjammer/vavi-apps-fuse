@@ -84,6 +84,20 @@ public class Main4 {
         fs.close();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "vavi.net.fuse.javafs.JavaFSFuseProvider",
+        "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider",
+        "vavi.net.fuse.fusejna.FuseJnaFuseProvider",
+    })
+    public void test02(String providerClassName) throws Exception {
+        System.setProperty("vavi.net.fuse.FuseProvider.class", providerClassName);
+
+        Base.testLargeFile(fs, mountPoint, options);
+
+        fs.close();
+    }
+
     //
 
     /**

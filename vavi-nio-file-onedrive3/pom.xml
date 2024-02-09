@@ -4,7 +4,7 @@
   <parent>
     <artifactId>vavi-apps-fuse</artifactId>
     <groupId>vavi</groupId>
-    <version>0.1.8</version>
+    <version>0.1.9</version>
   </parent>
 
   <artifactId>vavi-nio-file-onedrive3</artifactId>
@@ -28,13 +28,8 @@
   <dependencies>
     <dependency>
       <!-- java-fs base -->
-      <groupId>${java7-fs-base.groupId}</groupId>
-      <artifactId>java7-fs-base</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>${vavi-nio-file.groupId}</groupId>
-      <artifactId>vavi-nio-file</artifactId>
+      <groupId>${vavi-nio-file-base.groupId}</groupId>
+      <artifactId>vavi-nio-file-base</artifactId>
     </dependency>
 
     <dependency>
@@ -48,11 +43,6 @@
       <groupId>com.github.iterate-ch</groupId>
       <artifactId>onedrive-java-client</artifactId>
       <version>onedrive-java-client-3.1.8</version>
-    </dependency>
-
-    <dependency>
-      <groupId>vavi</groupId>
-      <artifactId>vavi-nio-file-commons</artifactId>
     </dependency>
 
     <dependency>
@@ -77,8 +67,8 @@
     </dependency>
 
     <dependency>
-      <groupId>${vavi-nio-file.groupId}</groupId>
-      <artifactId>vavi-nio-file</artifactId>
+      <groupId>${vavi-nio-file-base.groupId}</groupId>
+      <artifactId>vavi-nio-file-base</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

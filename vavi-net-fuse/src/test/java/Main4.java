@@ -88,6 +88,8 @@ System.err.println("--------------------------- " + providerClassName + " ------
         Base.testFuse(fs, mountPoint, options);
 
         fs.close();
+
+        Thread.sleep(333);
     }
 
     /**

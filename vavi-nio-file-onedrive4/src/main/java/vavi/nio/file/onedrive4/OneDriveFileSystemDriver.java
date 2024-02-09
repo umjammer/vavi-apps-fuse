@@ -74,7 +74,7 @@ public final class OneDriveFileSystemDriver extends DoubleCachedFileSystemDriver
 
     private final IGraphServiceClient client;
 
-    private Runnable closer;
+    private final Runnable closer;
     private OneDriveWatchService systemWatcher;
 
     @SuppressWarnings("unchecked")
@@ -121,7 +121,7 @@ Debug.println("NOTIFICATION: maybe created: " + path);
             } catch (NoSuchElementException e) {
 Debug.println("NOTIFICATION: parent not found: " + e);
             } catch (IOException e) {
-                e.printStackTrace();
+                Debug.printStackTrace(e);
             }
         }
     }
@@ -168,7 +168,7 @@ Debug.println("download: " + entry.name + ", " + entry.size);
     protected OutputStream uploadEntry(DriveItem parentEntry, Path path, Set<? extends OpenOption> options) throws IOException {
         OneDriveUploadOption uploadOption = Util.getOneOfOptions(OneDriveUploadOption.class, options);
         if (uploadOption != null) {
-            // java.nio.file is highly abstracted, so here source information is lost.
+            // java.nio.file is highly abstracted, so source information is lost here.
             // but onedrive graph api requires content length for upload.
             // so reluctantly we provide {@link OneDriveUploadOption} for {@link java.nio.file.Files#copy} options.
             Path source = uploadOption.getSource();
@@ -261,7 +261,7 @@ Debug.println("upload done: " + result.name);
 
         IDriveItemCollectionPage pages = client.drive().items(dirEntry.id).children().buildRequest().get();
         while (pages != null) {
-            //System.err.println("child: " + childPath.toRealPath().toString());
+//System.err.println("child: " + childPath.toRealPath().toString());
             list.addAll(pages.getCurrentPage());
             pages = pages.getNextPage() != null ? pages.getNextPage().buildRequest().get() : null;
         }
@@ -282,7 +282,7 @@ Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEn
     @Override
     protected boolean hasChildren(DriveItem dirEntry, Path path) throws IOException {
         IDriveItemCollectionPage pages = client.drive().items(dirEntry.id).children().buildRequest().get();
-        return pages.getCurrentPage().size() > 0;
+        return !pages.getCurrentPage().isEmpty();
     }
 
     @Override
@@ -401,7 +401,7 @@ Debug.println(Level.INFO, "thumbnail updated: " + sourceEntry.name + ", size: " 
                 .thumbnails()
                 .buildRequest(Collections.singletonList(new QueryOption("select", "source")))
                 .get();
-        if (page.getCurrentPage().size() > 0) {
+        if (!page.getCurrentPage().isEmpty()) {
             ThumbnailSet set = page.getCurrentPage().get(0);
 Debug.println(Level.INFO, "thumbnail url: " + set.source.url);
             return set.source.url;

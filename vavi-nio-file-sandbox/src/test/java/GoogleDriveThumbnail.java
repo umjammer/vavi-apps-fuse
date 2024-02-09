@@ -27,7 +27,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
 import javax.imageio.ImageIO;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
@@ -37,7 +36,6 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
-
 import vavi.awt.image.resample.FfmpegResampleOp;
 import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
@@ -48,7 +46,7 @@ import static java.nio.file.FileVisitResult.CONTINUE;
 
 /**
  * GoogleDriveThumbnail.
- *
+ * <p>
  * TODO cannot set at one
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
@@ -64,6 +62,8 @@ public class GoogleDriveThumbnail {
 
     @Property(name = "googledrive.thumbnail.start")
     String start;
+    @Property(name = "googledrive.home")
+    String gdriveHome;
 
     static byte[] duke;
 
@@ -93,19 +93,19 @@ Debug.println("email: " + email);
         duke = Files.readAllBytes(Paths.get(GoogleDriveThumbnail.class.getResource("/duke.jpg").toURI()));
 
         Path dir = fs.getPath(app.start);
-        Files.walkFileTree(dir, new MyFileVisitor());
+        Files.walkFileTree(dir, app.new MyFileVisitor());
 
         fs.close();
     }
 
-    static class MyFileVisitor extends SimpleFileVisitor<Path> {
+    class MyFileVisitor extends SimpleFileVisitor<Path> {
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {
             if (attr.isRegularFile()) {
                 try {
                     if (filter1(file)) {
-                        func2(file);
+                        func0(file);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -118,7 +118,7 @@ Debug.println("email: " + email);
     // filters
 
     static final String ext = ".zip";
-    static final Pattern pattern = Pattern.compile("^\\(一般コミック(・雑誌)*\\)\\s\\[(.+?)\\]\\s(.+?)\\" + ext + "$");
+    static final Pattern pattern = Pattern.compile("^\\(一般(コミック(・雑誌)*|小説|書籍)\\)\\s\\[(.+?)\\]\\s(.+?)\\" + ext + "$");
 
     /** {@link #pattern}, {{@link #ext} */
     static boolean filter1(Path file) {
@@ -135,8 +135,19 @@ System.out.println(matcher.group(2) + " - " + matcher.group(3));
 
     // functions
 
-    /** get thumbnail of the file and save it to local */
-    static void func1(Path file) throws IOException {
+    /**
+     * ■ FUNC 0:
+     * just print a filename
+     */
+    void func0(Path file) throws IOException {
+        System.err.println(file);
+    }
+
+    /**
+     * ■ FUNC 1:
+     * get thumbnail of the file and save it to local
+     */
+    void func1(Path file) throws IOException {
         byte[] bytes = (byte[]) Files.getAttribute(file, "user:thumbnail");
         if (bytes != null && bytes.length != 0) {
             String name = file.getFileName().toString().replace(".zip", ".jpg");
@@ -148,15 +159,17 @@ System.err.println("skip: " + file);
         }
     }
 
-
     static final boolean DRY_RUN = false;
     static final boolean OVERWRITE = false;
 
-    static final Pattern jpg = Pattern.compile("^.+?\\.jpg$");
-//    static final Pattern jpg = Pattern.compile("^[\\w+\\/]+\\.jpe?g$");
+    static final Pattern image = Pattern.compile("^.+?\\.(jpe?g|avif|png)$");
+//    static final Pattern jpg = Pattern.compile("^[\\w+\\/]+\\.(jpe?g|avif|png)$");
 
-    /** extract self and set first jpg as a thumbnail */
-    static void func2(Path file) throws IOException {
+    /**
+     * ■ FUNC 2:
+     * extract self and set first jpg as a thumbnail
+     */
+    void func2(Path file) throws IOException {
         // check existence
         byte[] bytes = (byte[]) Files.getAttribute(file, "user:thumbnail");
         if (!OVERWRITE && bytes != null && bytes.length != 0) {
@@ -169,14 +182,14 @@ System.err.println("skip: " + file);
         ZipEntry entry;
         List<String> names = new ArrayList<>();
         while ((entry = zis.getNextEntry()) != null) {
-            Matcher m = jpg.matcher(entry.getName());
+            Matcher m = image.matcher(entry.getName());
             if (m.matches()) {
                 names.add(entry.getName());
             }
         }
 
         // determine cover
-        Collections.sort(names, (a, b) -> {
+        names.sort((a, b) -> {
             if (a.contains("cover") && !b.contains("cover")) {
                 return -1;
             } else if (!a.contains("cover") && b.contains("cover")) {
@@ -224,10 +237,11 @@ System.err.println(entry.getName() + ": " + thumbnail.getWidth() + "x" + thumbna
     }
 
     /**
-     * set amazon thumbnail asin from self meta data
+     * ■ FUNC 3:
+     * set amazon thumbnail asin from self metadata
      * GoogleDrive.app needed
      */
-    static void func3(Path file) throws Exception {
+    void func3(Path file) throws Exception {
         // check existence
         byte[] bytes = (byte[]) Files.getAttribute(file, "user:thumbnail");
         if (!OVERWRITE && bytes != null && bytes.length != 0) {
@@ -237,9 +251,9 @@ System.err.println("skip: " + file);
 
         // exec
         // convert path from google drive fs to default fs
-        // because "zipfs" dosn't accept googledrive as sub scheme
-        Path gd = Paths.get("/Volumes/GoogleDrive/My Drive", file.toString());
-        URI uri = URI.create("jar:" + gd.toUri().toString());
+        // because "zipfs" doesn't accept googledrive as sub scheme
+        Path gd = Paths.get(gdriveHome, file.toString());
+        URI uri = URI.create("jar:" + gd.toUri());
 Debug.println("uri: " + uri);
 
         FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
@@ -260,7 +274,6 @@ Debug.println("element: " + element.getTagName());
 Debug.println("full-path: " + fullPath);
 
         Path content = fs.getPath(fullPath);
-        is = new InputSource(Files.newInputStream(content));
 
         is = new InputSource(Files.newInputStream(content));
 
@@ -269,7 +282,7 @@ Debug.println("full-path: " + fullPath);
 Debug.println("element: " + element.getTagName());
         String asin = element.getTextContent();
 Debug.println("asin: " + asin);
-        String url = EpubManipulator.amazon(asin);
+        String url = amazon(asin);
 Debug.println("url: " + url);
 
 
@@ -293,10 +306,15 @@ Debug.println("image: " + bytes.length);
         } else {
             Files.setAttribute(file, "user:thumbnail", bytes);
         }
+
+        fs.close();
     }
 
-    /** set amazon thumbnail specify asin directly */
-    static void func4(Path file) throws Exception {
+    /**
+     * ■ FUNC 4:
+     * set amazon thumbnail specify asin directly
+     */
+    void func4(Path file) throws Exception {
         // check existence
         byte[] bytes = (byte[]) Files.getAttribute(file, "user:thumbnail");
         if (!OVERWRITE && bytes != null && bytes.length != 0) {
@@ -306,7 +324,7 @@ System.err.println("skip: " + file);
 
         // exec
 Debug.println("asin: " + asin);
-        String url = EpubManipulator.amazon(asin);
+        String url = amazon(asin);
 Debug.println("url: " + url);
 
 
@@ -332,7 +350,10 @@ Debug.println("image: " + bytes.length);
         }
     }
 
-    /** set local thumbnail same file name */
+    /**
+     * FUNC 5:
+     * set local thumbnail same file name
+     */
     static void func5(Path file) throws Exception {
         // check existence
         byte[] bytes = (byte[]) Files.getAttribute(file, "user:thumbnail");
@@ -359,6 +380,15 @@ Debug.println("image: " + bytes.length);
         }
 
         Files.setAttribute(file, "user:thumbnail", bytes);
+    }
+
+    /**
+     * @see "https://www.ipentec.com/document/internet-get-amazon-product-image"
+     */
+    static String amazon(String asin) {
+        int countryCode = 9;
+        String imageType = "LZZZZZZZ";
+        return String.format("http://images-jp.amazon.com/images/P/%s.%02d.%s.jpg", asin, countryCode, imageType);
     }
 }
 

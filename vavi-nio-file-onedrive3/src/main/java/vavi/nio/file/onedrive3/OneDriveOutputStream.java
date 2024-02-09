@@ -22,7 +22,7 @@ import vavi.util.Debug;
 
 
 /**
- * Wrapper over {@link OneDriveUploadSession} extending {@link OutputStream}
+ * Wrapper over {@link UploadSession} extending {@link OutputStream}
  *
  * <p>
  * This class wraps a OneDrive downloader class by extending {@code
@@ -37,7 +37,7 @@ import vavi.util.Debug;
  * throw an exception; which means it may throw none, or it may throw an
  * <em>unchecked</em> exception. As such, the {@link #close()} method of this
  * class captures all {@link RuntimeException}s which {@link
- * OneDriveUploadSession#cancelUpload()} may throw and wrap it into a {@link
+ * UploadSession#cancelUpload()} may throw and wrap it into a {@link
  * IOException}. If the underlying output stream <em>did</em> throw an
  * exception, however, then such an exception is {@link
  * Throwable#addSuppressed(Throwable) suppressed}.
@@ -51,9 +51,9 @@ public final class OneDriveOutputStream extends OutputStream {
     private final Path file;
     private final AtomicBoolean close = new AtomicBoolean();
     private long offset = 0L;
-    private int length;
+    private final int length;
     private DriveItem.Metadata entry;
-    private Consumer<DriveItem.Metadata> consumer;
+    private final Consumer<DriveItem.Metadata> consumer;
 
     public OneDriveOutputStream(final UploadSession upload, final Path file, int length, Consumer<DriveItem.Metadata> consumer) {
         this.upload = upload;
@@ -73,14 +73,14 @@ try {
         final byte[] content = Arrays.copyOfRange(b, off, off + len);
         final String header;
         if (length == -1) {
-            header = String.format("%d-%d/*", offset, offset + content.length - 1); // TODO got error response, not in spec.?
+            header = String.format("%d-%d/*", offset, offset + content.length - 1); // TODO got error response, not in the specs.?
         } else {
             header = String.format("%d-%d/%d", offset, offset + content.length - 1, length);
         }
 Debug.printf("header %s", header);
         OneDriveJsonObject object = upload.uploadFragment(header, content);
-        if (DriveItem.Metadata.class.isInstance(object)) {
-            entry = DriveItem.Metadata.class.cast(object);
+        if (object instanceof DriveItem.Metadata) {
+            entry = (DriveItem.Metadata) object;
 Debug.printf("Completed upload for %s", file);
         } else {
 Debug.printf(Level.FINE, "Uploaded fragment %s for file %s", header, file);
@@ -88,7 +88,7 @@ Debug.printf(Level.FINE, "Uploaded fragment %s for file %s", header, file);
         offset += content.length;
 Debug.printf("offset: %d (%d)", offset, content.length);
 } catch (Throwable e) {
- e.printStackTrace();
+ Debug.printStackTrace(e);
 }
     }
 

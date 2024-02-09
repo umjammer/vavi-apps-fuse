@@ -22,6 +22,7 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.github.fge.filesystem.attributes.provider.UserDefinedFileAttributesProvider;
+import com.google.api.client.json.GenericJson;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.Revision;
 import com.google.gson.Gson;
@@ -79,10 +80,13 @@ public class GoogleDriveUserDefinedFileAttributesProvider extends UserDefinedFil
 
     /** user:foo */
     private enum UserAttributes implements UserAttribute<Metadata> {
-        /** {@link String} */
+        /**
+         * "user:description"
+         * {@link String}
+         */
         description {
             /** */
-            Map<File, String> descriptionCache = new ConcurrentHashMap<>(); // TODO LRU
+            final Map<File, String> descriptionCache = new ConcurrentHashMap<>(); // TODO LRU
 
             /** */
             private String getDescription(File file) {
@@ -124,10 +128,13 @@ Debug.println(Level.FINE, "write " + name() + ": " + description);
                 return description.getBytes().length;
             }
         },
-        /** {@link String}, "\n" separated */
+        /**
+         * "user:revisions"
+         * {@link String}, "\n" separated
+         */
         revisions {
             /** */
-            Map<File, List<String>> revisionsCache = new ConcurrentHashMap<>(); // TODO LRU
+            final Map<File, List<String>> revisionsCache = new ConcurrentHashMap<>(); // TODO LRU
 
             /** */
             private List<String> getRevisions(Metadata entry) throws IOException {
@@ -135,7 +142,7 @@ Debug.println(Level.FINE, "write " + name() + ": " + description);
                     return revisionsCache.get(entry.file);
                 } else {
                     List<Revision> revisions = entry.driver.getRevisions(entry.file); 
-                    List<String> results = revisions.stream().map(r -> r.toString()).collect(Collectors.toList());
+                    List<String> results = revisions.stream().map(GenericJson::toString).collect(Collectors.toList());
                     revisionsCache.put(entry.file, results);
                     return results;
                 }
@@ -144,7 +151,7 @@ Debug.println(Level.FINE, "write " + name() + ": " + description);
             @Override
             public int size(Metadata entry) throws IOException {
                 // joined by '\n'
-                int len = getRevisions(entry).stream().mapToInt(r -> r.toString().getBytes().length + 1).sum() - 1;
+                int len = getRevisions(entry).stream().mapToInt(r -> r.getBytes().length + 1).sum() - 1;
 if (len > 0) {
  Debug.println(Level.FINE, "size " + name() + ": " + len);
 }
@@ -162,7 +169,7 @@ Debug.println(Level.FINE, "read " + name() + ":\n" + String.join("\n", getRevisi
             public int write(Metadata entry, ByteBuffer src) throws IOException {
                 String[] revisions = RevisionsUtil.split(src.array());
 Arrays.stream(revisions).forEach(r -> {
- Debug.println(Level.INFO, "write " + name() + ": " + r);
+ Debug.println(Level.FINE, "write " + name() + ": " + r);
 });
                 // to be deleted
                 List<String> toDeleted = new ArrayList<>(); 
@@ -194,10 +201,13 @@ Debug.printStackTrace(Level.WARNING, e);
                 return src.array().length;
             }
         },
-        /** whole image file */
+        /**
+         * "user:thumbnail"
+         * whole image file
+         */
         thumbnail {
             /** */
-            Map<File, String> thumbnailCache = new ConcurrentHashMap<>(); // TODO LRU
+            final Map<File, String> thumbnailCache = new ConcurrentHashMap<>(); // TODO LRU
 
             /** */
             private String getUrl(Metadata entry) throws IOException {
@@ -270,23 +280,26 @@ try {
 
     /** utility */
     public static class RevisionsUtil {
+        private RevisionsUtil() {}
         /** sort by "modifiedTime" desc */
         public static byte[] getLatestOnly(byte[] revisions) {
             @SuppressWarnings("unchecked")
             List<Map<String, String>> revisionList = Arrays.stream(split(revisions))
                     .map(r -> (Map<String, String>) gson.fromJson(r, Map.class))
                     .sorted((o1, o2) -> {
-                        OffsetDateTime odt1 = OffsetDateTime.parse((String) o1.get("modifiedTime"));
-                        OffsetDateTime odt2 = OffsetDateTime.parse((String) o2.get("modifiedTime"));
+                        OffsetDateTime odt1 = OffsetDateTime.parse(o1.get("modifiedTime"));
+                        OffsetDateTime odt2 = OffsetDateTime.parse(o2.get("modifiedTime"));
                         return odt2.compareTo(odt1);
                     })
                     .collect(Collectors.toList());
 //revisionList.forEach(System.err::println);
             return gson.toJson(revisionList.get(0)).getBytes(); 
         }
+        /** split multiple revisions in json into each one */
         public static String[] split(byte[] revisions) {
-            return new String((byte[]) revisions).split("\n");
+            return new String(revisions).split("\n");
         }
+        /** how many revisions */
         public static int size(Object revisions) {
             return split((byte[]) revisions).length;
         }

@@ -82,7 +82,7 @@ Debug.println("Stop");
 Debug.println("Done");
 
 // TODO https://stackoverflow.com/a/46472909/6102938
-if(container != null && container instanceof org.eclipse.jetty.util.component.LifeCycle) { 
+if (container != null && container instanceof org.eclipse.jetty.util.component.LifeCycle) {
  try {
 Debug.println("Stopping Jetty's WebSocket Client");
   ((org.eclipse.jetty.util.component.LifeCycle) container).stop();

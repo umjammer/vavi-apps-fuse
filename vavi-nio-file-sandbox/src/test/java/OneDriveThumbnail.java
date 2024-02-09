@@ -289,7 +289,7 @@ Debug.println("full-path: " + fullPath);
 Debug.println("element: " + element.getTagName());
         String asin = element.getTextContent();
 Debug.println("asin: " + asin);
-        String url = EpubManipulator.amazon(asin);
+        String url = GoogleDriveThumbnail.amazon(asin);
 Debug.println("url: " + url);
 
 
@@ -326,7 +326,7 @@ System.err.println("skip: " + file);
 
         // exec
 Debug.println("asin: " + asin);
-        String url = EpubManipulator.amazon(asin);
+        String url = GoogleDriveThumbnail.amazon(asin);
 Debug.println("url: " + url);
 
 
