@@ -198,7 +198,7 @@ System.err.println("skip: " + file);
                 return a.compareTo(b);
             }
         });
-        if (names.size() == 0) {
+        if (names.isEmpty()) {
 zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(file)));
 while ((entry = zis.getNextEntry()) != null) {
  System.err.println(entry.getName());

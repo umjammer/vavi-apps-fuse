@@ -19,7 +19,6 @@ import javax.imageio.ImageIO;
 import com.flickr4java.flickr.Flickr;
 import com.flickr4java.flickr.FlickrException;
 import com.flickr4java.flickr.photos.Photo;
-import com.github.fge.filesystem.driver.FileSystemDriver;
 
 
 /**
@@ -39,12 +38,12 @@ import com.github.fge.filesystem.driver.FileSystemDriver;
  * <em>unchecked</em> exception. As such, the {@link #close()} method of this
  * class captures all {@link RuntimeException}s which {@link
  * #close()} may throw and wrap it into a {@link
- * FlickrIOException}. If the underlying input stream <em>did</em> throw an
+ * IOException}. If the underlying input stream <em>did</em> throw an
  * exception, however, then such an exception is {@link
  * Throwable#addSuppressed(Throwable) suppressed}.
  * </p>
  *
- * @see FileSystemDriver#newInputStream(Path, OpenOption...)
+ * @see java.nio.file.Files#newInputStream(Path, OpenOption...)
  */
 @ParametersAreNonnullByDefault
 public final class FlickrInputStream extends InputStream {

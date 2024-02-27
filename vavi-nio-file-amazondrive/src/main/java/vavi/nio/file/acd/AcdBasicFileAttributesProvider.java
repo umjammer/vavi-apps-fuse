@@ -86,7 +86,7 @@ public final class AcdBasicFileAttributesProvider extends BasicFileAttributesPro
      */
     @Override
     public long size() {
-        return FileInfo.class.isInstance(entry) ? FileInfo.class.cast(entry).getContentProperties().getSize() : 0;
+        return entry instanceof FileInfo ? ((FileInfo) entry).getContentProperties().getSize() : 0;
     }
 
     /* @see java.nio.file.attribute.PosixFileAttributes#owner() */

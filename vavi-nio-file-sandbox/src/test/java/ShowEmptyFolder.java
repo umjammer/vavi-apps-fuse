@@ -75,7 +75,7 @@ Debug.println("Done");
     }
 
     boolean filter1(Path path) throws IOException {
-        return Files.list(path).count() == 0;
+        return Files.list(path).findAny().isEmpty();
     }
 
     boolean filter2(Path path) throws IOException {

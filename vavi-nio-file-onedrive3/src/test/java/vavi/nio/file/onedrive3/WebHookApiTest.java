@@ -107,7 +107,7 @@ public class WebHookApiTest {
             DriveItem.Metadata child = i.next();
             if (child.getName().equals("TEST_WEBHOOK")) {
 System.out.println("rmdir " + child.getName());
-                Files.delete(DriveItem.class.cast(child.getItem()));
+                Files.delete((DriveItem) child.getItem());
             }
         }
 System.out.println("mkdir " + "TEST_WEBHOOK");

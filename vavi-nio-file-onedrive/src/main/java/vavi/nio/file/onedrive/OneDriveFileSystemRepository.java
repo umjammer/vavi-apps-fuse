@@ -58,7 +58,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         WithTotpUserCredential userCredential = null;
 
         if (env.containsKey(OneDriveFileSystemProvider.ENV_USER_CREDENTIAL)) {
-            userCredential = WithTotpUserCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_USER_CREDENTIAL));
+            userCredential = (WithTotpUserCredential) env.get(OneDriveFileSystemProvider.ENV_USER_CREDENTIAL);
         }
 
         Map<String, String> params = getParamsMap(uri);
@@ -76,7 +76,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         OAuth2AppCredential appCredential = null;
 
         if (env.containsKey(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL)) {
-            appCredential = OAuth2AppCredential.class.cast(env.get(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL));
+            appCredential = (OAuth2AppCredential) env.get(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL);
         }
 
         if (appCredential == null) {
@@ -117,7 +117,7 @@ Debug.println("refreshToken: timeout?");
                 }
             };
             oauth2.writeRefreshToken(callback);
-            client.startSessionAutoRefresh(() -> { oauth2.writeRefreshToken(callback); });
+            client.startSessionAutoRefresh(() -> oauth2.writeRefreshToken(callback));
 
             final OneDriveFileStore fileStore = new OneDriveFileStore(client, factoryProvider.getAttributesFactory());
             return new OneDriveFileSystemDriver(fileStore, factoryProvider, client, env);

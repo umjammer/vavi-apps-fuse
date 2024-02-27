@@ -43,7 +43,7 @@ public class GoogleWebSocketNotification extends WebSocketNotification<UnparsedN
 
     private static final URI uri = URI.create(websocketBaseUrl + websocketPath);
 
-    private Consumer<UnparsedNotification> callback;
+    private final Consumer<UnparsedNotification> callback;
 
     /**
      * @param args 0: uuid for channel id

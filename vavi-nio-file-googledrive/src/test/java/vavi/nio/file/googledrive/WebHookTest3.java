@@ -6,7 +6,6 @@
 
 package vavi.nio.file.googledrive;
 
-import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -16,8 +15,6 @@ import java.nio.file.Paths;
 import java.util.Collections;
 
 import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.services.drive.Drive;
 
 import vavi.net.auth.WithTotpUserCredential;
@@ -58,13 +55,10 @@ public class WebHookTest3 {
 
         Credential credential = new GoogleOAuth2(appCredential).authorize(userCredential);
         Drive driveService = new Drive.Builder(GoogleOAuth2.getHttpTransport(), GoogleOAuth2.getJsonFactory(), credential)
-                .setHttpRequestInitializer(new HttpRequestInitializer() {
-                    @Override
-                    public void initialize(HttpRequest httpRequest) throws IOException {
-                        credential.initialize(httpRequest);
-                        httpRequest.setConnectTimeout(30 * 1000);
-                        httpRequest.setReadTimeout(30 * 1000);
-                    }
+                .setHttpRequestInitializer(httpRequest -> {
+                    credential.initialize(httpRequest);
+                    httpRequest.setConnectTimeout(30 * 1000);
+                    httpRequest.setReadTimeout(30 * 1000);
                 })
                 .setApplicationName(appCredential.getClientId())
                 .build();

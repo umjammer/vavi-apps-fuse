@@ -84,13 +84,13 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
     }
 
     /** */
-    private OAuth2AppCredential microsoftAppCredential = new MicrosoftGraphLocalAppCredential();
+    private final OAuth2AppCredential microsoftAppCredential = new MicrosoftGraphLocalAppCredential();
     /** */
-    private OAuth2AppCredential googleAppCredential = new GoogleLocalOAuth2AppCredential("googledrive");
+    private final OAuth2AppCredential googleAppCredential = new GoogleLocalOAuth2AppCredential("googledrive");
     /** */
-    private OAuth2AppCredential boxAppCredential = new BoxLocalAppCredential();
+    private final OAuth2AppCredential boxAppCredential = new BoxLocalAppCredential();
     /** */
-    private OAuth2AppCredential dropboxAppCredential = new DropBoxLocalAppCredential();
+    private final OAuth2AppCredential dropboxAppCredential = new DropBoxLocalAppCredential();
 
     private FileSystem getFileSystem(String id) throws IOException {
         String[] part1s = id.split(":");

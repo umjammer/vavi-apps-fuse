@@ -98,7 +98,7 @@ public final class Rename {
             this.replacer = replacer;
         }
 
-        class Pair {
+        static class Pair {
             Pair(Path source, Path target) {
                 this.source = source;
                 this.target = target;

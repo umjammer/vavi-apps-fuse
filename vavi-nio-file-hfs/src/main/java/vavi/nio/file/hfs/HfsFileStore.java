@@ -11,7 +11,6 @@ import java.nio.file.FileStore;
 import java.util.logging.Level;
 
 import org.catacombae.storage.fs.FSFolder;
-import org.catacombae.storage.fs.FSForkType;
 import org.catacombae.storage.fs.hfscommon.HFSCommonFileSystemHandler;
 
 import com.github.fge.filesystem.attributes.FileAttributesFactory;

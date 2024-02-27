@@ -8,6 +8,7 @@ package vavi.nio.file.vfs;
 
 import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.util.Collections;
 
@@ -36,7 +37,7 @@ public class Main2 {
      */
     @Test
     void test01() throws Exception {
-        String username = URLEncoder.encode(System.getenv("TEST_SFTP_ACCOUNT"), "utf-8");
+        String username = URLEncoder.encode(System.getenv("TEST_SFTP_ACCOUNT"), StandardCharsets.UTF_8);
         String passPhrase = System.getenv("TEST_SFTP_PASSPHRASE");
         String host = System.getenv("TEST_SFTP_HOST");
         String keyPath = System.getenv("TEST_SFTP_KEYPATH");

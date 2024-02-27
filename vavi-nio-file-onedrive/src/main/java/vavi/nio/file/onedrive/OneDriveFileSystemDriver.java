@@ -169,9 +169,7 @@ Debug.println("upload w/o option: " + is.available());
 
     /** OneDriveUploadOption */
     private OutputStream uploadEntry(OneItem parentEntry, Path path, int size) throws IOException {
-        OneUpload uploader = asFolder(parentEntry).upload(toFilenameString(path), size, newEntry -> {
-            updateEntry(path, newEntry);
-        });
+        OneUpload uploader = asFolder(parentEntry).upload(toFilenameString(path), size, newEntry -> updateEntry(path, newEntry));
         return new BufferedOutputStream(uploader.upload(), Util.BUFFER_SIZE);
     }
 
@@ -187,7 +185,7 @@ Debug.println("upload w/o option: " + is.available());
 
     @Override
     protected boolean hasChildren(OneItem dirEntry, Path dir) throws IOException {
-        return client.getFolderByPath(toPathString(dir)).getChildren().size() > 0;
+        return !client.getFolderByPath(toPathString(dir)).getChildren().isEmpty();
     }
 
     @Override

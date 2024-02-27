@@ -6,14 +6,12 @@
 
 package vavi.nio.file.onedrive4.graph;
 
-
 import java.io.IOException;
 import java.security.InvalidParameterException;
 
 import com.microsoft.graph.http.BaseRequest;
 import com.microsoft.graph.http.HttpMethod;
 import com.microsoft.graph.http.HttpResponseCode;
-import com.microsoft.graph.http.IHttpRequest;
 import com.microsoft.graph.models.extensions.DriveItem;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 
@@ -22,8 +20,6 @@ import vavi.util.Debug;
 
 /**
  * ThumbnailUpload service provider
- *
- * @param <UploadType> the upload item type
  */
 public class ThumbnailUploadProvider {
 
@@ -40,13 +36,10 @@ public class ThumbnailUploadProvider {
     /**
      * Creates the ChunkedUploadProvider
      *
-     * @param uploadSession   the initial upload session
-     * @param client          the Graph client
-     * @param streamSize      the stream size
-     * @param uploadTypeClass the upload type class
+     * @param item   the upload item
+     * @param client the Graph client
      */
-    public ThumbnailUploadProvider(final DriveItem item,
-                                   final IGraphServiceClient client) {
+    public ThumbnailUploadProvider(DriveItem item, IGraphServiceClient client) {
         if (item == null) {
             throw new InvalidParameterException("item is null.");
         }
@@ -66,17 +59,16 @@ Debug.println("url: " + uploadUrl);
      * @param image  the thumbnail bytes
      * @throws IOException the IO exception that occurred during upload
      */
-    public void upload(byte[] image)
-            throws IOException {
+    public void upload(byte[] image) throws IOException {
 
         BaseRequest request = new BaseRequest(uploadUrl, client, null, Integer.class) {{
             setHttpMethod(HttpMethod.PUT);
         }};
         int result = client.getHttpProvider().send(
-                      (IHttpRequest) request,
-                      Integer.class,
-                      image,
-                      new ThumbnailUploadResponseHandler());
+                request,
+                Integer.class,
+                image,
+                new ThumbnailUploadResponseHandler());
 
         if (result != HttpResponseCode.HTTP_OK) {
             throw new IOException(String.valueOf(result));

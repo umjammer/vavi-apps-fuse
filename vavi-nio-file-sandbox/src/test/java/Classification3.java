@@ -86,7 +86,7 @@ System.err.println("mv " + path + " " + dir);
     /** */
     static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
-        private List<Path> list = new ArrayList<>();
+        private final List<Path> list = new ArrayList<>();
 
         Pattern pattern = Pattern.compile("[あかさたなはまやらわ]");
 

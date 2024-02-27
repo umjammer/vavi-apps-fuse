@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
@@ -55,7 +54,7 @@ Debug.println("email: " + email);
             if (results.size() > 1) {
 Debug.println(Level.WARNING, "ambiguous: " + query);
                 results.forEach(System.err::println);
-            } else if (results.size() == 0) {
+            } else if (results.isEmpty()) {
 Debug.println(Level.WARNING, "none: " + query);
             } else {
 Debug.println(Level.INFO, "found: " + query);

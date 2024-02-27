@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.CopyOption;
 import java.nio.file.FileStore;
 import java.nio.file.OpenOption;
@@ -174,14 +175,12 @@ Debug.println(Level.FINE, "upload w/o option: " + is.available());
     private OutputStream uploadEntry(DriveItem.Metadata parentEntry, Path path, int size) throws IOException {
         DriveItem file = new DriveItem(asDriveItem(parentEntry), toItemPathString(toFilenameString(path)));
         final UploadSession uploadSession = Files.createUploadSession(file);
-        return new BufferedOutputStream(new OneDriveOutputStream(uploadSession, path, size, newEntry -> {
-            updateEntry(path, newEntry);
-        }), Util.BUFFER_SIZE);
+        return new BufferedOutputStream(new OneDriveOutputStream(uploadSession, path, size, newEntry -> updateEntry(path, newEntry)), Util.BUFFER_SIZE);
     }
 
     /** ms-graph doesn't accept '+' in a path string */
     private String toItemPathString(String pathString) throws IOException {
-        return URLEncoder.encode(pathString, "utf-8").replace("+", "%20");
+        return URLEncoder.encode(pathString, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     @Override
@@ -213,12 +212,10 @@ Debug.println(Level.FINE, "upload w/o option: " + is.available());
 Debug.println(Level.FINE, "target: " + targetParentEntry.getName());
         operation.copy(asDriveItem(targetParentEntry));
         OneDriveLongRunningAction action = Files.copy(asDriveItem(sourceEntry), operation);
-        action.await(statusObject -> {
-Debug.printf(Level.FINE, "Copy Progress Operation %s progress %.0f %%, status %s",
- statusObject.getOperation(),
- statusObject.getPercentage(),
- statusObject.getStatus());
-        });
+        action.await(statusObject -> Debug.printf(Level.FINE, "Copy Progress Operation %s progress %.0f %%, status %s",
+         statusObject.getOperation(),
+         statusObject.getPercentage(),
+         statusObject.getStatus()));
         return getEntry(null, target);
     }
 

@@ -21,7 +21,6 @@ import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchEvent.Kind;
@@ -49,7 +48,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 
 /**
@@ -98,18 +96,14 @@ public class WatchServiceTest {
 
     @Test
     public void testRegister_fileDoesNotExist() throws IOException {
-        assertThrows(NoSuchFileException.class, () -> {
-            watcher.register(fs.getPath("/a/b/c"), ImmutableList.of(ENTRY_CREATE));
-        });
+        assertThrows(NoSuchFileException.class, () -> watcher.register(fs.getPath("/a/b/c"), ImmutableList.of(ENTRY_CREATE)));
     }
 
     @Test
     public void testRegister_fileIsNotDirectory() throws IOException {
         Path path = fs.getPath("/a.txt");
         Files.createFile(path);
-        assertThrows(NoSuchFileException.class, () -> {
-            watcher.register(path, ImmutableList.of(ENTRY_CREATE));
-        });
+        assertThrows(NoSuchFileException.class, () -> watcher.register(path, ImmutableList.of(ENTRY_CREATE)));
     }
 
     @Test
@@ -219,7 +213,7 @@ public class WatchServiceTest {
     }
 
     private void assertWatcherHasEvents(WatchEvent<?>... events) throws InterruptedException {
-        assertWatcherHasEvents(Arrays.asList(events), ImmutableList.<WatchEvent<?>> of());
+        assertWatcherHasEvents(Arrays.asList(events), ImmutableList.of());
     }
 
     private void assertWatcherHasEvents(List<WatchEvent<?>> expected,
@@ -241,7 +235,7 @@ public class WatchServiceTest {
     }
 
     private Path createDirectory() throws IOException {
-        Path path = fs.getPath("/" + UUID.randomUUID().toString());
+        Path path = fs.getPath("/" + UUID.randomUUID());
         Files.createDirectory(path);
         return path;
     }

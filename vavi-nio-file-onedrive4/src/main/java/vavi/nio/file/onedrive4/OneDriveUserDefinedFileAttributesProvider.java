@@ -95,7 +95,7 @@ Debug.println("write " + name() + ": " + description);
         /** whole image file */
         thumbnail {
             /** */
-            Map<DriveItem, String> thumbnailCache = new ConcurrentHashMap<>(); // TODO LRU
+            final Map<DriveItem, String> thumbnailCache = new ConcurrentHashMap<>(); // TODO LRU
 
             /** */
             private String getUrl(Metadata entry) throws IOException {
@@ -155,7 +155,7 @@ Debug.println("write " + name() + ": " + description);
                 entry.driver.setThumbnail(entry.driveItem, thumbnail);
                 return thumbnail.length;
             }
-        };
+        }
     }
 }
 

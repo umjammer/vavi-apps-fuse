@@ -190,7 +190,7 @@ Debug.println(e);
         }
 
         // determine cover
-        Collections.sort(names, (a, b) -> {
+        names.sort((a, b) -> {
             if (a.contains("表紙") && !b.contains("表紙")) {
                 return -1;
             } else if (!a.contains("表紙") && b.contains("表紙")) {
@@ -203,7 +203,7 @@ Debug.println(e);
                 return a.compareTo(b);
             }
         });
-        if (names.size() == 0) {
+        if (names.isEmpty()) {
 ZipInputStream zis = new ZipInputStream(new BufferedInputStream(Files.newInputStream(file)), Charset.forName(sjis ? "MS932" : "UTF-8"));
 while ((entry = zis.getNextEntry()) != null) {
  System.err.println(entry.getName());
@@ -257,9 +257,9 @@ System.err.println("skip: " + file);
 
         // exec
         // convert path from google drive fs to default fs
-        // because "zipfs" dosn't accept googledrive as sub scheme
+        // because "zipfs" doesn't accept googledrive as sub scheme
         Path gd = Paths.get("/Volumes/GoogleDrive/My Drive", file.toString());
-        URI uri = URI.create("jar:" + gd.toUri().toString());
+        URI uri = URI.create("jar:" + gd.toUri());
 Debug.println("uri: " + uri);
 
         FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap());

@@ -10,13 +10,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 
-import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.concurrency.ChunkedUploadProvider;
 import com.microsoft.graph.concurrency.IProgressCallback;
 import com.microsoft.graph.core.ClientException;
@@ -109,9 +109,9 @@ public class TestGraph {
     void testList() throws IOException {
         client.me().drive().root().children().buildRequest().get().getCurrentPage().forEach(e -> System.err.println(e.name));
 
-        client.me().drive().root().itemWithPath(URLEncoder.encode("Books/Novels", "utf-8")).children().buildRequest().get().getCurrentPage().forEach(e -> System.err.println(e.name));
+        client.me().drive().root().itemWithPath(URLEncoder.encode("Books/Novels", StandardCharsets.UTF_8)).children().buildRequest().get().getCurrentPage().forEach(e -> System.err.println(e.name));
 
-        client.me().drive().root().itemWithPath(URLEncoder.encode("Books/Novels/あ", "utf-8")).children().buildRequest().get().getCurrentPage().forEach(e -> System.err.println(e.name));
+        client.me().drive().root().itemWithPath(URLEncoder.encode("Books/Novels/あ", StandardCharsets.UTF_8)).children().buildRequest().get().getCurrentPage().forEach(e -> System.err.println(e.name));
     }
 
     /** */
@@ -120,29 +120,31 @@ public class TestGraph {
 
         Path path = Paths.get(System.getenv("HOME"), "Music/0/rc.wav");
         InputStream is = Files.newInputStream(path.toFile().toPath());
-        UploadSession uploadSession = client.drive().root().itemWithPath(URLEncoder.encode("test/テスト.wav", "utf-8")).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
+        UploadSession uploadSession = client.drive().root().itemWithPath(URLEncoder.encode("test/テスト.wav", StandardCharsets.UTF_8)).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
         ChunkedUploadProvider<DriveItem> chunkedUploadProvider = new ChunkedUploadProvider<>(uploadSession,
                 client, is, is.available(), DriveItem.class);
-        chunkedUploadProvider.upload(new IProgressCallback<DriveItem>() {
-                @Override
-                public void progress(final long current, final long max) {
-                    System.err.println(current + "/" + max);
-                }
-                @Override
-                public void success(final DriveItem result) {
-                    System.err.println("done");
-                }
-                @Override
-                public void failure(final ClientException ex) {
-                    throw new IllegalStateException(ex);
-                }
-            });
+        chunkedUploadProvider.upload(new IProgressCallback<>() {
+            @Override
+            public void progress(final long current, final long max) {
+                System.err.println(current + "/" + max);
+            }
+
+            @Override
+            public void success(final DriveItem result) {
+                System.err.println("done");
+            }
+
+            @Override
+            public void failure(final ClientException ex) {
+                throw new IllegalStateException(ex);
+            }
+        });
     }
 
     /** */
     void testDelete(String name) throws IOException {
         try {
-            client.drive().root().itemWithPath(URLEncoder.encode(name, "utf-8")).buildRequest().delete();
+            client.drive().root().itemWithPath(URLEncoder.encode(name, StandardCharsets.UTF_8)).buildRequest().delete();
         } catch (GraphServiceException e) {
             if (!e.getMessage().startsWith("Error code: itemNotFound")) {
                 throw e;
@@ -156,8 +158,8 @@ public class TestGraph {
     void testCopy() throws IOException {
         testDelete("test/フォルダー/コピー.wav");
 
-        DriveItem src = client.drive().root().itemWithPath(URLEncoder.encode("test/テスト.wav", "utf-8")).buildRequest().get();
-        DriveItem dst = client.drive().root().itemWithPath(URLEncoder.encode("test/フォルダー", "utf-8")).buildRequest().get();
+        DriveItem src = client.drive().root().itemWithPath(URLEncoder.encode("test/テスト.wav", StandardCharsets.UTF_8)).buildRequest().get();
+        DriveItem dst = client.drive().root().itemWithPath(URLEncoder.encode("test/フォルダー", StandardCharsets.UTF_8)).buildRequest().get();
 
 
         ItemReference ir = new ItemReference();
@@ -171,20 +173,22 @@ public class TestGraph {
         @SuppressWarnings({ "unchecked", "rawtypes" }) // TODO
         LraSession copySession = client.getHttpProvider().<LraMonitorResult, DriveItemCopyBody, LraMonitorResult>send((IHttpRequest) request, LraMonitorResult.class, body, (IStatefulResponseHandler) handler).getSession();
         LraMonitorProvider<DriveItem> copyMonitorProvider = new LraMonitorProvider<>(copySession, client, DriveItem.class);
-        copyMonitorProvider.monitor(new IProgressCallback<DriveItem>() {
-                @Override
-                public void progress(final long current, final long max) {
-                    System.err.println(current + "/" + max);
-                }
-                @Override
-                public void success(final DriveItem result) {
-                    System.err.println("done: " + result.getRawObject());
-                }
-                @Override
-                public void failure(final ClientException ex) {
-                    ex.printStackTrace();
-                }
-            });
+        copyMonitorProvider.monitor(new IProgressCallback<>() {
+            @Override
+            public void progress(final long current, final long max) {
+                System.err.println(current + "/" + max);
+            }
+
+            @Override
+            public void success(final DriveItem result) {
+                System.err.println("done: " + result.getRawObject());
+            }
+
+            @Override
+            public void failure(final ClientException ex) {
+                ex.printStackTrace();
+            }
+        });
     }
 
     /** */

@@ -9,6 +9,7 @@ package vavi.nio.file.gathered;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import com.google.common.collect.BiMap;
@@ -23,14 +24,14 @@ import com.google.common.collect.HashBiMap;
  */
 public class NameMap {
 
-    private BiMap<String, String> nameMap = HashBiMap.create();
+    private final BiMap<String, String> nameMap = HashBiMap.create();
 
     /** id -> display name */
     public String encodeFsName(String id) throws IOException {
         if (!nameMap.isEmpty()) {
             return nameMap.get(id);
         } else {
-            return URLEncoder.encode(id, "utf-8");
+            return URLEncoder.encode(id, StandardCharsets.UTF_8);
         }
     }
 
@@ -39,7 +40,7 @@ public class NameMap {
         if (!nameMap.isEmpty()) {
             return nameMap.inverse().get(path);
         } else {
-            return URLDecoder.decode(path, "utf-8");
+            return URLDecoder.decode(path, StandardCharsets.UTF_8);
         }
     }
 

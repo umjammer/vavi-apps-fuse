@@ -13,7 +13,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -33,8 +32,6 @@ import javax.websocket.WebSocketContainer;
 
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.notifications.UnparsedNotification;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.Change;
 import com.google.api.services.drive.model.ChangeList;
@@ -106,7 +103,7 @@ Debug.println("CLOSE");
         public void beforeRequest(Map<String, List<String>> headers) {
             headers.put("Authorization", Collections.singletonList("Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes())));
         }
-    };
+    }
 
     static class Service {
         Drive driveService;

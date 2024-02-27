@@ -168,9 +168,7 @@ Debug.println(Level.FINE, "read " + name() + ":\n" + String.join("\n", getRevisi
             @Override
             public int write(Metadata entry, ByteBuffer src) throws IOException {
                 String[] revisions = RevisionsUtil.split(src.array());
-Arrays.stream(revisions).forEach(r -> {
- Debug.println(Level.FINE, "write " + name() + ": " + r);
-});
+Arrays.stream(revisions).forEach(r -> Debug.println(Level.FINE, "write " + name() + ": " + r));
                 // to be deleted
                 List<String> toDeleted = new ArrayList<>(); 
                 Arrays.stream(revisions)
@@ -180,7 +178,7 @@ Arrays.stream(revisions).forEach(r -> {
                             toDeleted.addAll(getRevisions(entry).stream()
                                     .map(x -> (String) gson.fromJson(x, Map.class).get("id"))
                                     .filter(a -> !a.equals(b))
-                                    .collect(Collectors.toList()));
+                                    .toList());
                         } catch (IOException e) {
 Debug.printStackTrace(Level.WARNING, e);
                         }
@@ -272,11 +270,11 @@ try {
                 entry.driver.setThumbnail(entry.file, thumbnail);
                 return thumbnail.length;
             }
-        };
+        }
     }
 
     /** */
-    private static Gson gson = new GsonBuilder().create();
+    private static final Gson gson = new GsonBuilder().create();
 
     /** utility */
     public static class RevisionsUtil {
@@ -291,7 +289,7 @@ try {
                         OffsetDateTime odt2 = OffsetDateTime.parse(o2.get("modifiedTime"));
                         return odt2.compareTo(odt1);
                     })
-                    .collect(Collectors.toList());
+                    .toList();
 //revisionList.forEach(System.err::println);
             return gson.toJson(revisionList.get(0)).getBytes(); 
         }

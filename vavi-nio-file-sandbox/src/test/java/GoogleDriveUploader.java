@@ -84,7 +84,7 @@ Debug.println("done: " + app.count);
                 Debug.println(Level.WARNING, "ambiguous: " + query);
 results.forEach(System.err::println);
                 return;
-            } else if (results.size() == 0) {
+            } else if (results.isEmpty()) {
                 Debug.println(Level.WARNING, "none: " + query);
                 return;
             } else {

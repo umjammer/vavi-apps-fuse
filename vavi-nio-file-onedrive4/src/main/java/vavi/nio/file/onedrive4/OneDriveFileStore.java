@@ -111,11 +111,12 @@ public final class OneDriveFileStore extends FileStoreBase {
         if (cache != null) {
             return cache;
         } else {
-            client.drive().buildRequest().get(new ICallback<Drive>() {
+            client.drive().buildRequest().get(new ICallback<>() {
                 @Override
                 public void success(final Drive result) {
                     cache = result.quota;
                 }
+
                 @Override
                 public void failure(ClientException ex) {
                 }

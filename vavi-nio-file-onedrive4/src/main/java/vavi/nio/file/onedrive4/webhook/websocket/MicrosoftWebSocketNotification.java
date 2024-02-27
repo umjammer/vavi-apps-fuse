@@ -37,7 +37,7 @@ public class MicrosoftWebSocketNotification extends StringWebSocketNotification 
 
     private static final URI uri = URI.create(websocketBaseUrl + websocketPath);
 
-    private Consumer<String> callback;
+    private final Consumer<String> callback;
 
     /**
      * @param args

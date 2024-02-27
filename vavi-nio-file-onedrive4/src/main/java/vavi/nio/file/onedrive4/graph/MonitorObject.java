@@ -40,7 +40,7 @@ public class MonitorObject implements IJsonBackedObject  {
 Debug.println(json);
     }
 
-    private transient AdditionalDataManager additionalDataManager = new AdditionalDataManager(this);
+    private final transient AdditionalDataManager additionalDataManager = new AdditionalDataManager(this);
 
     @Override
     public final AdditionalDataManager additionalDataManager() {

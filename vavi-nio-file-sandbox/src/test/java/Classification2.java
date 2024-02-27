@@ -121,12 +121,12 @@ public final class Classification2 {
             }
         }
 //System.err.println(sb);
-        return sb.length() == 0 ? text : sb.toString();
+        return sb.isEmpty() ? text : sb.toString();
     }
 
     static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
-        private List<Path> list = new ArrayList<>();
+        private final List<Path> list = new ArrayList<>();
 
         Path root;
 
