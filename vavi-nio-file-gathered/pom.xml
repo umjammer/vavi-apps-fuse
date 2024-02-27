@@ -102,13 +102,13 @@
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- com.github.fge / com.github.umjammer -->
       <artifactId>vavi-nio-file-dropbox</artifactId>
-      <version>0.0.20v</version>
+      <version>0.0.21</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- com.github.fge / com.github.umjammer -->
       <artifactId>vavi-nio-file-box</artifactId>
-      <version>0.1.15v</version>
+      <version>0.1.16</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
