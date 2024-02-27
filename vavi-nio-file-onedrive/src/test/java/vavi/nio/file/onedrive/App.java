@@ -50,7 +50,7 @@ import de.tuberlin.onedrivesdk.uploadFile.OneUploadFile;
 public class App {
     private static OneFolder currentFolder;
 
-    ExecutorService executor = Executors.newFixedThreadPool(5);
+    final ExecutorService executor = Executors.newFixedThreadPool(5);
     private OneDriveSDK api;
     private Map<String, OneFile> currentFolderFiles = Maps.newHashMap();
     private Map<String, OneFolder> currentFolderFolders = Maps.newHashMap();
@@ -177,7 +177,7 @@ System.err.println("authenticate: " + code);
             item = (OneItem) this.currentFolderFolders.get(index);
 
         if (item != null) {
-            System.out.println(String.format("Deleting %s", item.getName()));
+            System.out.printf("Deleting %s%n", item.getName());
             item.delete();
         } else {
             System.out.println("Can not find item with index '" + index + "'");
@@ -187,14 +187,14 @@ System.err.println("authenticate: " + code);
     @Command(description = "Creates a subfolder in the currentFolder")
     public void createFolder(@Param(name = "folderName", description = "The name of the new Folder that should be created") String folderName) throws IOException,
                                                                                                                                               OneDriveException {
-        System.out.println(String.format("Creating %s in %s", folderName, currentFolder.getName()));
+        System.out.printf("Creating %s in %s%n", folderName, currentFolder.getName());
         currentFolder.createFolder(folderName);
     }
 
     @Command
     public void downloadItem(@Param(name = "index", description = "Index of the file you want to download") String index,
                              @Param(name = "targetFileName", description = "path where to download to") String pathToDownload) throws IOException {
-        System.out.println(String.format("Downloading %s to %s", currentFolderFiles.get(index).getName(), pathToDownload));
+        System.out.printf("Downloading %s to %s%n", currentFolderFiles.get(index).getName(), pathToDownload);
         OneFile tmpFile = currentFolderFiles.get(index);
         try {
             tmpFile.download(new File(pathToDownload)).startDownload();
@@ -221,7 +221,7 @@ System.err.println("authenticate: " + code);
         List<String> itemKeys = new ArrayList<>(map.keySet());
         Collections.sort(itemKeys);
         for (String key : itemKeys) {
-            System.out.println(String.format("Item %s = %s", key, map.get(key)));
+            System.out.printf("Item %s = %s%n", key, map.get(key));
         }
     }
 }

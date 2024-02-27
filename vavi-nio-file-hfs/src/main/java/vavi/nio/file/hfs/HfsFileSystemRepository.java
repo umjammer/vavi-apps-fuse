@@ -126,13 +126,12 @@ Debug.println(Level.FINE, "CEncryptedEncoding structure found! Creating filter s
                             throw e;
                         }
 
-Debug.println(
- "Unsupported AES key size: " +
- "If you were trying to load an AES-256 encrypted image and\n" +
- "are using Sun/Oracle's Java Runtime Environment, then \n" +
- "please check if you have installed the Java Cryptography\n" +
- "Extension (JCE) Unlimited Strength Jurisdiction Policy\n" +
- "Files, which are required for AES-256 support in Java.");
+Debug.println("""
+ Unsupported AES key size: If you were trying to load an AES-256 encrypted image and
+ are using Sun/Oracle's Java Runtime Environment, then\s
+ please check if you have installed the Java Cryptography
+ Extension (JCE) Unlimited Strength Jurisdiction Policy
+ Files, which are required for AES-256 support in Java.""");
                     }
                 } catch (Exception e) {
                     throw new IllegalArgumentException("Reading encrypted disk image...: " + "Incorrect password.");
@@ -210,11 +209,11 @@ e.printStackTrace();
         PartitionSystemType[] matchingTypes = PartitionSystemDetector.detectPartitionSystem(syncStream, false);
 
         if (matchingTypes.length > 1) {
-            String message = "Multiple partition system types detected:";
+            StringBuilder message = new StringBuilder("Multiple partition system types detected:");
             for (PartitionSystemType type : matchingTypes) {
-                message += "\n" + type;
+                message.append("\n").append(type);
             }
-            throw new IllegalArgumentException(message);
+            throw new IllegalArgumentException(message.toString());
 
         } else if (matchingTypes.length == 1) {
             PartitionSystemType psType = matchingTypes[0];
@@ -289,23 +288,14 @@ Debug.println("patitions: " + partitions.length + ", default: " + defaultSelecti
         case HFS_PLUS:
         case HFSX:
 
-            final FileSystemMajorType fsMajorType;
-            switch (fsType) {
-            case HFS:
-                fsMajorType = FileSystemMajorType.APPLE_HFS;
-                break;
-            case HFS_PLUS:
-            case HFS_WRAPPED_HFS_PLUS:
-                fsMajorType = FileSystemMajorType.APPLE_HFS_PLUS;
-                break;
-            case HFSX:
-                fsMajorType = FileSystemMajorType.APPLE_HFSX;
-                break;
-            default:
-                throw new IllegalArgumentException("Unhandled type: " + fsType);
-            }
+            final FileSystemMajorType fsMajorType = switch (fsType) {
+                case HFS -> FileSystemMajorType.APPLE_HFS;
+                case HFS_PLUS, HFS_WRAPPED_HFS_PLUS -> FileSystemMajorType.APPLE_HFS_PLUS;
+                case HFSX -> FileSystemMajorType.APPLE_HFSX;
+                default -> throw new IllegalArgumentException("Unhandled type: " + fsType);
+            };
 
-boolean cachingEnabled = true; // TODO env
+            boolean cachingEnabled = true; // TODO env
             FileSystemHandlerFactory factory = fsMajorType.createDefaultHandlerFactory();
             if (factory.isSupported(StandardAttribute.CACHING_ENABLED)) {
                 factory.getCreateAttributes().setBooleanAttribute(

@@ -83,7 +83,7 @@ public final class AcdFileSystemDriver extends DoubleCachedFileSystemDriver<Node
     protected OutputStream uploadEntry(NodeInfo parentEntry, Path path, Set<? extends OpenOption> options) throws IOException {
         File temp = File.createTempFile("vavi-apps-fuse-", ".upload");
 
-        return new AcdOutputStream(drive, temp, toFilenameString(path), FolderInfo.class.cast(parentEntry), file -> {
+        return new AcdOutputStream(drive, temp, toFilenameString(path), (FolderInfo) parentEntry, file -> {
 System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + ", " + file.getContentProperties().getSize());
             updateEntry(path, file);
         });
@@ -102,7 +102,7 @@ System.out.println("file: " + file.getName() + ", " + file.getCreationDate() + "
 
     @Override
     protected boolean hasChildren(NodeInfo dirEntry, Path dir) throws IOException {
-        return drive.getList(dirEntry.getId()).size() > 0;
+        return !drive.getList(dirEntry.getId()).isEmpty();
     }
 
     @Override

@@ -10,7 +10,6 @@ import java.net.URI;
 import java.util.Calendar;
 
 import com.microsoft.graph.authentication.IAuthenticationProvider;
-import com.microsoft.graph.http.IHttpRequest;
 import com.microsoft.graph.models.extensions.DriveItem;
 import com.microsoft.graph.models.extensions.Folder;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
@@ -60,12 +59,7 @@ public class WebHookApiTest {
         String accessToken = new MicrosoftGraphOAuth2(appCredential, true).authorize(userCredential);
 //Debug.println("accessToken: " + accessToken);
 
-        IAuthenticationProvider authenticationProvider = new IAuthenticationProvider() {
-            @Override
-            public void authenticateRequest(IHttpRequest request) {
-                request.addHeader("Authorization", "Bearer " + accessToken);
-            }
-        };
+        IAuthenticationProvider authenticationProvider = request -> request.addHeader("Authorization", "Bearer " + accessToken);
         IGraphServiceClient graphClient = GraphServiceClient.builder()
             .authenticationProvider(authenticationProvider)
             .logger(new MyLogger())

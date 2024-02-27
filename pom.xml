@@ -4,7 +4,7 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.1.9</version>
+  <version>0.1.10</version>
   <packaging>pom</packaging>
 
   <modules>
@@ -19,15 +19,17 @@
     <module>vavi-nio-file-onedrive4</module>
     <module>vavi-nio-file-vfs</module>
     <module>vavi-nio-file-sandbox</module>
-    <module>vavi-net-fuse</module>
   </modules>
 
   <properties>
-    <vavi-net-auth.groupId>com.github.umjammer.vavi-net-auth</vavi-net-auth.groupId> <!-- vavi / com.github.umjammer -->
+    <vavi-net-auth.groupId>com.github.umjammer.vavi-net-auth</vavi-net-auth.groupId> <!-- vavi / com.github.umjammer.vavi-net-auth -->
     <vavi-net-auth.version>0.1.9</vavi-net-auth.version>
 
     <vavi-nio-file-base.groupId>com.github.umjammer</vavi-nio-file-base.groupId> <!-- com.github.fge / com.github.umjammer -->
     <vavi-nio-file-base.version>0.0.14v</vavi-nio-file-base.version>
+
+    <vavi-nio-file-fuse.groupId>com.github.umjammer</vavi-nio-file-fuse.groupId> <!-- vavi / com.github.umjammer -->
+    <vavi-nio-file-fuse.version>0.0.16</vavi-nio-file-fuse.version>
   </properties>
 
   <name>vavi-apps-fuse</name>
@@ -74,7 +76,6 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <!-- java-fs base -->
         <groupId>${vavi-nio-file-base.groupId}</groupId>
         <artifactId>vavi-nio-file-base</artifactId>
         <version>${vavi-nio-file-base.version}</version>
@@ -84,12 +85,6 @@
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>jsr305</artifactId>
         <version>3.0.2</version>
-      </dependency>
-
-      <dependency>
-        <groupId>vavi</groupId>
-        <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.9</version>
       </dependency>
 
       <dependency>
@@ -115,9 +110,16 @@
       </dependency>
 
       <dependency>
-        <groupId>vavi</groupId>
-        <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.9</version>
+        <groupId>${vavi-nio-file-fuse.groupId}</groupId>
+        <artifactId>vavi-nio-file-fuse</artifactId>
+        <version>${vavi-nio-file-fuse.version}</version>
+        <scope>test</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>${vavi-nio-file-fuse.groupId}</groupId>
+        <artifactId>vavi-nio-file-fuse</artifactId>
+        <version>${vavi-nio-file-fuse.version}</version>
         <type>test-jar</type>
         <scope>test</scope>
       </dependency>

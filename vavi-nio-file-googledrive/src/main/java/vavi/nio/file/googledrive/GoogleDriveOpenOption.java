@@ -33,10 +33,10 @@ public enum GoogleDriveOpenOption implements OpenOption {
     IMPORT_AS_NEW_REVISION(null);
 
     /** depends on enum stuff */
-    private String value;
+    private final String value;
 
     /** */
-    private GoogleDriveOpenOption(String value) {
+    GoogleDriveOpenOption(String value) {
         this.value = value;
     }
 

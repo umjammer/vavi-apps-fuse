@@ -14,12 +14,7 @@ import com.github.fge.filesystem.filestore.FileStoreBase;
 
 
 /**
- * A simple Commons VFS2 {@link FileStore}
- *
- * <p>
- * This makes use of information available in {@link StorageQuota}.
- * Information is computed in "real time".
- * </p>
+ * A simple Commons VFS2 {@link FileStore}.
  */
 public final class GatheredFileStore extends FileStoreBase {
 

@@ -104,7 +104,7 @@ public class WatchDirectoryTest {
     public void testEventForDirectoryWatchKey() throws Exception {
         generateFile(basePath.resolve("newTextFile.txt"), 10);
         List<WatchEvent<?>> eventList = basePathWatchKey.pollEvents();
-        while (eventList.size() == 0 ){
+        while (eventList.isEmpty()){
             eventList = basePathWatchKey.pollEvents();
             Thread.sleep(10000);
         }
@@ -115,7 +115,7 @@ public class WatchDirectoryTest {
         basePathWatchKey.reset();
         generateFile(basePath.resolve("newTextFileII.txt"), 10);
         generateFile(basePath.resolve("newTextFileIII.txt"), 10);
-        while (eventList.size() == 0 ){
+        while (eventList.isEmpty()){
             eventList = basePathWatchKey.pollEvents();
             Thread.sleep(10000);
         }

@@ -52,7 +52,7 @@ public class GoogleDriveWatchService extends WebHookBaseWatchService<UnparsedNot
     private static final String VAVI_APPS_WEBHOOK_SECRET = System.getenv("VAVI_APPS_WEBHOOK_SECRET");
     private static final String webhooktUrl = System.getenv("VAVI_APPS_WEBHOOK_WEBHOOK_GOOGLE_URL");
 
-    private Drive drive;
+    private final Drive drive;
     private Channel channel = null;
 
     private String savedStartPageToken;

@@ -20,7 +20,7 @@ import com.github.fge.filesystem.filestore.FileStoreBase;
  * A simple Amazon Cloud Drive {@link FileStore}
  *
  * <p>
- * This makes use of information available in {@link StorageQuota}.
+ * This makes use of information available in {@link AccountQuota}.
  * Information is computed in "real time".
  * </p>
  */

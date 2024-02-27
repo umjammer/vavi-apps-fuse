@@ -5,7 +5,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.9</version>
+    <version>0.1.10</version>
   </parent>
 
   <artifactId>vavi-nio-file-flickr</artifactId>
@@ -49,8 +49,8 @@
     </dependency>
 
     <dependency>
-      <groupId>vavi</groupId>
-      <artifactId>vavi-net-fuse</artifactId>
+      <groupId>${vavi-nio-file-fuse.groupId}</groupId>
+      <artifactId>vavi-nio-file-fuse</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

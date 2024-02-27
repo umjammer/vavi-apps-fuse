@@ -96,8 +96,8 @@ public class LraMonitorProvider<MonitorType> {
         while (!finished) {
 
             try {
-                Thread.sleep(1 << timeout);
-            } catch (InterruptedException e) {
+                Thread.sleep(1L << timeout);
+            } catch (InterruptedException ignored) {
             }
 
             LraMonitorRequest request = new LraMonitorRequest(this.monitorUrl, this.client);

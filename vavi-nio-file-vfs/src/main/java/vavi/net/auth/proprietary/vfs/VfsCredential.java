@@ -9,6 +9,7 @@ package vavi.net.auth.proprietary.vfs;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import vavi.net.auth.AppCredential;
 import vavi.net.auth.UserCredential;
@@ -113,31 +114,27 @@ public class VfsCredential implements UserCredential, AppCredential {
 
     /** */
     public String buildBaseUrl() {
-        try {
-            StringBuilder sb = new StringBuilder();
-            sb.append(getClientId());
-            sb.append("://");
-            if (username != null) {
-                sb.append(URLEncoder.encode(username, "utf-8"));
-            }
-            if (password != null) {
-                sb.append(":");
-                sb.append(password);
-            }
-            if (host != null) {
-                if (username != null || password != null) {
-                    sb.append("@");
-                }
-                sb.append(host);
-            }
-            if (port != -1) {
-                sb.append(":");
-                sb.append(port);
-            }
-            return sb.toString();
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
+        StringBuilder sb = new StringBuilder();
+        sb.append(getClientId());
+        sb.append("://");
+        if (username != null) {
+            sb.append(URLEncoder.encode(username, StandardCharsets.UTF_8));
         }
+        if (password != null) {
+            sb.append(":");
+            sb.append(password);
+        }
+        if (host != null) {
+            if (username != null || password != null) {
+                sb.append("@");
+            }
+            sb.append(host);
+        }
+        if (port != -1) {
+            sb.append(":");
+            sb.append(port);
+        }
+        return sb.toString();
     }
 }
 

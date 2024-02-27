@@ -6,11 +6,8 @@
 
 package vavi.nio.file.onedrive4.graph;
 
-import com.microsoft.graph.authentication.IAuthenticationProvider;
 import com.microsoft.graph.http.BaseRequest;
 import com.microsoft.graph.http.HttpMethod;
-import com.microsoft.graph.http.IHttpRequest;
-import com.microsoft.graph.http.IStatefulResponseHandler;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 import com.microsoft.graph.requests.extensions.GraphServiceClient;
 
@@ -33,10 +30,7 @@ public class LraMonitorRequest {
      */
     public LraMonitorRequest(final String requestUrl, IGraphServiceClient client) {
         IGraphServiceClient clientWithoutAuth = GraphServiceClient.builder()
-                .authenticationProvider(new IAuthenticationProvider() {
-                    @Override
-                    public void authenticateRequest(IHttpRequest request) {
-                    }
+                .authenticationProvider(request -> {
                 })
                 .logger(client.getLogger())
                 .buildClient();
@@ -55,9 +49,9 @@ public class LraMonitorRequest {
     public LraMonitorResult monitor(final LraMonitorResponseHandler responseHandler) {
         return this.baseRequest.getClient()
                 .getHttpProvider()
-                .send((IHttpRequest) baseRequest,
+                .send(baseRequest,
                       LraMonitorResult.class,
                       null,
-                      (IStatefulResponseHandler) responseHandler);
+                        responseHandler);
     }
 }

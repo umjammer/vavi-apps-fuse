@@ -20,7 +20,7 @@ import com.github.fge.filesystem.filestore.FileStoreBase;
  * A simple Flickr {@link FileStore}
  *
  * <p>
- * This makes use of information available in {@link StorageQuota}.
+ * This makes use of information available in {@link User}.
  * Information is computed in "real time".
  * </p>
  */
@@ -33,9 +33,9 @@ public final class FlickrFileStore extends FileStoreBase {
      *
      * @param flickr the (valid) Flickr flickr to use
      */
-    public FlickrFileStore(final Flickr drive, final FileAttributesFactory factory) {
+    public FlickrFileStore(final Flickr flickr, final FileAttributesFactory factory) {
         super("flickr", factory, false);
-        this.flickr = drive;
+        this.flickr = flickr;
     }
 
     /**

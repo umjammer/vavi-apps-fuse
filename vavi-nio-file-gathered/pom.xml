@@ -5,7 +5,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.9</version>
+    <version>0.1.10</version>
   </parent>
 
   <artifactId>vavi-nio-file-gathered</artifactId>
@@ -76,13 +76,13 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>vavi</groupId>
-      <artifactId>vavi-net-fuse</artifactId>
+      <groupId>${vavi-nio-file-fuse.groupId}</groupId>
+      <artifactId>vavi-nio-file-fuse</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>vavi</groupId>
-      <artifactId>vavi-net-fuse</artifactId>
+      <groupId>${vavi-nio-file-fuse.groupId}</groupId>
+      <artifactId>vavi-nio-file-fuse</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
@@ -90,25 +90,25 @@
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-googledrive</artifactId>
-      <version>0.1.9</version>
+      <version>0.1.10</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>vavi</groupId>
       <artifactId>vavi-nio-file-onedrive4</artifactId>
-      <version>0.1.9</version>
+      <version>0.1.10</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- com.github.fge / com.github.umjammer -->
       <artifactId>vavi-nio-file-dropbox</artifactId>
-      <version>0.0.20v</version>
+      <version>0.0.21</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.github.umjammer</groupId> <!-- com.github.fge / com.github.umjammer -->
       <artifactId>vavi-nio-file-box</artifactId>
-      <version>0.1.15v</version>
+      <version>0.1.16</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

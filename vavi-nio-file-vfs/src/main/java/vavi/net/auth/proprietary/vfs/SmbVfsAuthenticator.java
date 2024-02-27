@@ -106,7 +106,7 @@ Debug.println("credential: by uri");
 
     @Override
     public FileSystemOptions authorize(VfsCredential credential) throws IOException {
-        SmbVfsCredential c = SmbVfsCredential.class.cast(credential);
+        SmbVfsCredential c = (SmbVfsCredential) credential;
 
         FileSystemOptions options = new FileSystemOptions();
         StaticUserAuthenticator auth = new StaticUserAuthenticator(c.domain, c.username, c.password);

@@ -23,10 +23,10 @@ public enum GoogleDriveCopyOption implements CopyOption {
     EXPORT_AS_GDOCS("application/vnd.google-apps.document");
 
     /** */
-    private String value;
+    private final String value;
 
     /** */
-    private GoogleDriveCopyOption(String value) {
+    GoogleDriveCopyOption(String value) {
         this.value = value;
     }
 

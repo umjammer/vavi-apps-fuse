@@ -35,7 +35,7 @@ import org.yetiz.lib.acd.Entity.FolderInfo;
  * throw an exception; which means it may throw none, or it may throw an
  * <em>unchecked</em> exception. As such, the {@link #close()} method of this
  * class captures all {@link RuntimeException}s which {@link
- * java.io.File#close()} may throw and wrap it into a {@link
+ * java.io.OutputStream#close()} may throw and wrap it into a {@link
  * IOException}. If the underlying output stream <em>did</em> throw an
  * exception, however, then such an exception is {@link
  * Throwable#addSuppressed(Throwable) suppressed}.

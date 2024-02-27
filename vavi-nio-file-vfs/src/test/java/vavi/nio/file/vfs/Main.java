@@ -8,6 +8,7 @@ package vavi.nio.file.vfs;
 
 import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -76,10 +77,10 @@ public class Main {
             @EnabledIfEnvironmentVariable(named = "TEST_SFTP_PATH", matches = ".+"),
     })
     void test01() throws Exception {
-        String username = URLEncoder.encode(System.getenv("TEST_SFTP_ACCOUNT"), "utf-8");
-        String passPhrase = URLEncoder.encode(System.getenv("TEST_SFTP_PASSPHRASE"), "utf-8");
+        String username = URLEncoder.encode(System.getenv("TEST_SFTP_ACCOUNT"), StandardCharsets.UTF_8);
+        String passPhrase = URLEncoder.encode(System.getenv("TEST_SFTP_PASSPHRASE"), StandardCharsets.UTF_8);
         String host = System.getenv("TEST_SFTP_HOST");
-        String keyPath = URLEncoder.encode(System.getenv("TEST_SFTP_KEYPATH"), "utf-8");
+        String keyPath = URLEncoder.encode(System.getenv("TEST_SFTP_KEYPATH"), StandardCharsets.UTF_8);
         String path = System.getenv("TEST_SFTP_PATH");
 
         URI uri = URI.create(String.format("vfs:sftp://%s@%s%s?keyPath=%s&passphrase=%s", username, host, path, keyPath, passPhrase));
@@ -110,7 +111,7 @@ public class Main {
             @EnabledIfEnvironmentVariable(named = "TEST_WEBDAV_PATH", matches = ".+"),
     })
     void test02() throws Exception {
-        String username = URLEncoder.encode(System.getenv("TEST_WEBDAV_ACCOUNT"), "utf-8");
+        String username = URLEncoder.encode(System.getenv("TEST_WEBDAV_ACCOUNT"), StandardCharsets.UTF_8);
         String password = System.getenv("TEST_WEBDAV_PASSWORD");
         String host = System.getenv("TEST_WEBDAV_HOST");
         String port = System.getenv("TEST_WEBDAV_PORT");

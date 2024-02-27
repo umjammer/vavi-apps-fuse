@@ -27,13 +27,12 @@ public interface VfsAuthenticator extends Authenticator<VfsCredential, FileSyste
     /** factory */
     static VfsAuthenticator getAuthenticator(URI uri) {
         String scheme = uri.getScheme();
-        switch (scheme) {
-        case "smb": return new SmbVfsAuthenticator();
-        case "cifs": return new SmbVfsAuthenticator();
-        case "sftp": return new SftpVfsAuthenticator();
-        case "webdav4s": return new WebdavVfsAuthenticator();
-        default: throw new IllegalArgumentException(scheme);
-        }
+        return switch (scheme) {
+            case "smb", "cifs" -> new SmbVfsAuthenticator();
+            case "sftp" -> new SftpVfsAuthenticator();
+            case "webdav4s" -> new WebdavVfsAuthenticator();
+            default -> throw new IllegalArgumentException(scheme);
+        };
     }
 }
 

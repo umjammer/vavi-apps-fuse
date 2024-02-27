@@ -33,9 +33,9 @@ import vavi.util.properties.annotation.PropsEntity;
 public class OneDriveEasyFS implements EasyFS<DriveItem> {
 
     /** */
-    private MicrosoftGraphOAuth2 auth2;
+    private final MicrosoftGraphOAuth2 auth2;
     /** */
-    private IGraphServiceClient client;
+    private final IGraphServiceClient client;
 
     /** */
     public OneDriveEasyFS(String email) throws IOException {

@@ -32,7 +32,7 @@ import vavi.util.Debug;
  */
 public final class GatheredBasicFileAttributesProvider extends BasicFileAttributesProvider implements PosixFileAttributes {
 
-    private Object entry;
+    private final Object entry;
 
     public GatheredBasicFileAttributesProvider(@Nonnull final Object entry) throws IOException {
         this.entry = entry;
@@ -52,16 +52,14 @@ public final class GatheredBasicFileAttributesProvider extends BasicFileAttribut
     @Override
     public FileTime lastModifiedTime() {
         try {
-            if (FileSystem.class.isInstance(entry)) {
-                FileSystem fs = FileSystem.class.cast(entry);
-                if (GatheredFileSystemProvider.class.isInstance(fs.provider())) {
+            if (entry instanceof FileSystem fs) {
+                if (fs.provider() instanceof GatheredFileSystemProvider) {
                     return FileTime.fromMillis(System.currentTimeMillis());
                 } else {
                     return Files.getLastModifiedTime(fs.getRootDirectories().iterator().next());
                 }
-            } else if (Path.class.isInstance(entry)) {
-                Path path = Path.class.cast(entry);
-//System.err.println("@@@: " + entry + ", " + path.getFileSystem().provider());
+            } else if (entry instanceof Path path) {
+                //System.err.println("@@@: " + entry + ", " + path.getFileSystem().provider());
                 return Files.getLastModifiedTime(path);
             } else {
                 throw new IllegalStateException("unsupported type: " + entry.getClass().getName());
@@ -82,10 +80,9 @@ e.printStackTrace();
      */
     @Override
     public boolean isRegularFile() {
-        if (FileSystem.class.isInstance(entry)) {
+        if (entry instanceof FileSystem) {
             return false;
-        } else if (Path.class.isInstance(entry)) {
-            Path path = Path.class.cast(entry);
+        } else if (entry instanceof Path path) {
             return Files.isRegularFile(path);
         } else {
             throw new IllegalStateException("unsupported type: " + entry.getClass().getName());
@@ -97,10 +94,9 @@ e.printStackTrace();
      */
     @Override
     public boolean isDirectory() {
-        if (FileSystem.class.isInstance(entry)) {
+        if (entry instanceof FileSystem) {
             return true;
-        } else if (Path.class.isInstance(entry)) {
-            Path path = Path.class.cast(entry);
+        } else if (entry instanceof Path path) {
             return Files.isDirectory(path);
         } else {
             throw new IllegalStateException("unsupported type: " + entry.getClass().getName());
@@ -119,10 +115,10 @@ e.printStackTrace();
     @Override
     public long size() {
         try {
-            if (FileSystem.class.isInstance(entry)) {
-                return FileSystem.class.cast(entry).getFileStores().iterator().next().getTotalSpace();
-            } else if (Path.class.isInstance(entry)) {
-                return Files.size(Path.class.cast(entry));
+            if (entry instanceof FileSystem) {
+                return ((FileSystem) entry).getFileStores().iterator().next().getTotalSpace();
+            } else if (entry instanceof Path) {
+                return Files.size((Path) entry);
             } else {
                 throw new IllegalStateException("unsupported type: " + entry.getClass().getName());
             }

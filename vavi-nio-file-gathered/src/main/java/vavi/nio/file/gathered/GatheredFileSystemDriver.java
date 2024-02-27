@@ -57,7 +57,7 @@ public final class GatheredFileSystemDriver extends ExtendedFileSystemDriverBase
         super(fileStore, provider);
         this.fileSystems = fileSystems;
         if (env.containsKey(GatheredFileSystemProvider.ENV_NAME_MAP)) {
-            this.nameMap = NameMap.class.cast(env.get(GatheredFileSystemProvider.ENV_NAME_MAP));
+            this.nameMap = (NameMap) env.get(GatheredFileSystemProvider.ENV_NAME_MAP);
         }
     }
 
@@ -70,7 +70,7 @@ public final class GatheredFileSystemDriver extends ExtendedFileSystemDriverBase
             throw new IsDirectoryException("path: " + path);
         }
 
-        return Files.newInputStream(Path.class.cast(entry));
+        return Files.newInputStream((Path) entry);
     }
 
     @Override

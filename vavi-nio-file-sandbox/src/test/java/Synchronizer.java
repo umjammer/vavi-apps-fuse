@@ -76,7 +76,7 @@ public final class Synchronizer {
 
     static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
-        private List<Path> list = new ArrayList<>();
+        private final List<Path> list = new ArrayList<>();
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {

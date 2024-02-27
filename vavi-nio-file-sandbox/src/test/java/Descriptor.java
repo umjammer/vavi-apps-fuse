@@ -79,21 +79,20 @@ public final class Descriptor {
         String isbn13;
         @Override
         public String toString() {
-            StringBuilder builder = new StringBuilder();
-            builder.append("Result [title=");
-            builder.append(title);
-            builder.append(", authors=");
-            builder.append(authors);
-            builder.append(", publishedDate=");
-            builder.append(publishedDate);
-            builder.append(", description=");
-            builder.append(description);
-            builder.append(", isbn10=");
-            builder.append(isbn10);
-            builder.append(", isbn13=");
-            builder.append(isbn13);
-            builder.append("]");
-            return builder.toString();
+            String builder = "Result [title=" +
+                    title +
+                    ", authors=" +
+                    authors +
+                    ", publishedDate=" +
+                    publishedDate +
+                    ", description=" +
+                    description +
+                    ", isbn10=" +
+                    isbn10 +
+                    ", isbn13=" +
+                    isbn13 +
+                    "]";
+            return builder;
         }
         public String toFormatedString() {
             StringBuilder builder = new StringBuilder();

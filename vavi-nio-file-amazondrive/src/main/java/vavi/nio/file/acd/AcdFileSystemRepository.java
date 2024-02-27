@@ -47,7 +47,7 @@ public final class AcdFileSystemRepository extends FileSystemRepositoryBase {
         UserCredential userCredential = null;
 
         if (env.containsKey(AcdFileSystemProvider.ENV_USER_CREDENTIAL)) {
-            userCredential = UserCredential.class.cast(env.get(AcdFileSystemProvider.ENV_USER_CREDENTIAL));
+            userCredential = (UserCredential) env.get(AcdFileSystemProvider.ENV_USER_CREDENTIAL);
         }
 
         Map<String, String> params = getParamsMap(uri);
@@ -65,7 +65,7 @@ public final class AcdFileSystemRepository extends FileSystemRepositoryBase {
         OAuth2AppCredential appCredential = null;
 
         if (env.containsKey(AcdFileSystemProvider.ENV_APP_CREDENTIAL)) {
-            appCredential = OAuth2AppCredential.class.cast(env.get(AcdFileSystemProvider.ENV_APP_CREDENTIAL));
+            appCredential = (OAuth2AppCredential) env.get(AcdFileSystemProvider.ENV_APP_CREDENTIAL);
         }
 
         if (appCredential == null) {

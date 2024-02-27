@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.CopyOption;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -196,21 +197,23 @@ Debug.println("upload w/o option");
             UploadSession uploadSession = client.drive().root().itemWithPath(toItemPathString(toPathString(path))).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
             vavi.nio.file.onedrive4.graph.ChunkedUploadProvider<DriveItem> chunkedUploadProvider =
                     new vavi.nio.file.onedrive4.graph.ChunkedUploadProvider<>(uploadSession, client, size, DriveItem.class);
-            return new BufferedOutputStream(chunkedUploadProvider.upload(new IProgressCallback<DriveItem>() {
-                    @Override
-                    public void progress(final long current, final long max) {
-Debug.println(current + "/" + max);
-                    }
-                    @Override
-                    public void success(final DriveItem result) {
-                        updateEntry(path, result);
-Debug.println("upload done: " + result.name);
-                    }
-                    @Override
-                    public void failure(final ClientException ex) {
-                        // never called
-                    }
-                }), threshold);
+            return new BufferedOutputStream(chunkedUploadProvider.upload(new IProgressCallback<>() {
+                @Override
+                public void progress(final long current, final long max) {
+                    Debug.println(current + "/" + max);
+                }
+
+                @Override
+                public void success(final DriveItem result) {
+                    updateEntry(path, result);
+                    Debug.println("upload done: " + result.name);
+                }
+
+                @Override
+                public void failure(final ClientException ex) {
+                    // never called
+                }
+            }), threshold);
         } else {
             return new Util.OutputStreamForUploading() {
                 @Override
@@ -229,21 +232,23 @@ Debug.println("upload done: " + result.name);
             UploadSession uploadSession = client.drive().root().itemWithPath(toItemPathString(toPathString(path))).createUploadSession(new DriveItemUploadableProperties()).buildRequest().post();
             ChunkedUploadProvider<DriveItem> chunkedUploadProvider = new ChunkedUploadProvider<>(uploadSession,
                     client, is, size, DriveItem.class);
-            chunkedUploadProvider.upload(new IProgressCallback<DriveItem>() {
-                    @Override
-                    public void progress(final long current, final long max) {
-Debug.println(current + "/" + max);
-                    }
-                    @Override
-                    public void success(final DriveItem result) {
-                        updateEntry(path, result);
-Debug.println("upload done: " + result.name);
-                    }
-                    @Override
-                    public void failure(final ClientException ex) {
-                        throw ex;
-                    }
-                });
+            chunkedUploadProvider.upload(new IProgressCallback<>() {
+                @Override
+                public void progress(final long current, final long max) {
+                    Debug.println(current + "/" + max);
+                }
+
+                @Override
+                public void success(final DriveItem result) {
+                    updateEntry(path, result);
+                    Debug.println("upload done: " + result.name);
+                }
+
+                @Override
+                public void failure(final ClientException ex) {
+                    throw ex;
+                }
+            });
         } else {
             DriveItem newEntry = client.drive().root().itemWithPath(toItemPathString(toPathString(path))).content().buildRequest().put(ByteStreams.toByteArray(is)); // TODO depends on guava
             updateEntry(path, newEntry);
@@ -252,7 +257,7 @@ Debug.println("upload done: " + result.name);
 
     /** ms-graph doesn't accept '+' in a path string */
     private String toItemPathString(String pathString) throws IOException {
-        return URLEncoder.encode(pathString.replaceFirst("^\\/", ""), "utf-8").replace("+", "%20");
+        return URLEncoder.encode(pathString.replaceFirst("^\\/", ""), StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     @Override
@@ -303,16 +308,18 @@ Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEn
         @SuppressWarnings({ "unchecked", "rawtypes" }) // TODO
         LraSession copySession = client.getHttpProvider().<LraMonitorResult, DriveItemCopyBody, LraMonitorResult>send((IHttpRequest) request, LraMonitorResult.class, body, (IStatefulResponseHandler) handler).getSession();
         LraMonitorProvider<DriveItem> copyMonitorProvider = new LraMonitorProvider<>(copySession, client, DriveItem.class);
-        copyMonitorProvider.monitor(new IProgressCallback<DriveItem>() {
+        copyMonitorProvider.monitor(new IProgressCallback<>() {
             @Override
             public void progress(final long current, final long max) {
-Debug.println("copy progress: " + current + "/" + max);
+                Debug.println("copy progress: " + current + "/" + max);
             }
+
             @Override
             public void success(final DriveItem result) {
-Debug.println("copy done: " + result.id);
+                Debug.println("copy done: " + result.id);
                 updateEntry(target, result);
             }
+
             @Override
             public void failure(final ClientException ex) {
                 throw new IllegalStateException(ex);

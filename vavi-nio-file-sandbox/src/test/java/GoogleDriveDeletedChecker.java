@@ -5,23 +5,17 @@
  */
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-import java.util.stream.Stream;
 
 import vavi.nio.file.Util;
 import vavi.nio.file.googledrive.GoogleDriveFileSystemProvider;
-import vavi.nio.file.googledrive.GoogleDriveOpenOption;
-import vavi.nio.file.googledrive.GoogleDriveUserDefinedFileAttributesProvider;
 import vavi.util.Debug;
 
 import static vavi.nio.file.googledrive.GoogleDriveFileSystemDriver.fileSearcher;
@@ -77,7 +71,7 @@ System.out.println(normalized);
             if (results.size() > 1) {
 Debug.println(Level.WARNING, "ambiguous: " + normalized);
 results.forEach(System.err::println);
-            } else if (results.size() == 0) {
+            } else if (results.isEmpty()) {
 Debug.println(Level.WARNING, "none: " + normalized);
             } else {
                 count++;

@@ -40,11 +40,12 @@ public final class GatheredFileSystemRepository extends FileSystemRepositoryBase
      */
     @Nonnull
     @Override
+    @SuppressWarnings("unchecked")
     public FileSystemDriver createDriver(final URI uri, final Map<String, ?> env) throws IOException {
         if (!env.containsKey(GatheredFileSystemProvider.ENV_FILESYSTEMS)) {
             throw new NoSuchElementException(GatheredFileSystemProvider.ENV_FILESYSTEMS);
         }
-        Map<String, FileSystem> fileSystems = Map.class.cast(env.get(GatheredFileSystemProvider.ENV_FILESYSTEMS));
+        Map<String, FileSystem> fileSystems = (Map<String, FileSystem>) env.get(GatheredFileSystemProvider.ENV_FILESYSTEMS);
 
         GatheredFileStore fileStore = new GatheredFileStore(factoryProvider.getAttributesFactory());
         return new GatheredFileSystemDriver(fileStore, factoryProvider, fileSystems, env);

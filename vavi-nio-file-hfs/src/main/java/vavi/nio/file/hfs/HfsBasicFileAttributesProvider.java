@@ -38,7 +38,7 @@ import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider
  */
 public final class HfsBasicFileAttributesProvider extends BasicFileAttributesProvider implements PosixFileAttributes {
 
-    private FSEntry entry; // TODO
+    private final FSEntry entry; // TODO
 
     public HfsBasicFileAttributesProvider(@Nonnull final FSEntry entry) throws IOException {
         this.entry = entry;
@@ -65,7 +65,7 @@ public final class HfsBasicFileAttributesProvider extends BasicFileAttributesPro
      */
     @Override
     public boolean isRegularFile() {
-        return FSFile.class.isInstance(entry);
+        return entry instanceof FSFile;
     }
 
     /**
@@ -73,7 +73,7 @@ public final class HfsBasicFileAttributesProvider extends BasicFileAttributesPro
      */
     @Override
     public boolean isDirectory() {
-        return FSFolder.class.isInstance(entry);
+        return entry instanceof FSFolder;
     }
 
     /**

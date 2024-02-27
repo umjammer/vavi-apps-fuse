@@ -46,30 +46,28 @@ public final class CloserFinder {
         MyFileVisitor fileSearcher = new MyFileVisitor();
         Files.walkFileTree(root, fileSearcher);
         fileSearcher.result().parallelStream()
-            .forEach(path1 -> {
-                fileSearcher.result().parallelStream()
-                    .forEach(path2 -> {
-                        try {
-                            if (!path1.equals(path2)) {
-                                String filename1 = Util.toFilenameString(path1);
-                                String filename2 = Util.toFilenameString(path2);
-                                int d = LevenshteinDistance.calculate(filename1, filename2);
-                                if (d > 1 && d < 5) {
-                                    System.err.println(path1 + ": " + path2);
-                                }
+            .forEach(path1 -> fileSearcher.result().parallelStream()
+                .forEach(path2 -> {
+                    try {
+                        if (!path1.equals(path2)) {
+                            String filename1 = Util.toFilenameString(path1);
+                            String filename2 = Util.toFilenameString(path2);
+                            int d = LevenshteinDistance.calculate(filename1, filename2);
+                            if (d > 1 && d < 5) {
+                                System.err.println(path1 + ": " + path2);
                             }
-                        } catch (IOException e) {
-                            throw new IllegalStateException(e);
                         }
-                    });
-            });
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                }));
 
         fs.close();
     }
 
     static class MyFileVisitor extends SimpleFileVisitor<Path> {
 
-        private List<Path> list = new ArrayList<>();
+        private final List<Path> list = new ArrayList<>();
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attr) {

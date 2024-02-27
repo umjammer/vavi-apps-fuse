@@ -14,7 +14,6 @@ import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
-import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -66,7 +65,7 @@ public final class ArchiveFileSystemDriver extends ExtendedFileSystemDriverBase 
     }
 
     /** for the case archive#entries() does not return dirs */
-    private Map<Path, Set<Path>> directories = new HashMap<>();
+    private final Map<Path, Set<Path>> directories = new HashMap<>();
 
     /** */
     private Entry getEntry(Path path) throws FileNotFoundException{
@@ -170,7 +169,7 @@ Debug.println(Level.FINER, "root *: " + childPath);
                 if (entry.getName().startsWith(dirString)) {
                     String entryName = entry.getName().substring(dirString.length());
                     String[] names = entryName.split("/");
-                    if (names[0].length() > 0) { // exclude self?
+                    if (!names[0].isEmpty()) { // exclude self?
                         Path childPath = dir.resolve(names[0]);
                         if (!list.contains(childPath))
                             list.add(childPath);

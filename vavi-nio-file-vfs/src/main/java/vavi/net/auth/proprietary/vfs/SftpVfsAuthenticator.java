@@ -140,7 +140,7 @@ Debug.println("credential: by uri");
 
     @Override
     public FileSystemOptions authorize(VfsCredential credential) throws IOException {
-        SftpVfsCredential c = SftpVfsCredential.class.cast(credential);
+        SftpVfsCredential c = (SftpVfsCredential) credential;
 
         boolean pkc = c.passphrase != null;
         FileSystemOptions options = new FileSystemOptions();

@@ -6,6 +6,7 @@
 
 package vavi.nio.file.onedrive3;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.nio.file.CopyOption;
 import java.nio.file.OpenOption;
@@ -29,6 +30,7 @@ import java.nio.file.Path;
 public class OneDriveUploadOption implements OpenOption, CopyOption, Serializable {
 
     /** */
+    @Serial
     private static final long serialVersionUID = 5575546140441990410L;
 
     /** */

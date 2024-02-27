@@ -8,6 +8,7 @@ package vavi.nio.file.vfs;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemManager;
@@ -61,7 +62,7 @@ public class TestVfsWebdav {
         FileSystemManager fs = VFS.getManager();
         if (!fs.hasProvider("webdav"))
             throw new RuntimeException("Provider missing: webdav");
-        String baseUrl = String.format(this.baseUrl, username, password, host, port, URLEncoder.encode(component, "utf-8"));
+        String baseUrl = String.format(this.baseUrl, username, password, host, port, URLEncoder.encode(component, StandardCharsets.UTF_8));
 System.err.println("Connecting \"" + baseUrl + "\" with " + options);
         FileObject davFile = fs.resolveFile(baseUrl, options); // added opts!
 //System.err.println(smbFile.exists() + " " + smbFile.getContent().getLastModifiedTime());
