@@ -79,13 +79,13 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>vavi</groupId>
-      <artifactId>vavi-net-fuse</artifactId>
+      <groupId>${vavi-nio-file-fuse.groupId}</groupId>
+      <artifactId>vavi-nio-file-fuse</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>vavi</groupId>
-      <artifactId>vavi-net-fuse</artifactId>
+      <groupId>${vavi-nio-file-fuse.groupId}</groupId>
+      <artifactId>vavi-nio-file-fuse</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

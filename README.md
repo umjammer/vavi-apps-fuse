@@ -97,3 +97,4 @@
  * https://github.com/mucommander/mucommander
  * trash,recent
  * ~~separate vavi-nio-file-commons and merge into vavi-nio-file-base~~
+ * separate fuse part (use obsoleted vavi-nio-file -> vavi-nio-file-fuse)
