@@ -28,7 +28,6 @@
 
   <dependencies>
     <dependency>
-      <!-- java-fs base -->
       <groupId>${vavi-nio-file-base.groupId}</groupId>
       <artifactId>vavi-nio-file-base</artifactId>
     </dependency>

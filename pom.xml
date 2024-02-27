@@ -22,7 +22,7 @@
   </modules>
 
   <properties>
-    <vavi-net-auth.groupId>com.github.umjammer.vavi-net-auth</vavi-net-auth.groupId> <!-- vavi / com.github.umjammer -->
+    <vavi-net-auth.groupId>com.github.umjammer.vavi-net-auth</vavi-net-auth.groupId> <!-- vavi / com.github.umjammer.vavi-net-auth -->
     <vavi-net-auth.version>0.1.9</vavi-net-auth.version>
 
     <vavi-nio-file-base.groupId>com.github.umjammer</vavi-nio-file-base.groupId> <!-- com.github.fge / com.github.umjammer -->
@@ -76,7 +76,6 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <!-- java-fs base -->
         <groupId>${vavi-nio-file-base.groupId}</groupId>
         <artifactId>vavi-nio-file-base</artifactId>
         <version>${vavi-nio-file-base.version}</version>
@@ -86,12 +85,6 @@
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>jsr305</artifactId>
         <version>3.0.2</version>
-      </dependency>
-
-      <dependency>
-        <groupId>vavi</groupId>
-        <artifactId>vavi-net-fuse</artifactId>
-        <version>0.1.9</version>
       </dependency>
 
       <dependency>
