@@ -15,8 +15,10 @@ import org.apache.commons.vfs2.FileSystemOptions;
 import org.apache.commons.vfs2.VFS;
 import org.apache.commons.vfs2.auth.StaticUserAuthenticator;
 import org.apache.commons.vfs2.impl.DefaultFileSystemConfigBuilder;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -38,6 +40,15 @@ public class TestVfs {
     private transient String password;
     private String baseUrl;
     private String alias;
+
+    @BeforeAll
+    static void setup() {
+        Debug.println("TEST_SMB_ACCOUNT: " + System.getenv("TEST_SMB_ACCOUNT"));
+        Debug.println("TEST_SMB_DOMAIN: " + System.getenv("TEST_SMB_DOMAIN"));
+        Debug.println("TEST_SMB_HOST: " + System.getenv("TEST_SMB_HOST"));
+        Debug.println("TEST_SMB_PASSWORD: " + System.getenv("TEST_SMB_PASSWORD"));
+        Debug.println("TEST_SMB_PATH: " + System.getenv("TEST_SMB_PATH"));
+    }
 
     /**
      * @param args 0: base url, 1: alias
@@ -70,7 +81,7 @@ System.err.println(fo.getName());
     @Test
     void test00() throws Exception {
         URI uri = URI.create("vfs:sftp://user:password@nsanomac4.local:10022/Users/nsano?alias=alias");
-        System.err.println(uri.getScheme());
+        System.err.println("scheme: " + uri.getScheme());
         System.err.println(uri.getHost());
         System.err.println(uri.getPath());
         System.err.println(uri.getPort());
@@ -81,7 +92,7 @@ System.err.println(fo.getName());
 
         String uriString = uri.toString();
         URI subUri = URI.create(uriString.substring(uriString.indexOf(':') + 1));
-        System.err.println(subUri.getScheme());
+        System.err.println("scheme: " + subUri.getScheme());
         System.err.println(subUri.getHost());
         System.err.println(subUri.getPath());
         System.err.println(subUri.getPort());
