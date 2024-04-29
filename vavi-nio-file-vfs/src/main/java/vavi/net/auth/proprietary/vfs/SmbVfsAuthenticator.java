@@ -115,5 +115,3 @@ Debug.println("auth: " + auth);
         return options;
     }
 }
-
-/* */

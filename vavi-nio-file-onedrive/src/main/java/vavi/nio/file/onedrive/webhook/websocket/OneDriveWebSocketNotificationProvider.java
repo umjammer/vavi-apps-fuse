@@ -27,5 +27,3 @@ public class OneDriveWebSocketNotificationProvider implements NotificationProvid
         return (Notification<T>) new OneDriveWebSocketNotification((Consumer) callback, args);
     }
 }
-
-/* */

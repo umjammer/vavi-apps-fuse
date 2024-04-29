@@ -218,5 +218,3 @@ Debug.println("thumbnail url: " + set.source.url);
         Files.copy(new URL(set.source.url).openStream(), out, StandardCopyOption.REPLACE_EXISTING);
     }
 }
-
-/* */

@@ -128,5 +128,3 @@ System.out.println("rmdir " + newFolder.name);
         graphClient.drive().items(newFolder.id).buildRequest().delete();
     }
 }
-
-/* */

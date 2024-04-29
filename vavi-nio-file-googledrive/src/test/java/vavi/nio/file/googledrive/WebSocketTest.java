@@ -92,5 +92,3 @@ Debug.println("Stopping Jetty's WebSocket Client");
 }
     }
 }
-
-/* */

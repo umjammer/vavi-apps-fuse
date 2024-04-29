@@ -139,5 +139,3 @@ System.err.println();
     static final boolean DRY_RUN = false;
     static final boolean OVERWRITE = false;
 }
-
-/* */

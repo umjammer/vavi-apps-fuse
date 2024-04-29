@@ -114,5 +114,3 @@ System.out.println("rmdir " + newFolder.getName());
         newFolder.delete();
     }
 }
-
-/* */

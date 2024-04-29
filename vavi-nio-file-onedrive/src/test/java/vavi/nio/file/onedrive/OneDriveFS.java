@@ -51,5 +51,3 @@ public class OneDriveFS {
         Fuse.getFuse().mount(fs, args[0], Collections.emptyMap());
     }
 }
-
-/* */

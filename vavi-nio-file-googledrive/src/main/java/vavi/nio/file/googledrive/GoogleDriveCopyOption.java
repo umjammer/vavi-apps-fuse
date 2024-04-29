@@ -35,5 +35,3 @@ public enum GoogleDriveCopyOption implements CopyOption {
         return value;
     }
 }
-
-/* */

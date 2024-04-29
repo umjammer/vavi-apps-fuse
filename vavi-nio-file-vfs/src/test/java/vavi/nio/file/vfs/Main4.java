@@ -139,5 +139,3 @@ public class Main4 {
         Fuse.getFuse().mount(fs, mountPoint, options);
     }
 }
-
-/* */

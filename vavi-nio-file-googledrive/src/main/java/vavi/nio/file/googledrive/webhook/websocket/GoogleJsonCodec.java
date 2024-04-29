@@ -32,5 +32,3 @@ public class GoogleJsonCodec extends JsonCodec {
         }
     }
 }
-
-/* */

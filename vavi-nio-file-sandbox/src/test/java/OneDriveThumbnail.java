@@ -381,5 +381,3 @@ Debug.println("image: " + bytes.length);
         Files.setAttribute(file, "user:thumbnail", bytes);
     }
 }
-
-/* */

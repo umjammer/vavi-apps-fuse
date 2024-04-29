@@ -179,5 +179,3 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
         assertEquals(0, root.getNameCount());
     }
 }
-
-/* */

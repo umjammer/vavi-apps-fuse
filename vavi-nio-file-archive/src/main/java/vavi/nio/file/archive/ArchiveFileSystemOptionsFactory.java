@@ -23,5 +23,3 @@ public class ArchiveFileSystemOptionsFactory extends FileSystemOptionsFactory {
         addLinkOption(LinkOption.NOFOLLOW_LINKS);
     }
 }
-
-/* */

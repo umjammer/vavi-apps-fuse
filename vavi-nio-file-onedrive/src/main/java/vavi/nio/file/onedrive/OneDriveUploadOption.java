@@ -54,5 +54,3 @@ public class OneDriveUploadOption implements OpenOption, CopyOption, Serializabl
         return Long.hashCode(serialVersionUID); // TODO ad-hoc
     }
 }
-
-/* */

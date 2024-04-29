@@ -60,5 +60,3 @@ public class MicrosoftWebSocketNotification extends StringWebSocketNotification 
     protected void onCloseImpl(Session session) throws IOException {
     }
 }
-
-/* */

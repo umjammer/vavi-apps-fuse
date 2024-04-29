@@ -86,5 +86,3 @@ class Main9 {
         Files.write(Paths.get("tmp/thumbnail.jpg"), bytes);
     }
 }
-
-/* */

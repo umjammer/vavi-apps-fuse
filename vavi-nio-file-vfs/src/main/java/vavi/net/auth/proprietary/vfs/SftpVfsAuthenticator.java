@@ -155,5 +155,3 @@ Debug.println("credential: by uri");
         return options;
     }
 }
-
-/* */

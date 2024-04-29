@@ -27,5 +27,3 @@ public class GoogleWebSocketNotificationProvider implements NotificationProvider
         return (Notification<T>) new GoogleWebSocketNotification((Consumer) callback, args);
     }
 }
-
-/* */

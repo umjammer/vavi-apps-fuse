@@ -391,5 +391,3 @@ Debug.println("image: " + bytes.length);
         return String.format("http://images-jp.amazon.com/images/P/%s.%02d.%s.jpg", asin, countryCode, imageType);
     }
 }
-
-/* */
