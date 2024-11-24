@@ -10,7 +10,9 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -18,7 +20,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import com.github.fge.filesystem.attributes.provider.UserDefinedFileAttributesProvider;
@@ -29,7 +30,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import vavi.nio.file.googledrive.GoogleDriveFileAttributesFactory.Metadata;
-import vavi.util.Debug;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -39,6 +41,8 @@ import vavi.util.Debug;
  * @version 0.00 2020/09/08 umjammer initial version <br>
  */
 public class GoogleDriveUserDefinedFileAttributesProvider extends UserDefinedFileAttributesProvider {
+
+    private static final Logger logger = getLogger(GoogleDriveUserDefinedFileAttributesProvider.class.getName());
 
     /** driver & file entry */
     private final Metadata entry;
@@ -103,7 +107,7 @@ public class GoogleDriveUserDefinedFileAttributesProvider extends UserDefinedFil
             public int size(Metadata entry) throws IOException {
                 String description = getDescription(entry.file);
 if (description != null) {
- Debug.println(Level.FINE, "size " + name() + ": " + description);
+ logger.log(Level.DEBUG, "size " + name() + ": " + description);
 }
                 return description == null ? 0 : description.getBytes().length;
             }
@@ -112,7 +116,7 @@ if (description != null) {
             public int read(Metadata entry, ByteBuffer dst) throws IOException {
                 String description = getDescription(entry.file);
 if (description != null) {
- Debug.println(Level.FINE, "read " + name() + ": " + description);
+ logger.log(Level.DEBUG, "read " + name() + ": " + description);
 }
                 if (description != null) {
                     dst.put(description.getBytes());
@@ -123,7 +127,7 @@ if (description != null) {
             @Override
             public int write(Metadata entry, ByteBuffer src) throws IOException {
                 String description = new String(src.array());
-Debug.println(Level.FINE, "write " + name() + ": " + description);
+logger.log(Level.DEBUG, "write " + name() + ": " + description);
                 entry.driver.patchEntryDescription(entry.file, description);
                 return description.getBytes().length;
             }
@@ -153,14 +157,14 @@ Debug.println(Level.FINE, "write " + name() + ": " + description);
                 // joined by '\n'
                 int len = getRevisions(entry).stream().mapToInt(r -> r.getBytes().length + 1).sum() - 1;
 if (len > 0) {
- Debug.println(Level.FINE, "size " + name() + ": " + len);
+ logger.log(Level.DEBUG, "size " + name() + ": " + len);
 }
                 return len;
             }
 
             @Override
             public int read(Metadata entry, ByteBuffer dst) throws IOException {
-Debug.println(Level.FINE, "read " + name() + ":\n" + String.join("\n", getRevisions(entry)));
+logger.log(Level.DEBUG, "read " + name() + ":\n" + String.join("\n", getRevisions(entry)));
                 dst.put(String.join("\n", getRevisions(entry)).getBytes());
                 return dst.array().length;
             }
@@ -168,7 +172,7 @@ Debug.println(Level.FINE, "read " + name() + ":\n" + String.join("\n", getRevisi
             @Override
             public int write(Metadata entry, ByteBuffer src) throws IOException {
                 String[] revisions = RevisionsUtil.split(src.array());
-Arrays.stream(revisions).forEach(r -> Debug.println(Level.FINE, "write " + name() + ": " + r));
+Arrays.stream(revisions).forEach(r -> logger.log(Level.DEBUG, "write " + name() + ": " + r));
                 // to be deleted
                 List<String> toDeleted = new ArrayList<>(); 
                 Arrays.stream(revisions)
@@ -180,7 +184,7 @@ Arrays.stream(revisions).forEach(r -> Debug.println(Level.FINE, "write " + name(
                                     .filter(a -> !a.equals(b))
                                     .toList());
                         } catch (IOException e) {
-Debug.printStackTrace(Level.WARNING, e);
+logger.log(Level.WARNING, e.getMessage(), e);
                         }
                     });
 
@@ -188,7 +192,7 @@ Debug.printStackTrace(Level.WARNING, e);
                     try {
                         entry.driver.removeRevision(entry.file, id);
                     } catch (IOException e) {
-Debug.printStackTrace(Level.WARNING, e);
+logger.log(Level.WARNING, e.getMessage(), e);
                     }
                 });
 
@@ -225,7 +229,7 @@ Debug.printStackTrace(Level.WARNING, e);
             private byte[] getThumbnail(Metadata entry) throws IOException {
 try {
                 String url = getUrl(entry);
-                InputStream is = new BufferedInputStream(new URL(url).openStream());
+                InputStream is = new BufferedInputStream(URI.create(url).toURL().openStream());
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 byte[] buffer = new byte[8024];
                 int l = 0;
@@ -234,7 +238,7 @@ try {
                 }
                 return baos.toByteArray();
 } catch (java.io.FileNotFoundException e) {
- Debug.println(Level.WARNING, e.toString());
+ logger.log(Level.WARNING, e.toString());
  return null;
 }
             }

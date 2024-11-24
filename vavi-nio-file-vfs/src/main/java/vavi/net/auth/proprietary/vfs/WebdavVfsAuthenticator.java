@@ -7,13 +7,16 @@
 package vavi.net.auth.proprietary.vfs;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URI;
 import java.util.NoSuchElementException;
 
 import org.apache.commons.vfs2.FileSystemOptions;
 
 import vavi.nio.file.vfs.VfsFileSystemProvider;
-import vavi.util.Debug;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -27,18 +30,20 @@ import vavi.util.Debug;
  */
 public class WebdavVfsAuthenticator implements VfsAuthenticator {
 
+    private static final Logger logger = getLogger(WebdavVfsAuthenticator.class.getName());
+
     @Override
     public VfsCredential getCredential(String alias, URI uri) {
         VfsCredential credential;
         if (alias != null) {
             credential = new VfsCredential(alias);
-Debug.println("credential: by alias " + alias);
+logger.log(Level.DEBUG, "credential: by alias " + alias);
         } else {
             credential = new VfsCredential(uri);
             if (credential.getId() == null || credential.getId().isEmpty()) {
                 throw new NoSuchElementException("uri should have a username or a param " + VfsFileSystemProvider.PARAM_ALIAS);
             }
-Debug.println("credential: by uri");
+logger.log(Level.DEBUG, "credential: by uri");
         }
 
         return credential;

@@ -84,10 +84,10 @@ public final class HfsFileSystemDriver extends ExtendedFileSystemDriverBase {
         if (path.getNameCount() == 0) {
             return handler.getRoot();
         } else {
-//Debug.println(Arrays.toString(toPathString(path).replaceFirst("^/", "").split("/", -1)));
+//logger.log(Level.TRACE, Arrays.toString(toPathString(path).replaceFirst("^/", "").split("/", -1)));
             FSEntry entry = handler.getEntry(toPathString(path).replaceFirst("^/", "").split("/", -1));
             if (entry != null) {
-//Debug.println("entry: " + entry.getName() + ", " + isFolder(entry));
+//logger.log(Level.TRACE, "entry: " + entry.getName() + ", " + isFolder(entry));
                 return entry;
             } else {
                 throw new NoSuchFileException(path.toString());

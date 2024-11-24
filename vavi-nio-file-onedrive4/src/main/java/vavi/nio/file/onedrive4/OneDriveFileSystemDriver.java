@@ -10,6 +10,8 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.CopyOption;
@@ -25,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.logging.Level;
 
 import com.github.fge.filesystem.driver.DoubleCachedFileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
@@ -59,6 +60,7 @@ import vavi.nio.file.onedrive4.graph.LraSession;
 import vavi.nio.file.onedrive4.graph.ThumbnailUploadProvider;
 import vavi.util.Debug;
 
+import static java.lang.System.getLogger;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static vavi.nio.file.Util.toFilenameString;
 import static vavi.nio.file.Util.toPathString;
@@ -72,6 +74,8 @@ import static vavi.nio.file.onedrive4.OneDriveFileSystemProvider.ENV_USE_SYSTEM_
  * @version 0.00 2016/03/11 umjammer initial version <br>
  */
 public final class OneDriveFileSystemDriver extends DoubleCachedFileSystemDriver<DriveItem> {
+
+    private static final Logger logger = getLogger(OneDriveFileSystemDriver.class.getName());
 
     private final IGraphServiceClient client;
 
@@ -103,26 +107,26 @@ public final class OneDriveFileSystemDriver extends DoubleCachedFileSystemDriver
                 Path path = cache.getEntry(e -> id.equals(e.id));
                 cache.removeEntry(path);
             } catch (NoSuchElementException e) {
-Debug.println("NOTIFICATION: already deleted: " + id);
+logger.log(Level.DEBUG, "NOTIFICATION: already deleted: " + id);
             }
         } else {
             try {
                 try {
                     Path path = cache.getEntry(e -> id.equals(e.id));
-Debug.println("NOTIFICATION: maybe updated: " + path);
+logger.log(Level.DEBUG, "NOTIFICATION: maybe updated: " + path);
                     cache.removeEntry(path);
                     cache.getEntry(path);
                 } catch (NoSuchElementException e) {
                     DriveItem entry = client.drive().items(id).buildRequest().get();
                     Path parent = cache.getEntry(f -> entry.parentReference.id.equals(f.id));
                     Path path = parent.resolve(entry.name);
-Debug.println("NOTIFICATION: maybe created: " + path);
+logger.log(Level.DEBUG, "NOTIFICATION: maybe created: " + path);
                     cache.addEntry(path, entry);
                 }
             } catch (NoSuchElementException e) {
-Debug.println("NOTIFICATION: parent not found: " + e);
+logger.log(Level.DEBUG, "NOTIFICATION: parent not found: " + e);
             } catch (IOException e) {
-                Debug.printStackTrace(e);
+                logger.log(Level.ERROR, e.getMessage(), e);
             }
         }
     }
@@ -158,7 +162,7 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     @Override
     protected InputStream downloadEntryImpl(DriveItem entry, Path path, Set<? extends OpenOption> options) throws IOException {
         try {
-Debug.println("download: " + entry.name + ", " + entry.size);
+logger.log(Level.DEBUG, "download: " + entry.name + ", " + entry.size);
             return client.drive().items(entry.id).content().buildRequest().get();
         } catch (ClientException e) {
             throw new IOException(e);
@@ -173,11 +177,11 @@ Debug.println("download: " + entry.name + ", " + entry.size);
             // but onedrive graph api requires content length for upload.
             // so reluctantly we provide {@link OneDriveUploadOption} for {@link java.nio.file.Files#copy} options.
             Path source = uploadOption.getSource();
-Debug.println("upload w/ option: " + source);
+logger.log(Level.DEBUG, "upload w/ option: " + source);
 
             return uploadEntry(path, (int) Files.size(source));
         } else {
-Debug.println("upload w/o option");
+logger.log(Level.DEBUG, "upload w/o option");
             return new Util.OutputStreamForUploading() { // TODO used for getting file length
                 @Override
                 protected void onClosed() throws IOException {
@@ -200,13 +204,13 @@ Debug.println("upload w/o option");
             return new BufferedOutputStream(chunkedUploadProvider.upload(new IProgressCallback<>() {
                 @Override
                 public void progress(final long current, final long max) {
-                    Debug.println(current + "/" + max);
+                    logger.log(Level.DEBUG, current + "/" + max);
                 }
 
                 @Override
                 public void success(final DriveItem result) {
                     updateEntry(path, result);
-                    Debug.println("upload done: " + result.name);
+                    logger.log(Level.DEBUG, "upload done: " + result.name);
                 }
 
                 @Override
@@ -235,13 +239,13 @@ Debug.println("upload w/o option");
             chunkedUploadProvider.upload(new IProgressCallback<>() {
                 @Override
                 public void progress(final long current, final long max) {
-                    Debug.println(current + "/" + max);
+                    logger.log(Level.DEBUG, current + "/" + max);
                 }
 
                 @Override
                 public void success(final DriveItem result) {
                     updateEntry(path, result);
-                    Debug.println("upload done: " + result.name);
+                    logger.log(Level.DEBUG, "upload done: " + result.name);
                 }
 
                 @Override
@@ -266,7 +270,7 @@ Debug.println("upload w/o option");
 
         IDriveItemCollectionPage pages = client.drive().items(dirEntry.id).children().buildRequest().get();
         while (pages != null) {
-//System.err.println("child: " + childPath.toRealPath().toString());
+//logger.log(Level.TRACE, "child: " + childPath.toRealPath().toString());
             list.addAll(pages.getCurrentPage());
             pages = pages.getNextPage() != null ? pages.getNextPage().buildRequest().get() : null;
         }
@@ -280,7 +284,7 @@ Debug.println("upload w/o option");
         preEntry.name = toFilenameString(dir);
         preEntry.folder = new Folder();
         DriveItem newEntry = client.drive().items(parentEntry.id).children().buildRequest().post(preEntry);
-Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEntry) + ", " + newEntry.hashCode());
+logger.log(Level.DEBUG, newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEntry) + ", " + newEntry.hashCode());
         return newEntry;
     }
 
@@ -311,12 +315,12 @@ Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEn
         copyMonitorProvider.monitor(new IProgressCallback<>() {
             @Override
             public void progress(final long current, final long max) {
-                Debug.println("copy progress: " + current + "/" + max);
+                logger.log(Level.DEBUG, "copy progress: " + current + "/" + max);
             }
 
             @Override
             public void success(final DriveItem result) {
-                Debug.println("copy done: " + result.id);
+                logger.log(Level.DEBUG, "copy done: " + result.id);
                 updateEntry(target, result);
             }
 
@@ -395,7 +399,7 @@ Debug.println(newEntry.id + ", " + newEntry.name + ", folder: " + isFolder(newEn
     void setThumbnail(DriveItem sourceEntry, byte[] image) throws IOException {
         ThumbnailUploadProvider provider = new ThumbnailUploadProvider(sourceEntry, client);
         provider.upload(image);
-Debug.println(Level.INFO, "thumbnail updated: " + sourceEntry.name + ", size: " + image.length);
+logger.log(Level.INFO, "thumbnail updated: " + sourceEntry.name + ", size: " + image.length);
     }
 
     /**
@@ -410,7 +414,7 @@ Debug.println(Level.INFO, "thumbnail updated: " + sourceEntry.name + ", size: " 
                 .get();
         if (!page.getCurrentPage().isEmpty()) {
             ThumbnailSet set = page.getCurrentPage().get(0);
-Debug.println(Level.INFO, "thumbnail url: " + set.source.url);
+logger.log(Level.INFO, "thumbnail url: " + set.source.url);
             return set.source.url;
         } else {
             return null;

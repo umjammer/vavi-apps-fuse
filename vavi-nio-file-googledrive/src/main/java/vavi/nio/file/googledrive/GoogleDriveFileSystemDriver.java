@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.nio.file.CopyOption;
 import java.nio.file.FileStore;
 import java.nio.file.OpenOption;
@@ -24,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.logging.Level;
 
 import com.github.fge.filesystem.driver.DoubleCachedFileSystemDriver;
 import com.github.fge.filesystem.exceptions.IsDirectoryException;
@@ -39,9 +40,9 @@ import com.google.api.services.drive.model.Revision;
 import com.google.api.services.drive.model.RevisionList;
 import vavi.nio.file.Util;
 import vavi.nio.file.googledrive.GoogleDriveFileAttributesFactory.Metadata;
-import vavi.util.Debug;
 import vavi.util.StringUtil;
 
+import static java.lang.System.getLogger;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static vavi.nio.file.Util.toFilenameString;
 import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_NORMALIZE_FILENAME;
@@ -55,6 +56,8 @@ import static vavi.nio.file.googledrive.GoogleDriveFileSystemProvider.ENV_USE_SY
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
 public final class GoogleDriveFileSystemDriver extends DoubleCachedFileSystemDriver<File> {
+
+    private static final Logger logger = getLogger(GoogleDriveFileSystemDriver.class.getName());
 
     private final Drive drive;
 
@@ -72,7 +75,7 @@ public final class GoogleDriveFileSystemDriver extends DoubleCachedFileSystemDri
         this.drive = drive;
         setEnv(env);
         this.normalizeFilename = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_NORMALIZE_FILENAME, true);
-Debug.printf(Level.FINE, "env: %s: %s%n", ENV_NORMALIZE_FILENAME, normalizeFilename);
+logger.log(Level.DEBUG, "env: %s: %s%n".formatted(ENV_NORMALIZE_FILENAME, normalizeFilename));
         boolean useSystemWatcher = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_USE_SYSTEM_WATCHER, false);
 
         if (useSystemWatcher) {
@@ -92,26 +95,26 @@ Debug.printf(Level.FINE, "env: %s: %s%n", ENV_NORMALIZE_FILENAME, normalizeFilen
                 Path path = cache.getEntry(e -> id.equals(e.getId()));
                 cache.removeEntry(path);
             } catch (NoSuchElementException e) {
-Debug.println("NOTIFICATION: already deleted: " + id);
+logger.log(Level.DEBUG, "NOTIFICATION: already deleted: " + id);
             }
         } else {
             try {
                 try {
                     Path path = cache.getEntry(e -> id.equals(e.getId()));
-Debug.println("NOTIFICATION: maybe updated: " + path);
+logger.log(Level.DEBUG, "NOTIFICATION: maybe updated: " + path);
                     cache.removeEntry(path);
                     cache.getEntry(path);
                 } catch (NoSuchElementException e) {
                     File entry = drive.files().get(id).execute();
                     Path parent = cache.getEntry(f -> entry.getParents().get(0).equals(f.getId()));
                     Path path = parent.resolve(entry.getName());
-Debug.println("NOTIFICATION: maybe created: " + path);
+logger.log(Level.DEBUG, "NOTIFICATION: maybe created: " + path);
                     cache.addEntry(path, entry);
                 }
             } catch (NoSuchElementException e) {
-Debug.println("NOTIFICATION: parent not found: " + e);
+logger.log(Level.DEBUG, "NOTIFICATION: parent not found: " + e);
             } catch (IOException e) {
-                Debug.printStackTrace(e);
+                logger.log(Level.ERROR, e.getMessage(), e);
             }
         }
     }
@@ -149,7 +152,7 @@ Debug.println("NOTIFICATION: parent not found: " + e);
     protected File getEntry(File parentEntry, Path path) throws IOException {
         try {
             String q = "'" + parentEntry.getId() + "' in parents and name = '" + getEscapedFileName(path.getFileName()) + "' and trashed=false";
-//Debug.println("q: " + q);
+//logger.log(Level.TRACE, "q: " + q);
             FileList files = drive.files().list()
                     .setQ(q)
                     .setSpaces("drive")
@@ -184,7 +187,7 @@ Debug.println("NOTIFICATION: parent not found: " + e);
             return drive.files().export(entry.getId(), option.getValue()).executeMediaAsInputStream();
         } else {
             // normal download
-Debug.println(Level.FINE, "download: " + entry.getName() + ", " + entry.getSize());
+logger.log(Level.DEBUG, "download: " + entry.getName() + ", " + entry.getSize());
             return drive.files().get(entry.getId()).executeMediaAsInputStream();
         }
     }
@@ -219,7 +222,7 @@ Debug.println(Level.FINE, "download: " + entry.getName() + ", " + entry.getSize(
                 };
 
                 if (options == null || options.stream().noneMatch(o -> o.equals(GoogleDriveOpenOption.IMPORT_AS_NEW_REVISION))) {
-Debug.printf(Level.FINE, "new file: " + path);
+logger.log(Level.DEBUG, "new file: " + path);
                     File entry = new File();
                     entry.setName(toFilenameString(path));
                     entry.setParents(Collections.singletonList(parentEntry.getId()));
@@ -228,10 +231,10 @@ Debug.printf(Level.FINE, "new file: " + path);
                     MediaHttpUploader uploader = creator.getMediaHttpUploader();
                     uploader.setDirectUploadEnabled(true);
                     // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
-                    uploader.setProgressListener(u -> Debug.println(Level.FINE, "upload progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()));
+                    uploader.setProgressListener(u -> logger.log(Level.DEBUG, "upload progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()));
                     return creator.setFields(ENTRY_FIELDS).execute();
                 } else {
-Debug.printf(Level.FINE, "new revision: " + path);
+logger.log(Level.DEBUG, "new revision: " + path);
                     File entry = new File();
 
                     File destEntry = getEntry(path);
@@ -239,14 +242,14 @@ Debug.printf(Level.FINE, "new revision: " + path);
                     MediaHttpUploader uploader = updater.getMediaHttpUploader();
                     uploader.setDirectUploadEnabled(true);
                     // MediaHttpUploader#getProgress() cannot use because w/o content length, using #getNumBytesUploaded() instead
-                    uploader.setProgressListener(u -> Debug.println(Level.FINE, "new revision progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()));
+                    uploader.setProgressListener(u -> logger.log(Level.DEBUG, "new revision progress: " + u.getNumBytesUploaded() + ", " + u.getUploadState()));
                     return updater.setFields(ENTRY_FIELDS).execute();
                 }
             }
 
             @Override
             protected void onClosed(File newEntry) {
-Debug.printf(Level.FINE, "file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.getSize());
+logger.log(Level.DEBUG, "file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n".formatted(newEntry.getName(), newEntry.getCreatedTime().getValue(), newEntry.getSize()));
                 updateEntry(path, newEntry);
             }
         }, Util.BUFFER_SIZE);
@@ -269,7 +272,7 @@ Debug.printf(Level.FINE, "file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getNa
             list.addAll(files.getFiles());
 
             pageToken = files.getNextPageToken();
-//Debug.println("t: " + (System.currentTimeMillis() - t) + ", " + children.size() + ", " + (pageToken != null));
+//logger.log(Level.TRACE, "t: " + (System.currentTimeMillis() - t) + ", " + children.size() + ", " + (pageToken != null));
         } while (pageToken != null);
 
         return list;
@@ -397,7 +400,7 @@ Debug.printf(Level.FINE, "file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n", newEntry.getNa
                     .execute();
 
             if (revisions.getRevisions() != null) {
-Debug.println(Level.FINE, "revisions: " + revisions.getRevisions().size() + ", " + revisions.getNextPageToken());
+logger.log(Level.DEBUG, "revisions: " + revisions.getRevisions().size() + ", " + revisions.getNextPageToken());
                 list.addAll(revisions.getRevisions());
             }
 
@@ -409,7 +412,7 @@ Debug.println(Level.FINE, "revisions: " + revisions.getRevisions().size() + ", "
 
     /** attributes user:revisions */
     void removeRevision(File entry, String revisionId) throws IOException {
-Debug.println(Level.FINE, "delete revision: " + entry.getName() + ", revision: " + revisionId);
+logger.log(Level.DEBUG, "delete revision: " + entry.getName() + ", revision: " + revisionId);
         drive.revisions().delete(entry.getId(), revisionId).execute();
     }
 
@@ -429,7 +432,7 @@ Debug.println(Level.FINE, "delete revision: " + entry.getName() + ", revision: "
         entry.setContentHints(contentHints);
 
         File newEntry = drive.files().update(sourceEntry.getId(), entry).setFields("thumbnailLink").execute();
-Debug.println(Level.FINE, "thumbnail updated: " + sourceEntry.getName() + ", size: " + image.length + ", " + StringUtil.paramString(newEntry));
+logger.log(Level.DEBUG, "thumbnail updated: " + sourceEntry.getName() + ", size: " + image.length + ", " + StringUtil.paramString(newEntry));
     }
 
     /**
@@ -441,7 +444,7 @@ Debug.println(Level.FINE, "thumbnail updated: " + sourceEntry.getName() + ", siz
         File entry = new File();
 
         File newEntry = drive.files().update(sourceEntry.getId(), entry).setFields("thumbnailLink").execute();
-Debug.println(Level.FINE, "thumbnail url: " + sourceEntry.getName() + ", url: " + newEntry.getThumbnailLink());
+logger.log(Level.DEBUG, "thumbnail url: " + sourceEntry.getName() + ", url: " + newEntry.getThumbnailLink());
         return newEntry.getThumbnailLink();
     }
 

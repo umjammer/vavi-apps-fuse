@@ -7,6 +7,8 @@
 package vavi.nio.file.gathered;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -24,13 +26,15 @@ import javax.annotation.Nonnull;
 
 import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider;
 
-import vavi.util.Debug;
+import static java.lang.System.getLogger;
 
 
 /**
  * {@link BasicFileAttributes} implementation for Gathered FS
  */
 public final class GatheredBasicFileAttributesProvider extends BasicFileAttributesProvider implements PosixFileAttributes {
+
+    private static final Logger logger = getLogger(GatheredBasicFileAttributesProvider.class.getName());
 
     private final Object entry;
 
@@ -66,11 +70,11 @@ public final class GatheredBasicFileAttributesProvider extends BasicFileAttribut
             }
         } catch (NoSuchFileException e) {
 if (!e.getMessage().contains("ignore apple double file")) {
- Debug.println(e);
+ logger.log(Level.DEBUG, e);
 }
             return UNIX_EPOCH;
         } catch (IOException e) {
-e.printStackTrace();
+logger.log(Level.ERROR, e.getMessage(), e);
             return UNIX_EPOCH;
         }
     }
@@ -124,11 +128,11 @@ e.printStackTrace();
             }
         } catch (NoSuchFileException e) {
 if (!e.getMessage().contains("ignore apple double file")) {
- Debug.println(e);
+ logger.log(Level.DEBUG, e);
 }
             return 0;
         } catch (IOException e) {
-e.printStackTrace();
+logger.log(Level.ERROR, e.getMessage(), e);
             return 0;
         }
     }

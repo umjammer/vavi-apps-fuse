@@ -8,7 +8,7 @@ package vavi.nio.file.onedrive4;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -215,6 +215,6 @@ Debug.println("thumbnail url: " + set.source.url);
         Path dir = Paths.get("tmp");
         Path out = dir.resolve("thumbnail.jpg");
 
-        Files.copy(new URL(set.source.url).openStream(), out, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(URI.create(set.source.url).toURL().openStream(), out, StandardCopyOption.REPLACE_EXISTING);
     }
 }

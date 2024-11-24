@@ -7,6 +7,8 @@
 package vavi.net.auth.proprietary.vfs;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URI;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -17,9 +19,10 @@ import org.apache.commons.vfs2.impl.DefaultFileSystemConfigBuilder;
 
 import vavi.net.http.HttpUtil;
 import vavi.nio.file.vfs.VfsFileSystemProvider;
-import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -29,6 +32,8 @@ import vavi.util.properties.annotation.PropsEntity;
  * @version 0.00 2020/05/02 umjammer initial version <br>
  */
 public class SmbVfsAuthenticator implements VfsAuthenticator {
+
+    private static final Logger logger = getLogger(SmbVfsAuthenticator.class.getName());
 
     /**
      * <p>
@@ -92,13 +97,13 @@ public class SmbVfsAuthenticator implements VfsAuthenticator {
         VfsCredential credential;
         if (alias != null) {
             credential = new SmbVfsCredential(alias);
-Debug.println("credential: by alias " + alias);
+logger.log(Level.DEBUG, "credential: by alias " + alias);
         } else {
             credential = new SmbVfsCredential(uri);
             if (credential.getId() == null || credential.getId().isEmpty()) {
                 throw new NoSuchElementException("uri should have a username or a param " + VfsFileSystemProvider.PARAM_ALIAS);
             }
-Debug.println("credential: by uri");
+logger.log(Level.DEBUG, "credential: by uri");
         }
 
         return credential;
@@ -110,7 +115,7 @@ Debug.println("credential: by uri");
 
         FileSystemOptions options = new FileSystemOptions();
         StaticUserAuthenticator auth = new StaticUserAuthenticator(c.domain, c.username, c.password);
-Debug.println("auth: " + auth);
+logger.log(Level.DEBUG, "auth: " + auth);
         DefaultFileSystemConfigBuilder.getInstance().setUserAuthenticator(options, auth);
         return options;
     }

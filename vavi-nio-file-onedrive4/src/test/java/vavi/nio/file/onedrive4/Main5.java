@@ -62,7 +62,7 @@ System.out.println("$ mkdir " + dstDir);
             Files.createDirectory(dstDir);
 
 System.out.println("$ cp " + src + " " + dst);
-            Files.copy(src, dst); // TODO w/o dstDir it's works
+            Files.copy(src, dst); // TODO even w/o dstDir it works
 System.out.println("$ ls " + dstDir);
 Files.list(dstDir).forEach(System.err::println);
             a = Util.toFilenameString(Files.list(dstDir).findFirst().get());

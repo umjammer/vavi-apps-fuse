@@ -7,6 +7,8 @@
 package vavi.nio.file.onedrive;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URI;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -23,8 +25,8 @@ import vavi.net.auth.oauth2.OAuth2AppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftLocalAppCredential;
 import vavi.net.auth.oauth2.microsoft.MicrosoftOAuth2;
 import vavi.net.auth.web.microsoft.MicrosoftLocalUserCredential;
-import vavi.util.Debug;
 
+import static java.lang.System.getLogger;
 import static vavi.net.auth.oauth2.OAuth2AppCredential.wrap;
 
 import de.tuberlin.onedrivesdk.OneDriveException;
@@ -42,6 +44,8 @@ import de.tuberlin.onedrivesdk.networking.OneDriveAuthenticationException;
  */
 @ParametersAreNonnullByDefault
 public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase {
+
+    private static final Logger logger = getLogger(OneDriveFileSystemRepository.class.getName());
 
     public OneDriveFileSystemRepository() {
         super("onedrive1", new OneDriveFileSystemFactoryProvider());
@@ -101,7 +105,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
                 try {
                     client.authenticateWithRefreshToken(refreshToken);
                 } catch (OneDriveAuthenticationException e) {
-Debug.println("refreshToken: timeout?");
+logger.log(Level.DEBUG, "refreshToken: timeout?");
                     code = oauth2.authorize(userCredential);
                     client.authenticate(code);
                 }

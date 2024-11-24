@@ -8,6 +8,8 @@ package vavi.net.auth.proprietary.vfs;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Map;
@@ -21,9 +23,10 @@ import com.jcraft.jsch.UserInfo;
 
 import vavi.net.http.HttpUtil;
 import vavi.nio.file.vfs.VfsFileSystemProvider;
-import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -33,6 +36,8 @@ import vavi.util.properties.annotation.PropsEntity;
  * @version 0.00 2020/05/02 umjammer initial version <br>
  */
 public class SftpVfsAuthenticator implements VfsAuthenticator {
+
+    private static final Logger logger = getLogger(SftpVfsAuthenticator.class.getName());
 
     /**
      * <p>
@@ -100,13 +105,13 @@ public class SftpVfsAuthenticator implements VfsAuthenticator {
         VfsCredential credential;
         if (alias != null) {
             credential = new SftpVfsCredential(alias);
-Debug.println("credential: by alias " + alias);
+logger.log(Level.DEBUG, "credential: by alias " + alias);
         } else {
             credential = new SftpVfsCredential(uri);
             if (credential.getId() == null || credential.getId().isEmpty()) {
                 throw new NoSuchElementException("uri should have a username or a param " + VfsFileSystemProvider.PARAM_ALIAS);
             }
-Debug.println("credential: by uri");
+logger.log(Level.DEBUG, "credential: by uri");
         }
 
         return credential;

@@ -7,12 +7,13 @@
 package vavi.nio.file.hfs;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.util.Map;
 import java.util.Objects;
-import java.util.logging.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -45,7 +46,7 @@ import org.catacombae.storage.ps.PartitionType;
 import com.github.fge.filesystem.driver.FileSystemDriver;
 import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 
-import vavi.util.Debug;
+import static java.lang.System.getLogger;
 
 
 /**
@@ -56,6 +57,8 @@ import vavi.util.Debug;
  */
 @ParametersAreNonnullByDefault
 public final class HfsFileSystemRepository extends FileSystemRepositoryBase {
+
+    private static final Logger logger = getLogger(HfsFileSystemRepository.class.getName());
 
     public HfsFileSystemRepository() {
         super("hfs", new HfsFileSystemFactoryProvider());
@@ -81,7 +84,7 @@ public final class HfsFileSystemRepository extends FileSystemRepositoryBase {
         }
         // TODO virtual relative directory from rawSchemeSpecificParts[1]
 
-Debug.println(Level.FINE, "file: " + Paths.get(file).toAbsolutePath());
+logger.log(Level.DEBUG, "file: " + Paths.get(file).toAbsolutePath());
 
         HFSCommonFileSystemHandler fsHandler = loadFSWithUDIFAutodetect(Paths.get(file).toAbsolutePath().toString());
 
@@ -106,11 +109,11 @@ Debug.println(Level.FINE, "file: " + Paths.get(file).toAbsolutePath());
         ReadableRandomAccessStream fsFile = new ReadableFileStream(filename);
 
         try {
-Debug.println(Level.FINER, "Trying to detect CEncryptedEncoding structure...");
+logger.log(Level.TRACE, "Trying to detect CEncryptedEncoding structure...");
             if (ReadableCEncryptedEncodingStream.isCEncryptedEncoding(fsFile)) {
 
 String password = ""; // TODO env
-Debug.println(Level.FINE, "CEncryptedEncoding structure found! Creating filter stream...");
+logger.log(Level.DEBUG, "CEncryptedEncoding structure found! Creating filter stream...");
                 char[] res = password.toCharArray();
                 try {
                     ReadableCEncryptedEncodingStream stream = new ReadableCEncryptedEncodingStream(fsFile, res);
@@ -126,7 +129,7 @@ Debug.println(Level.FINE, "CEncryptedEncoding structure found! Creating filter s
                             throw e;
                         }
 
-Debug.println("""
+logger.log(Level.INFO, """
  Unsupported AES key size: If you were trying to load an AES-256 encrypted image and
  are using Sun/Oracle's Java Runtime Environment, then\s
  please check if you have installed the Java Cryptography
@@ -137,40 +140,37 @@ Debug.println("""
                     throw new IllegalArgumentException("Reading encrypted disk image...: " + "Incorrect password.");
                 }
             } else {
-Debug.println(Level.FINER, "CEncryptedEncoding structure not found. Proceeding...");
+logger.log(Level.TRACE, "CEncryptedEncoding structure not found. Proceeding...");
             }
         } catch (Exception e) {
-Debug.println(Level.FINER, "Non-critical exception while trying to detect CEncryptedEncoding structure:");
-e.printStackTrace();
+logger.log(Level.TRACE, "Non-critical exception while trying to detect CEncryptedEncoding structure:", e);
         }
 
         try {
-Debug.println(Level.FINE, "Detecting sparseimage structure...");
+logger.log(Level.DEBUG, "Detecting sparseimage structure...");
             if (SparseImageRecognizer.isSparseImage(fsFile)) {
-Debug.println(Level.FINE, "sparseimage structure found! Creating filter stream...");
+logger.log(Level.DEBUG, "sparseimage structure found! Creating filter stream...");
 
                 try {
                     ReadableSparseImageStream stream = new ReadableSparseImageStream(fsFile);
                     fsFile = stream;
                 } catch (Exception e) {
-Debug.println("Exception while creating readable sparseimage stream:");
-                    e.printStackTrace();
+logger.log(Level.DEBUG, "Exception while creating readable sparseimage stream:", e);
                 }
             }
         } catch (Exception e) {
-Debug.println("Non-critical exception while trying to detect sparseimage structure:");
-e.printStackTrace();
+logger.log(Level.DEBUG, "Non-critical exception while trying to detect sparseimage structure:", e);
         }
 
         try {
-Debug.println(Level.FINER, "Trying to detect UDIF structure...");
+logger.log(Level.TRACE, "Trying to detect UDIF structure...");
             if (UDIFDetector.isUDIFEncoded(fsFile)) {
-Debug.println(Level.FINE, "UDIF structure found! Creating filter stream...");
+logger.log(Level.DEBUG, "UDIF structure found! Creating filter stream...");
                 UDIFRandomAccessStream stream = null;
                 try {
                     stream = new UDIFRandomAccessStream(fsFile);
                 } catch (Exception e) {
-e.printStackTrace();
+logger.log(Level.ERROR, e.getMessage(), e);
                     if (e.getMessage().startsWith("java.lang.RuntimeException: No handler for block type")) {
                         throw new IllegalArgumentException(
                                 "UDIF file contains unsupported block types!\n" +
@@ -184,11 +184,10 @@ e.printStackTrace();
                     fsFile = stream;
                 }
             } else {
-Debug.println(Level.FINER, "UDIF structure not found. Proceeding...");
+logger.log(Level.TRACE, "UDIF structure not found. Proceeding...");
             }
         } catch(Exception e) {
-Debug.println("Non-critical exception while trying to detect UDIF structure:");
-e.printStackTrace();
+logger.log(Level.DEBUG, "Non-critical exception while trying to detect UDIF structure:", e);
         }
 
         SynchronizedReadableRandomAccessStream syncStream = new SynchronizedReadableRandomAccessStream(fsFile);
@@ -241,7 +240,7 @@ e.printStackTrace();
                 try {
                     fsLength = syncStream.length();
                 } catch(Exception e) {
-                    e.printStackTrace();
+                    logger.log(Level.ERROR, e.getMessage(), e);
                     fsLength = -1;
                 }
             } else {
@@ -257,7 +256,7 @@ e.printStackTrace();
                         break;
                     }
                 }
-Debug.println("patitions: " + partitions.length + ", default: " + defaultSelection); // TODO env
+logger.log(Level.DEBUG, "patitions: " + partitions.length + ", default: " + defaultSelection); // TODO env
 
                 // Prompt user to choose a partition to load.
                 Partition selectedPartition = partitions[defaultSelection];

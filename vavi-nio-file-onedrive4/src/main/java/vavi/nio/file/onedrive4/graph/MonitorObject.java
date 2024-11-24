@@ -6,6 +6,9 @@
 
 package vavi.nio.file.onedrive4.graph;
 
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
+
 import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -13,7 +16,8 @@ import com.microsoft.graph.serializer.AdditionalDataManager;
 import com.microsoft.graph.serializer.IJsonBackedObject;
 import com.microsoft.graph.serializer.ISerializer;
 
-import vavi.util.Debug;
+import static java.lang.System.getLogger;
+
 
 /**
  * MonitorObject.
@@ -22,6 +26,9 @@ import vavi.util.Debug;
  * @version 0.00 2019/07/08 umjammer initial version <br>
  */
 public class MonitorObject implements IJsonBackedObject  {
+
+    private static final Logger logger = getLogger(MonitorObject.class.getName());
+
     @SerializedName("operation")
     @Expose
     String operation;
@@ -37,7 +44,7 @@ public class MonitorObject implements IJsonBackedObject  {
 
     @Override
     public void setRawObject(ISerializer serializer, JsonObject json) {
-Debug.println(json);
+logger.log(Level.DEBUG, json);
     }
 
     private final transient AdditionalDataManager additionalDataManager = new AdditionalDataManager(this);

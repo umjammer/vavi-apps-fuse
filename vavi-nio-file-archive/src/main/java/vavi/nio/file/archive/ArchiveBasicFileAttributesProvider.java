@@ -69,7 +69,7 @@ public final class ArchiveBasicFileAttributesProvider extends BasicFileAttribute
      */
     @Override
     public boolean isDirectory() {
-//Debug.println("entry: " + entry + ", " + (entry != null ? entry.isDirectory() : "means root"));
+//logger.log(Level.TRACE, "entry: " + entry + ", " + (entry != null ? entry.isDirectory() : "means root"));
         return entry == null || entry.isDirectory();
     }
 
