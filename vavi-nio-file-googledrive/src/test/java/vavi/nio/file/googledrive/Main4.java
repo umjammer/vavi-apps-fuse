@@ -35,8 +35,6 @@ public class Main4 {
 
     @BeforeEach
     public void before() throws Exception {
-        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod", "co\\.paralleluniverse\\.fuse\\.LoggedFuseFilesystem#log");
-
         String email = System.getenv("TEST4_ACCOUNT");
         mountPoint = System.getenv("TEST4_MOUNT_POINT");
 

@@ -31,14 +31,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class Main5 {
 
-    static {
-        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
-                           "(" +
-                           "com\\.microsoft\\.graph\\.logger\\.DefaultLogger#logDebug" + "|" +
-                           "vavi\\.nio\\.file\\.onedrive4\\.graph\\.MyLogger#logDebug" +
-                           ")");
-    }
-
     @Test
     void test01() throws Exception {
         String email = System.getenv("TEST5_ACCOUNT");

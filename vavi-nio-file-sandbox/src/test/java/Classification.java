@@ -43,11 +43,6 @@ import static java.nio.file.FileVisitResult.CONTINUE;
 @PropsEntity(url = "file:local.properties")
 public final class Classification {
 
-    static {
-        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
-                           "com\\.microsoft\\.graph\\.logger\\.DefaultLogger#logDebug");
-    }
-
     static boolean localPropertiesExists() {
         return Files.exists(Paths.get("local.properties"));
     }

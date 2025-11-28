@@ -59,14 +59,6 @@ import vavi.util.properties.annotation.PropsEntity;
  */
 public class TestGraph {
 
-    static {
-        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod", "(" +
-                           "sun\\.util\\.logging\\.\\w*Log\\w*#\\w+" + "|" +
-                           "jdk\\.internal\\.event\\.EventHelper#log\\w+" + "|" +
-                           "vavi\\.nio\\.file\\.onedrive4\\.graph\\.MyLogger#logDebug" +
-                           ")");
-    }
-
     /**
      * @param args 0: email
      */
