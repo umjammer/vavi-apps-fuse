@@ -16,7 +16,7 @@ import java.util.List;
 
 import org.klab.commons.csv.CsvColumn;
 import org.klab.commons.csv.CsvEntity;
-import org.klab.commons.csv.impl.FileCsvFactory;
+import org.klab.commons.csv.impl.FileCsvDataSource;
 
 import static java.nio.file.FileVisitResult.CONTINUE;
 
@@ -59,7 +59,7 @@ public class TestAozora {
         });
     }
 
-    @CsvEntity(url = "tmp/list_person_all_extended.csv", io = FileCsvFactory.class, encoding = "Windows-31J")
+    @CsvEntity(url = "tmp/list_person_all_extended.csv", dataSource = FileCsvDataSource.class, encoding = "Windows-31J")
     public static class AozoraDatabase {
         @CsvColumn(sequence = 16)
         String familyName;
