@@ -7,7 +7,7 @@
 
 🌏 mount the world!
 
-## Status
+### Status
 
 | fs                 | list | upload | download | copy | move | rm | mkdir | cache | watch | project                                                                                    | library                                                                                                                                     |
 |--------------------|------|--------|----------|------|------|----|-------|-------|-------|--------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
@@ -34,14 +34,6 @@
 | fuse (fuse-jna)    | ✅    | ✅   | ✅       | ✅    | ✅    | ✅  | ✅   | ✅     |       | [vavi-nio-file-fuse](https://github.com/umjammer/vavi-nio-file-fuse)                                                                | [fuse-jna](https://github.com/EtiennePerot/fuse-jna)                                                                                        |
 | fuse (jnr-fuse)    | ✅    | ✅   | ✅       | ✅    | ✅    | ✅  | ✅   | ✅     |       | [vavi-nio-file-fuse](https://github.com/umjammer/vavi-nio-file-fuse)                                                                | [jnr-fuse](https://github.com/SerCeMan/jnr-fuse)                                                                                            |
 
-## Usage
-
-```java
-    URI uri = URI.create("googledrive:///?id=you@gmail.com");
-    FileSystems fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
-    Fuse.getFuse().mount(fs, "/your/mout/point", Collections.emptyMap());
-```
-
 ## Installation
 
  * [maven](https://jitpack.io/#umjammer/vavi-apps-fuse)
@@ -65,7 +57,15 @@
  * jvmarg (fuse-jna)
    * `-Djna.library.path=/usr/local/lib`
 
-## How To
+## Usage
+
+```java
+    URI uri = URI.create("googledrive:///?id=you@gmail.com");
+    FileSystems fs = FileSystems.newFileSystem(uri, Collections.emptyMap());
+    Fuse.getFuse().mount(fs, "/your/mout/point", Collections.emptyMap());
+```
+
+### How To
 
  * [how to replace authenticator](https://github.com/umjammer/vavi-apps-fuse/wiki/HowToReplaceAuthenticator)
  * [OCR using google drive](https://github.com/umjammer/vavi-apps-fuse/blob/ade22cec00d1ca9a3ade45cf4061228a032e4a32/vavi-nio-file-sandbox/src/test/java/GoogleOCR.java)
@@ -75,13 +75,15 @@
 ## References
 
  * https://github.com/umjammer/vavi-apps-fuse/wiki/Libraries
- * https://github.com/googleapis/java-storage-nio (official !!!)
+ * https://github.com/googleapis/java-storage-nio (~~official !!!~~ not for google drive but [google cloud storage](https://cloud.google.com/storage/))
    * retry handler
    * option
    * SeekableByteChannel
    * how about upload?
  * https://github.com/unsound/jfuse (jni)
  * https://github.com/uw-dims/fuse4j
+ * watch
+   * https://github.com/drapostolos/rdp4j
 
 ## TODO
 
@@ -104,3 +106,5 @@
  * ~~separate vavi-nio-file-commons and merge into vavi-nio-file-base~~
  * ~~separate fuse part (use obsoleted vavi-nio-file -> vavi-nio-file-fuse)~~
    * rename project like vavi-nio-file-collection
+ * use like vavi.sound.SoundUtil#getSource instead of setting path in *UploadOption
+ * onedrive4 does not work 250920
