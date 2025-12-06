@@ -7,6 +7,8 @@
 package vavi.nio.file.onedrive4.graph;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.security.InvalidParameterException;
 
 import com.microsoft.graph.http.BaseRequest;
@@ -15,13 +17,15 @@ import com.microsoft.graph.http.HttpResponseCode;
 import com.microsoft.graph.models.extensions.DriveItem;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 
-import vavi.util.Debug;
+import static java.lang.System.getLogger;
 
 
 /**
  * ThumbnailUpload service provider
  */
 public class ThumbnailUploadProvider {
+
+    private static final Logger logger = getLogger(ThumbnailUploadProvider.class.getName());
 
     /**
      * The client
@@ -50,7 +54,7 @@ public class ThumbnailUploadProvider {
 
         this.client = client;
         this.uploadUrl = client.getServiceRoot() + "/drive/items/" + item.id + "/thumbnails/0/source/content";
-Debug.println("url: " + uploadUrl);
+logger.log(Level.DEBUG, "url: " + uploadUrl);
     }
 
     /**

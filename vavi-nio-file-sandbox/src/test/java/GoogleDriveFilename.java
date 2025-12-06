@@ -32,14 +32,6 @@ import static java.nio.file.FileVisitResult.CONTINUE;
  */
 public class GoogleDriveFilename {
 
-    static {
-        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
-                "(" +
-                "com\\.microsoft\\.graph\\.logger\\.DefaultLogger#logDebug" + "|" +
-                "vavi\\.nio\\.file\\.onedrive4\\.graph\\.MyLogger#logDebug" +
-                ")");
-    }
-
     /**
      * @param args url dir
      */
@@ -139,5 +131,3 @@ System.err.println();
     static final boolean DRY_RUN = false;
     static final boolean OVERWRITE = false;
 }
-
-/* */

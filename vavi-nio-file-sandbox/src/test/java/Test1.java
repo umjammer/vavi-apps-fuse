@@ -150,5 +150,3 @@ Debug.println("element: " + element);
         assertEquals("Configuration", element.getName());
     }
 }
-
-/* */

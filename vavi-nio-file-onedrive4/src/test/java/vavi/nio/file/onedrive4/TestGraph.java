@@ -8,7 +8,7 @@ package vavi.nio.file.onedrive4;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -58,14 +58,6 @@ import vavi.util.properties.annotation.PropsEntity;
  * @version 0.00 2019/07/04 umjammer initial version <br>
  */
 public class TestGraph {
-
-    static {
-        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod", "(" +
-                           "sun\\.util\\.logging\\.\\w*Log\\w*#\\w+" + "|" +
-                           "jdk\\.internal\\.event\\.EventHelper#log\\w+" + "|" +
-                           "vavi\\.nio\\.file\\.onedrive4\\.graph\\.MyLogger#logDebug" +
-                           ")");
-    }
 
     /**
      * @param args 0: email
@@ -215,8 +207,6 @@ Debug.println("thumbnail url: " + set.source.url);
         Path dir = Paths.get("tmp");
         Path out = dir.resolve("thumbnail.jpg");
 
-        Files.copy(new URL(set.source.url).openStream(), out, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(URI.create(set.source.url).toURL().openStream(), out, StandardCopyOption.REPLACE_EXISTING);
     }
 }
-
-/* */

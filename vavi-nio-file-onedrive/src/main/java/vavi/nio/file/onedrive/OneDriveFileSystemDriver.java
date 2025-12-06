@@ -10,6 +10,8 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.nio.file.CopyOption;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -33,8 +35,8 @@ import de.tuberlin.onedrivesdk.file.OneFile;
 import de.tuberlin.onedrivesdk.folder.OneFolder;
 import de.tuberlin.onedrivesdk.uploadFile.OneUpload;
 import vavi.nio.file.Util;
-import vavi.util.Debug;
 
+import static java.lang.System.getLogger;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static vavi.nio.file.Util.toFilenameString;
 import static vavi.nio.file.Util.toPathString;
@@ -49,6 +51,8 @@ import static vavi.nio.file.onedrive.OneDriveFileSystemProvider.ENV_USE_SYSTEM_W
  */
 @ParametersAreNonnullByDefault
 public final class OneDriveFileSystemDriver extends DoubleCachedFileSystemDriver<OneItem> {
+
+    private static final Logger logger = getLogger(OneDriveFileSystemDriver.class.getName());
 
     private final OneDriveSDK client;
 
@@ -77,24 +81,24 @@ public final class OneDriveFileSystemDriver extends DoubleCachedFileSystemDriver
                 Path path = cache.getEntry(e -> id.equals(e.getId()));
                 cache.removeEntry(path);
             } catch (NoSuchElementException e) {
-Debug.println("NOTIFICATION: already deleted: " + id);
+logger.log(Level.DEBUG, "NOTIFICATION: already deleted: " + id);
             }
         } else {
             try {
                 try {
                     Path path = cache.getEntry(e -> id.equals(e.getId()));
-Debug.println("NOTIFICATION: maybe updated: " + path);
+logger.log(Level.DEBUG, "NOTIFICATION: maybe updated: " + path);
                     cache.removeEntry(path);
                     cache.getEntry(path);
                 } catch (NoSuchElementException e) {
                     OneFile entry = client.getFileById(id);
                     Path parent = cache.getEntry(f -> { try { return entry.getParentFolder().getId().equals(f.getId()); } catch (IOException g) { g.printStackTrace(); return false; }});
                     Path path = parent.resolve(entry.getName());
-Debug.println("NOTIFICATION: maybe created: " + path);
+logger.log(Level.DEBUG, "NOTIFICATION: maybe created: " + path);
                     cache.addEntry(path, (OneItem) entry);
                 }
             } catch (NoSuchElementException e) {
-Debug.println("NOTIFICATION: parent not found: " + e);
+logger.log(Level.DEBUG, "NOTIFICATION: parent not found: " + e);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -148,16 +152,16 @@ Debug.println("NOTIFICATION: parent not found: " + e);
             // but onedrive graph api requires content length for upload.
             // so reluctantly we provide {@link OneDriveUploadOption} for {@link java.nio.file.Files#copy} options.
             Path source = uploadOption.getSource();
-Debug.println("upload w/ option: " + source);
+logger.log(Level.DEBUG, "upload w/ option: " + source);
 
             return uploadEntry(parentEntry, path, (int) Files.size(source));
         } else {
-Debug.println("upload w/o option");
+logger.log(Level.DEBUG, "upload w/o option");
             return new Util.OutputStreamForUploading() { // TODO used for getting file length
                 @Override
                 protected void onClosed() throws IOException {
                     InputStream is = getInputStream();
-Debug.println("upload w/o option: " + is.available());
+logger.log(Level.DEBUG, "upload w/o option: " + is.available());
                     OutputStream os = uploadEntry(parentEntry, path, is.available());
                     Util.transfer(is, os);
                     is.close();
@@ -196,7 +200,7 @@ Debug.println("upload w/o option: " + is.available());
     @Override
     protected OneItem copyEntry(OneItem sourceEntry, OneItem targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
         OneFile newEntry = asFile(sourceEntry).copy(asFolder(targetParentEntry), toFilenameString(target));
-Debug.println(newEntry.getParentFolder().getName() + "/" + newEntry.getName());
+logger.log(Level.DEBUG, newEntry.getParentFolder().getName() + "/" + newEntry.getName());
         return (OneItem) newEntry;
     }
 
@@ -208,7 +212,7 @@ Debug.println(newEntry.getParentFolder().getName() + "/" + newEntry.getName());
     @Override
     protected OneItem moveFolderEntry(OneItem sourceEntry, OneItem targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
         OneItem newEntry = asFolder(sourceEntry).move(asFolder(targetParentEntry));
-Debug.println(newEntry.getParentFolder().getName() + "/" + newEntry.getName());
+logger.log(Level.DEBUG, newEntry.getParentFolder().getName() + "/" + newEntry.getName());
         return newEntry;
     }
 

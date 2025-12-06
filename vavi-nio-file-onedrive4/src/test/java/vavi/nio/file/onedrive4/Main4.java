@@ -31,23 +31,12 @@ import vavi.net.fuse.Fuse;
 @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
 public class Main4 {
 
-    static {
-        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
-                           "(" +
-                           "com\\.microsoft\\.graph\\.logger\\.DefaultLogger#logDebug" + "|" +
-                           "vavi\\.nio\\.file\\.onedrive4\\.graph\\.MyLogger#logError" + "|" +
-                           "vavi\\.nio\\.file\\.onedrive4\\.graph\\.MyLogger#logDebug" +
-                           ")");
-    }
-
     String mountPoint;
     FileSystem fs;
     Map<String, Object> options;
 
     @BeforeEach
     public void before() throws Exception {
-        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod", "co\\.paralleluniverse\\.fuse\\.LoggedFuseFilesystem#log");
-
         String email = System.getenv("TEST4_ACCOUNT");
         mountPoint = System.getenv("TEST4_MOUNT_POINT");
 
@@ -105,5 +94,3 @@ public class Main4 {
         Fuse.getFuse().mount(fs, args[0], options);
     }
 }
-
-/* */

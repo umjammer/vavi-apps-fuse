@@ -43,21 +43,6 @@ import vavi.util.Debug;
  */
 public class Main {
 
-    static {
-        System.setProperty("vavi.util.logging.VaviFormatter.extraClassMethod",
-                "(" +
-                "org\\.slf4j\\.impl\\.JDK14LoggerAdapter#(log|info)" +
-                "|" +
-                "sun\\.util\\.logging\\.LoggingSupport#log" +
-                "|" +
-                "sun\\.util\\.logging\\.PlatformLogger#fine" +
-                "|" +
-                "jdk\\.internal\\.event\\.EventHelper#logX509CertificateEvent" +
-                "|" +
-                "sun\\.util\\.logging\\.PlatformLogger.JavaLoggerProxy#doLog" +
-                ")");
-    }
-
     /**
      * environment variable
      * <ul>

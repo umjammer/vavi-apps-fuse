@@ -7,10 +7,11 @@
 package vavi.nio.file.vfs;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URI;
 import java.util.Map;
 import java.util.Objects;
-import java.util.logging.Level;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -26,7 +27,8 @@ import com.github.fge.filesystem.provider.FileSystemRepositoryBase;
 
 import vavi.net.auth.proprietary.vfs.VfsAuthenticator;
 import vavi.net.auth.proprietary.vfs.VfsCredential;
-import vavi.util.Debug;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -37,6 +39,8 @@ import vavi.util.Debug;
  */
 @ParametersAreNonnullByDefault
 public final class VfsFileSystemRepository extends FileSystemRepositoryBase {
+
+    private static final Logger logger = getLogger(VfsFileSystemRepository.class.getName());
 
     public VfsFileSystemRepository() {
         super("vfs", new VfsFileSystemFactoryProvider());
@@ -52,7 +56,7 @@ public final class VfsFileSystemRepository extends FileSystemRepositoryBase {
         String uriString = uri.toString();
         URI subUri = URI.create(uriString.substring(uriString.indexOf(':') + 1));
         String protocol = subUri.getScheme();
-Debug.println(Level.FINE, "protocol: " + protocol);
+logger.log(Level.DEBUG, "protocol: " + protocol);
 
         Map<String, String> params = getParamsMap(subUri);
         String alias = params.get(VfsFileSystemProvider.PARAM_ALIAS);
@@ -65,11 +69,11 @@ Debug.println(Level.FINE, "protocol: " + protocol);
         if (subUri.getPath() != null) {
             baseUrl += subUri.getPath();
         }
-Debug.println(Level.FINE, "baseUrl: " + baseUrl);
+logger.log(Level.DEBUG, "baseUrl: " + baseUrl);
 
         FileSystemManager manager = VFS.getManager();
         if (!manager.hasProvider(protocol)) {
-if (Debug.isLoggable(Level.FINE)) {
+if (logger.isLoggable(Level.DEBUG)) {
  for (String scheme : manager.getSchemes()) {
   System.err.println("scheme: " + scheme);
  }

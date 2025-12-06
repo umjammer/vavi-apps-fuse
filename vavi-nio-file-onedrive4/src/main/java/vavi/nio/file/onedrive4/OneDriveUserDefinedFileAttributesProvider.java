@@ -10,7 +10,9 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
@@ -22,7 +24,8 @@ import com.github.fge.filesystem.attributes.provider.UserDefinedFileAttributesPr
 import com.microsoft.graph.models.extensions.DriveItem;
 
 import vavi.nio.file.onedrive4.OneDriveFileAttributesFactory.Metadata;
-import vavi.util.Debug;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -32,6 +35,8 @@ import vavi.util.Debug;
  * @version 0.00 2020/09/08 umjammer initial version <br>
  */
 public class OneDriveUserDefinedFileAttributesProvider extends UserDefinedFileAttributesProvider {
+
+    private static final Logger logger = getLogger(OneDriveUserDefinedFileAttributesProvider.class.getName());
 
     /** driver & file entry */
     private final Metadata entry;
@@ -74,12 +79,12 @@ public class OneDriveUserDefinedFileAttributesProvider extends UserDefinedFileAt
         description {
             public int size(Metadata entry) throws IOException {
                 String description = entry.driveItem.description;
-Debug.println("size " + name() + ": " + description);
+logger.log(Level.DEBUG, "size " + name() + ": " + description);
                 return description == null ? 0 : description.getBytes().length;
             }
             public int read(Metadata entry, ByteBuffer dst) throws IOException {
                 String description = entry.driveItem.description;
-Debug.println("read " + name() + ": " + description);
+logger.log(Level.DEBUG, "read " + name() + ": " + description);
                 if (description != null) {
                     dst.put(description.getBytes());
                 }
@@ -87,7 +92,7 @@ Debug.println("read " + name() + ": " + description);
             }
             public int write(Metadata entry, ByteBuffer src) throws IOException {
                 String description = new String(src.array());
-Debug.println("write " + name() + ": " + description);
+logger.log(Level.DEBUG, "write " + name() + ": " + description);
                 entry.driver.patchEntryDescription(entry.driveItem, description);
                 return description.getBytes().length;
             }
@@ -114,7 +119,7 @@ Debug.println("write " + name() + ": " + description);
             /** */
             private byte[] getThumbnail(Metadata entry) throws IOException {
                 String url = getUrl(entry);
-                InputStream is = new BufferedInputStream(new URL(url).openStream());
+                InputStream is = new BufferedInputStream(URI.create(url).toURL().openStream());
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 byte[] buffer = new byte[8024];
                 int l = 0;
@@ -158,5 +163,3 @@ Debug.println("write " + name() + ": " + description);
         }
     }
 }
-
-/* */

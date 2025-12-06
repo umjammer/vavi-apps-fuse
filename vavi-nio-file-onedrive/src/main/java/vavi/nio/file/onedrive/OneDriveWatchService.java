@@ -7,11 +7,14 @@
 package vavi.nio.file.onedrive;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 
 import vavi.nio.file.watch.webhook.WebHookBaseWatchService;
-import vavi.util.Debug;
 
 import de.tuberlin.onedrivesdk.OneDriveSDK;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -27,6 +30,8 @@ import de.tuberlin.onedrivesdk.OneDriveSDK;
  * @version 0.00 2020/07/22 umjammer initial version <br>
  */
 public class OneDriveWatchService extends WebHookBaseWatchService<String> {
+
+    private static final Logger logger = getLogger(OneDriveWatchService.class.getName());
 
     private static final String WEBHOOK_NOTIFICATION_PROVIDER =
             System.getProperty("vavi.nio.file.watch.webhook.NotificationProvider.onedrive", ".onedrive.webhook.websocket");
@@ -44,7 +49,7 @@ public class OneDriveWatchService extends WebHookBaseWatchService<String> {
 
     @Override
     protected void onNotifyMessage(String notification) throws IOException {
-Debug.println(">> notification: done");
+logger.log(Level.DEBUG, ">> notification: done");
     }
 
     @Override

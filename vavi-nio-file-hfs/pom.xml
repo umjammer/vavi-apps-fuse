@@ -5,7 +5,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.10</version>
+    <version>0.1.11</version>
   </parent>
 
   <artifactId>vavi-nio-file-hfs</artifactId>
@@ -27,10 +27,10 @@
     </dependency>
 
     <dependency>
-      <!-- java-fs hfs (catacombae:) -->
-      <groupId>com.github.umjammer</groupId>
+      <!-- java-fs hfs -->
+      <groupId>com.github.umjammer</groupId> <!-- catacombae / com.github.umjammer -->
       <artifactId>hfsexplorer</artifactId>
-      <version>0.23.3</version>
+      <version>0.23.4</version>
       <exclusions>
         <exclusion>
           <groupId>com.sun</groupId>

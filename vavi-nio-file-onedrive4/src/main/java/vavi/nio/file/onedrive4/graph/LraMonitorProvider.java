@@ -7,13 +7,16 @@
 package vavi.nio.file.onedrive4.graph;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.security.InvalidParameterException;
 
 import com.microsoft.graph.concurrency.IProgressCallback;
 import com.microsoft.graph.models.extensions.IGraphServiceClient;
 
-import vavi.util.Debug;
 import vavi.util.StringUtil;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -24,6 +27,8 @@ import vavi.util.StringUtil;
  * @version 0.00 2019/07/08 umjammer initial version <br>
  */
 public class LraMonitorProvider<MonitorType> {
+
+    private static final Logger logger = getLogger(LraMonitorProvider.class.getName());
 
     /**
      * The default retry times for a simple chunk upload if failure happened
@@ -104,7 +109,7 @@ public class LraMonitorProvider<MonitorType> {
             LraMonitorResult result = request.monitor(this.responseHandler);
 
             if (result.monitorDone()) {
-Debug.println(StringUtil.paramString(result));
+logger.log(Level.DEBUG, result);
                 MonitorObject monitor = result.getMonitorObject();
                 if ("completed".equals(monitor.status)) {
                     finished = true;

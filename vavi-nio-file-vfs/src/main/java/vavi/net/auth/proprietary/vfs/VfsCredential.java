@@ -137,5 +137,3 @@ public class VfsCredential implements UserCredential, AppCredential {
         return sb.toString();
     }
 }
-
-/* */

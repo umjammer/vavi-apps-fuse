@@ -67,5 +67,3 @@ public class GoogleWebSocketNotification extends WebSocketNotification<UnparsedN
     protected void onCloseImpl(Session session) throws IOException {
     }
 }
-
-/* */

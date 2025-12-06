@@ -11,6 +11,8 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.CopyOption;
@@ -28,7 +30,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
@@ -46,8 +47,8 @@ import org.nuxeo.onedrive.client.types.Drive;
 import org.nuxeo.onedrive.client.types.DriveItem;
 import org.nuxeo.onedrive.client.types.FileSystemInfo;
 import vavi.nio.file.Util;
-import vavi.util.Debug;
 
+import static java.lang.System.getLogger;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static vavi.nio.file.Util.toFilenameString;
 import static vavi.nio.file.onedrive3.OneDriveFileSystemProvider.ENV_USE_SYSTEM_WATCHER;
@@ -61,6 +62,8 @@ import static vavi.nio.file.onedrive3.OneDriveFileSystemProvider.ENV_USE_SYSTEM_
  */
 @ParametersAreNonnullByDefault
 public final class OneDriveFileSystemDriver extends DoubleCachedFileSystemDriver<DriveItem.Metadata> {
+
+    private static final Logger logger = getLogger(OneDriveFileSystemDriver.class.getName());
 
     private final OneDriveAPI client;
     private final Drive.Metadata drive;
@@ -95,13 +98,13 @@ public final class OneDriveFileSystemDriver extends DoubleCachedFileSystemDriver
                 Path path = cache.getEntry(e -> id.equals(e.getId()));
                 cache.removeEntry(path);
             } catch (NoSuchElementException e) {
-Debug.println("NOTIFICATION: already deleted: " + id);
+logger.log(Level.DEBUG, "NOTIFICATION: already deleted: " + id);
             }
         } else {
             try {
                 try {
                     Path path = cache.getEntry(e -> id.equals(e.getId()));
-Debug.println("NOTIFICATION: maybe updated: " + path);
+logger.log(Level.DEBUG, "NOTIFICATION: maybe updated: " + path);
                     cache.removeEntry(path);
                     cache.getEntry(path);
                 } catch (NoSuchElementException e) {
@@ -109,13 +112,13 @@ Debug.println("NOTIFICATION: maybe updated: " + path);
 //                    OneDriveItem.Metadata entry = drive.getApi().getMetadata(id);
 //                    Path parent = cache.getEntry(f -> entry.getParentReference().getId().equals(f.getId()));
 //                    Path path = parent.resolve(entry.getName());
-//Debug.println("NOTIFICATION: maybe created: " + path);
+//logger.log(Level.TRACE, "NOTIFICATION: maybe created: " + path);
 //                    cache.addEntry(path, entry);
                 }
             } catch (NoSuchElementException e) {
-Debug.println("NOTIFICATION: parent not found: " + e);
+logger.log(Level.DEBUG, "NOTIFICATION: parent not found: " + e);
             } catch (IOException e) {
-                Debug.printStackTrace(e);
+                logger.log(Level.ERROR, e.getMessage(), e);
             }
         }
     }
@@ -153,15 +156,15 @@ Debug.println("NOTIFICATION: parent not found: " + e);
             // but onedrive graph api requires content length for upload.
             // so reluctantly we provide {@link OneDriveUploadOption} for {@link java.nio.file.Files#copy} options.
             Path source = uploadOption.getSource();
-Debug.println(Level.FINE, "upload w/ option: " + source);
+logger.log(Level.DEBUG, "upload w/ option: " + source);
             return uploadEntry(parentEntry, path, (int) java.nio.file.Files.size(source));
         } else {
-Debug.println(Level.FINE, "upload w/o option");
+logger.log(Level.DEBUG, "upload w/o option");
             return new Util.OutputStreamForUploading() { // TODO used for only getting file length
                 @Override
                 protected void onClosed() throws IOException {
                     InputStream is = getInputStream();
-Debug.println(Level.FINE, "upload w/o option: " + is.available());
+logger.log(Level.DEBUG, "upload w/o option: " + is.available());
                     OutputStream os = uploadEntry(parentEntry, path, is.available());
                     Util.transfer(is, os);
                     is.close();
@@ -209,13 +212,13 @@ Debug.println(Level.FINE, "upload w/o option: " + is.available());
     protected DriveItem.Metadata copyEntry(DriveItem.Metadata sourceEntry, DriveItem.Metadata targetParentEntry, Path source, Path target, Set<CopyOption> options) throws IOException {
         CopyOperation operation = new CopyOperation();
         operation.rename(toFilenameString(target));
-Debug.println(Level.FINE, "target: " + targetParentEntry.getName());
+logger.log(Level.DEBUG, "target: " + targetParentEntry.getName());
         operation.copy(asDriveItem(targetParentEntry));
         OneDriveLongRunningAction action = Files.copy(asDriveItem(sourceEntry), operation);
-        action.await(statusObject -> Debug.printf(Level.FINE, "Copy Progress Operation %s progress %.0f %%, status %s",
+        action.await(statusObject -> logger.log(Level.DEBUG, "Copy Progress Operation %s progress %.0f %%, status %s".formatted(
          statusObject.getOperation(),
          statusObject.getPercentage(),
-         statusObject.getStatus()));
+         statusObject.getStatus())));
         return getEntry(null, target);
     }
 

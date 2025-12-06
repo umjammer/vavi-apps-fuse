@@ -7,8 +7,9 @@
 package vavi.nio.file.hfs;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.nio.file.FileStore;
-import java.util.logging.Level;
 
 import org.catacombae.storage.fs.FSFolder;
 import org.catacombae.storage.fs.hfscommon.HFSCommonFileSystemHandler;
@@ -16,8 +17,7 @@ import org.catacombae.storage.fs.hfscommon.HFSCommonFileSystemHandler;
 import com.github.fge.filesystem.attributes.FileAttributesFactory;
 import com.github.fge.filesystem.filestore.FileStoreBase;
 
-import vavi.util.Debug;
-import vavi.util.StringUtil;
+import static java.lang.System.getLogger;
 
 
 /**
@@ -30,6 +30,8 @@ import vavi.util.StringUtil;
  */
 public final class HfsFileStore extends FileStoreBase {
 
+    private static final Logger logger = getLogger(HfsFileStore.class.getName());
+
     private final FSFolder root;
 
     /**
@@ -38,9 +40,9 @@ public final class HfsFileStore extends FileStoreBase {
     public HfsFileStore(HFSCommonFileSystemHandler handler, final FileAttributesFactory factory) {
         super("hfs", factory, false);
         this.root = handler.getRoot();
-Debug.println(Level.FINE, StringUtil.paramString(root));
-Debug.println(Level.FINE, StringUtil.paramString(root.getAllForks()));
-Debug.println(Level.FINE, StringUtil.paramString(root.getAttributes()));
+logger.log(Level.DEBUG, root);
+logger.log(Level.DEBUG, root.getAllForks());
+logger.log(Level.DEBUG, root.getAttributes());
     }
 
     /**

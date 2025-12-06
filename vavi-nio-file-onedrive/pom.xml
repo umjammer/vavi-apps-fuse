@@ -5,7 +5,7 @@
   <parent>
     <groupId>vavi</groupId>
     <artifactId>vavi-apps-fuse</artifactId>
-    <version>0.1.10</version>
+    <version>0.1.11</version>
   </parent>
 
   <artifactId>vavi-nio-file-onedrive</artifactId>
@@ -43,7 +43,7 @@
       <!-- java-fs onedrive -->
       <groupId>com.github.umjammer</groupId> <!-- de.tuberlin:onedrivesdk / com.github.umjammer:OneDriveJavaSDK -->
       <artifactId>OneDriveJavaSDK</artifactId>
-      <version>0.0.9v</version>
+      <version>0.0.10v</version>
     </dependency>
 
     <dependency>

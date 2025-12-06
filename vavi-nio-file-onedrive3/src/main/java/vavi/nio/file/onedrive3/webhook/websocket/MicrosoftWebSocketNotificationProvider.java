@@ -27,5 +27,3 @@ public class MicrosoftWebSocketNotificationProvider implements NotificationProvi
         return (Notification<T>) new MicrosoftWebSocketNotification((Consumer) callback, args);
     }
 }
-
-/* */

@@ -6,6 +6,8 @@
 
 package vavi.nio.file.onedrive4.graph;
 
+import java.util.StringJoiner;
+
 import com.microsoft.graph.core.ClientException;
 import com.microsoft.graph.http.GraphServiceException;
 
@@ -159,5 +161,15 @@ public class LraMonitorResult {
      */
     public ClientException getError() {
         return this.error;
+    }
+
+    @Override
+    public String toString() {
+        return new StringJoiner(", ", LraMonitorResult.class.getSimpleName() + "[", "]")
+                .add("monitorObject=" + monitorObject)
+                .add("session=" + session)
+                .add("error=" + error)
+                .add("seeOtherUtl='" + seeOtherUtl + "'")
+                .toString();
     }
 }

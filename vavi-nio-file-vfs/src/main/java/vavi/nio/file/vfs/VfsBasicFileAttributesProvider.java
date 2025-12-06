@@ -7,6 +7,8 @@
 package vavi.nio.file.vfs;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.GroupPrincipal;
@@ -24,7 +26,7 @@ import org.apache.commons.vfs2.FileSystemException;
 
 import com.github.fge.filesystem.attributes.provider.BasicFileAttributesProvider;
 
-import vavi.util.Debug;
+import static java.lang.System.getLogger;
 
 
 /**
@@ -38,6 +40,8 @@ import vavi.util.Debug;
  * </p>
  */
 public final class VfsBasicFileAttributesProvider extends BasicFileAttributesProvider implements PosixFileAttributes {
+
+    private static final Logger logger = getLogger(VfsBasicFileAttributesProvider.class.getName());
 
     private final FileObject entry;
 
@@ -61,8 +65,7 @@ public final class VfsBasicFileAttributesProvider extends BasicFileAttributesPro
         try {
             return FileTime.fromMillis(entry.getContent().getLastModifiedTime());
         } catch (FileSystemException e) {
-Debug.println("error code: " + e.getCode());
-e.printStackTrace();
+logger.log(Level.DEBUG, "error code: " + e.getCode(), e);
             return FileTime.fromMillis(0);
         }
     }
@@ -75,7 +78,7 @@ e.printStackTrace();
         try {
             return entry.isFile();
         } catch (FileSystemException e) {
-e.printStackTrace();
+logger.log(Level.ERROR, e.getMessage(), e);
             return false;
         }
     }
@@ -88,7 +91,7 @@ e.printStackTrace();
         try {
             return entry.isFolder();
         } catch (FileSystemException e) {
-e.printStackTrace();
+logger.log(Level.ERROR, e.getMessage(), e);
             return false;
         }
     }
@@ -107,25 +110,21 @@ e.printStackTrace();
         try {
             return isDirectory() ? 0 : entry.getContent().getSize();
         } catch (FileSystemException e) {
-Debug.println("error code: " + e.getCode());
-e.printStackTrace();
+logger.log(Level.DEBUG, "error code: " + e.getCode(), e);
             return 0;
         }
     }
 
-    /* @see java.nio.file.attribute.PosixFileAttributes#owner() */
     @Override
     public UserPrincipal owner() {
         return null;
     }
 
-    /* @see java.nio.file.attribute.PosixFileAttributes#group() */
     @Override
     public GroupPrincipal group() {
         return null;
     }
 
-    /* @see java.nio.file.attribute.PosixFileAttributes#permissions() */
     @Override
     public Set<PosixFilePermission> permissions() {
         return isDirectory() ? PosixFilePermissions.fromString("rwxr-xr-x") : PosixFilePermissions.fromString("rw-r--r--");

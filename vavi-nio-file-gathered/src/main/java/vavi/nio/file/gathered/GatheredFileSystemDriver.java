@@ -119,7 +119,7 @@ public final class GatheredFileSystemDriver extends ExtendedFileSystemDriverBase
      */
     @Override
     protected Object getPathMetadataImpl(final Path path) throws IOException {
-//Debug.println("path: " + path);
+//logger.log(Level.TRACE, "path: " + path);
         if (path.getNameCount() < 2) {
             return getFileSystemOf(path);
         } else {
@@ -150,16 +150,16 @@ public final class GatheredFileSystemDriver extends ExtendedFileSystemDriverBase
 
     /** */
     private FileSystem getFileSystemOf(Path path) throws IOException {
-//Debug.println("path: " + path);
+//logger.log(Level.TRACE, "path: " + path);
         if (path.getNameCount() == 0) {
-//Debug.println("fs: " + path.getFileSystem());
+//logger.log(Level.TRACE, "fs: " + path.getFileSystem());
             return path.getFileSystem();
         } else {
             String first = nameMap.decodeFsName(path.getName(0).toString());
             if (!fileSystems.containsKey(first)) {
                 throw new NoSuchFileException(path.toString());
             }
-//Debug.println("first: " + fileSystems.get(first));
+//logger.log(Level.TRACE, "first: " + fileSystems.get(first));
             return fileSystems.get(first);
         }
     }
@@ -167,7 +167,7 @@ public final class GatheredFileSystemDriver extends ExtendedFileSystemDriverBase
     /** */
     private Path toLocalPathForDir(Path path) throws IOException {
         String subPathString = toPathString(path.subpath(1, path.getNameCount()));
-//Debug.println("subPathString: " + subPathString);
+//logger.log(Level.TRACE, "subPathString: " + subPathString);
         FileSystem fileSystem = getFileSystemOf(path);
         return fileSystem.getPath(subPathString);
     }

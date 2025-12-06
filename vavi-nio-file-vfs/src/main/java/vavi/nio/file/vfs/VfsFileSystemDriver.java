@@ -98,13 +98,13 @@ public final class VfsFileSystemDriver extends ExtendedFileSystemDriver<FileObje
      * @param check check existence of the path
      */
     private FileObject getEntry(Path path, boolean check) throws IOException {
-//Debug.println(Level.FINE, "path: " + path);
+//logger.log(Level.TRACE, "path: " + path);
         if (ignoreAppleDouble && path.getFileName() != null && isAppleDouble(path)) {
             throw new NoSuchFileException("ignore apple double file: " + path);
         }
 
         FileObject entry = manager.resolveFile(baseUrl + toPathString(path), opts);
-//Debug.println(Level.FINE, "entry: " + entry + ", " + entry.exists());
+//logger.log(Level.TRACE, "entry: " + entry + ", " + entry.exists());
         if (check) {
             if (entry.exists()) {
                 return entry;

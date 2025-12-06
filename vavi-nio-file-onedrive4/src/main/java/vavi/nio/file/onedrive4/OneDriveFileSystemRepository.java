@@ -81,7 +81,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         // 3. process
         MicrosoftGraphOAuth2 oAuth2 = new MicrosoftGraphOAuth2(appCredential, true);
         String accessToken = oAuth2.authorize(userCredential);
-//Debug.println("accessToken: " + accessToken);
+//logger.log(Level.TRACE, "accessToken: " + accessToken);
 
         IAuthenticationProvider authenticationProvider = request -> request.addHeader("Authorization", "Bearer " + accessToken);
         IGraphServiceClient graphClient = GraphServiceClient.builder()

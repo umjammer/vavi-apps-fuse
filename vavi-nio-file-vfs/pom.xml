@@ -5,7 +5,7 @@
   <parent>
     <artifactId>vavi-apps-fuse</artifactId>
     <groupId>vavi</groupId>
-    <version>0.1.10</version>
+    <version>0.1.11</version>
   </parent>
 
   <artifactId>vavi-nio-file-vfs</artifactId>
@@ -36,7 +36,7 @@
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>properties-maven-plugin</artifactId>
-            <version>1.1.0</version>
+            <version>1.2.1</version>
             <executions>
               <execution>
                 <id>read-properties</id>
@@ -62,7 +62,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>3.2.5</version>
         <configuration>
           <environmentVariables>
             <TEST_SMB_ACCOUNT>${TEST_SMB_ACCOUNT}</TEST_SMB_ACCOUNT>
@@ -73,7 +73,6 @@
           </environmentVariables>
           <argLine>
             -Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties
-            -Dvavi.util.logging.VaviFormatter.extraClassMethod="(org\.slf4j\.impl\.JDK14LoggerAdapter#(log|info)|sun\\.util\\.logging\\.LoggingSupport#log|sun\\.util\\.logging\\.PlatformLogger#fine|jdk\\.internal\\.event\\.EventHelper#logX509CertificateEvent|sun\\.util\\.logging\\.PlatformLogger.JavaLoggerProxy#doLog)"
           </argLine>
           <trimStackTrace>false</trimStackTrace>
         </configuration>
@@ -105,35 +104,24 @@
       <!-- java-fs vfs2 -->
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-vfs2</artifactId>
-      <version>2.9.0</version>
+      <version>2.10.0</version>
       <exclusions>
         <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-databind</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.squareup.okio</groupId>
-          <artifactId>okio</artifactId>
+          <groupId>maven:org.apache.commons</groupId>
+          <artifactId>commons-lang</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
 <dependency>
-  <groupId>com.fasterxml.jackson.core</groupId>
-  <artifactId>jackson-databind</artifactId>
-  <version>2.15.1</version>
-  <scope>test</scope>
-</dependency>
-<dependency>
-  <groupId>com.squareup.okio</groupId>
-  <artifactId>okio</artifactId>
-  <version>3.4.0</version>
-  <scope>test</scope>
+  <groupId>org.apache.commons</groupId>
+  <artifactId>commons-lang3</artifactId>
+  <version>3.18.0</version>
 </dependency>
     <dependency>
       <!-- java-fs vfs2 webdav -->
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-vfs2-jackrabbit2</artifactId>
-      <version>2.9.0</version>
+      <version>2.10.0</version>
       <exclusions>
         <exclusion>
           <groupId>commons-codec</groupId>
@@ -144,7 +132,7 @@
 <dependency>
   <groupId>commons-codec</groupId>
   <artifactId>commons-codec</artifactId>
-  <version>1.15</version>
+  <version>1.16.1</version>
   <scope>test</scope>
 </dependency>
     <dependency>
@@ -215,6 +203,12 @@
       <artifactId>slf4j-jdk14</artifactId>
       <version>1.7.36</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>vavi-commons-net</artifactId>
+      <version>1.0.9</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 </project>

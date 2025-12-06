@@ -25,5 +25,3 @@ public class OneDriveFileSystemOptionsFactory extends FileSystemOptionsFactory {
         addWriteOpenOption(new OneDriveUploadOption(null));
     }
 }
-
-/* */

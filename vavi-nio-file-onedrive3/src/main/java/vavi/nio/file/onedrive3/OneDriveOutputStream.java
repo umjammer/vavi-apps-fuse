@@ -8,17 +8,20 @@ package vavi.nio.file.onedrive3;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.System.Logger;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 
 import org.nuxeo.onedrive.client.OneDriveJsonObject;
 import org.nuxeo.onedrive.client.UploadSession;
 import org.nuxeo.onedrive.client.types.DriveItem;
 
-import vavi.util.Debug;
+import static java.lang.System.Logger.Level.DEBUG;
+import static java.lang.System.Logger.Level.ERROR;
+import static java.lang.System.Logger.Level.WARNING;
+import static java.lang.System.getLogger;
 
 
 /**
@@ -47,6 +50,8 @@ import vavi.util.Debug;
  */
 public final class OneDriveOutputStream extends OutputStream {
 
+    private static final Logger logger = getLogger(OneDriveOutputStream.class.getName());
+
     private final UploadSession upload;
     private final Path file;
     private final AtomicBoolean close = new AtomicBoolean();
@@ -73,22 +78,22 @@ try {
         final byte[] content = Arrays.copyOfRange(b, off, off + len);
         final String header;
         if (length == -1) {
-            header = String.format("%d-%d/*", offset, offset + content.length - 1); // TODO got error response, not in the specs.?
+            header = "%d-%d/*".formatted(offset, offset + content.length - 1); // TODO got error response, not in the specs.?
         } else {
-            header = String.format("%d-%d/%d", offset, offset + content.length - 1, length);
+            header = "%d-%d/%d".formatted(offset, offset + content.length - 1, length);
         }
-Debug.printf("header %s", header);
+logger.log(DEBUG, "header %s".formatted(header));
         OneDriveJsonObject object = upload.uploadFragment(header, content);
         if (object instanceof DriveItem.Metadata) {
             entry = (DriveItem.Metadata) object;
-Debug.printf("Completed upload for %s", file);
+logger.log(DEBUG, "Completed upload for %s".formatted(file));
         } else {
-Debug.printf(Level.FINE, "Uploaded fragment %s for file %s", header, file);
+logger.log(DEBUG, "Uploaded fragment %s for file %s".formatted(header, file));
         }
         offset += content.length;
-Debug.printf("offset: %d (%d)", offset, content.length);
+logger.log(DEBUG, "offset: %d (%d)".formatted(offset, content.length));
 } catch (Throwable e) {
- Debug.printStackTrace(e);
+ logger.log(ERROR, e.getMessage(), e);
 }
     }
 
@@ -96,11 +101,11 @@ Debug.printf("offset: %d (%d)", offset, content.length);
     public void close() throws IOException {
         try {
             if (close.get()) {
-Debug.printf(Level.WARNING, "Skip double close of stream %s", this);
+logger.log(WARNING, "Skip double close of stream %s".formatted(this));
                 return;
             }
             if (0L == offset) {
-Debug.printf(Level.WARNING, "Abort upload session %s with no completed parts", upload);
+logger.log(WARNING, "Abort upload session %s with no completed parts".formatted(upload));
                 // Use touch feature for empty file upload
                 upload.cancelUpload();
             }

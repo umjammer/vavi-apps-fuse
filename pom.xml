@@ -4,7 +4,7 @@
 
   <groupId>vavi</groupId>
   <artifactId>vavi-apps-fuse</artifactId>
-  <version>0.1.10</version>
+  <version>0.1.11</version>
   <packaging>pom</packaging>
 
   <modules>
@@ -23,13 +23,13 @@
 
   <properties>
     <vavi-net-auth.groupId>com.github.umjammer.vavi-net-auth</vavi-net-auth.groupId> <!-- vavi / com.github.umjammer.vavi-net-auth -->
-    <vavi-net-auth.version>0.1.9</vavi-net-auth.version>
+    <vavi-net-auth.version>0.1.15</vavi-net-auth.version>
 
     <vavi-nio-file-base.groupId>com.github.umjammer</vavi-nio-file-base.groupId> <!-- com.github.fge / com.github.umjammer -->
-    <vavi-nio-file-base.version>0.0.14v</vavi-nio-file-base.version>
+    <vavi-nio-file-base.version>0.0.17</vavi-nio-file-base.version>
 
     <vavi-nio-file-fuse.groupId>com.github.umjammer</vavi-nio-file-fuse.groupId> <!-- vavi / com.github.umjammer -->
-    <vavi-nio-file-fuse.version>0.0.16</vavi-nio-file-fuse.version>
+    <vavi-nio-file-fuse.version>0.0.17</vavi-nio-file-fuse.version>
   </properties>
 
   <name>vavi-apps-fuse</name>
@@ -48,7 +48,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.11.0</version>
+          <version>3.12.1</version>
           <configuration>
             <release>17</release>
           </configuration>
@@ -56,9 +56,15 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.2.2</version>
+          <version>3.2.5</version>
           <configuration>
-            <argLine>-Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties</argLine>
+            <argLine>
+              --add-opens java.base/java.io=ALL-UNNAMED
+              --add-opens java.base/sun.nio.ch=ALL-UNNAMED
+              -Djava.library.path=/usr/local/lib
+              -Djna.library.path=/usr/local/lib
+              -Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties
+            </argLine>
             <trimStackTrace>false</trimStackTrace>
           </configuration>
         </plugin>
@@ -90,7 +96,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.10.1</version>
+        <version>5.14.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>

@@ -60,5 +60,3 @@ public class OneDriveWebSocketNotification extends StringWebSocketNotification {
     protected void onCloseImpl(Session session) throws IOException {
     }
 }
-
-/* */

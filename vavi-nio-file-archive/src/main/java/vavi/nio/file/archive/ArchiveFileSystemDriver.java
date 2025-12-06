@@ -10,6 +10,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
@@ -24,7 +26,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
 
 import javax.annotation.Nonnull;
 
@@ -32,9 +33,10 @@ import com.github.fge.filesystem.driver.ExtendedFileSystemDriverBase;
 import com.github.fge.filesystem.provider.FileSystemFactoryProvider;
 
 import vavi.nio.file.Util;
-import vavi.util.Debug;
 import vavi.util.archive.Archive;
 import vavi.util.archive.Entry;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -44,6 +46,8 @@ import vavi.util.archive.Entry;
  * @version 0.00 2016/03/30 umjammer initial version <br>
  */
 public final class ArchiveFileSystemDriver extends ExtendedFileSystemDriverBase {
+
+    private static final Logger logger = getLogger(ArchiveFileSystemDriver.class.getName());
 
     private final Archive archive;
 
@@ -70,13 +74,13 @@ public final class ArchiveFileSystemDriver extends ExtendedFileSystemDriverBase 
     /** */
     private Entry getEntry(Path path) throws FileNotFoundException{
         if (path.getNameCount() == 0) {
-Debug.println(Level.FINE, "root");
+logger.log(Level.DEBUG, "root");
             return null; // TODO null means dir
         }
-Debug.println(Level.FINE, "entry: \"" + toArchiveString(path) + "\"");
+logger.log(Level.DEBUG, "entry: \"" + toArchiveString(path) + "\"");
         Entry entry = archive.getEntry(toArchiveString(path));
         if (entry == null) {
-Debug.println(Level.FINE, directories.get(path.getParent()));
+logger.log(Level.DEBUG, directories.get(path.getParent()));
             if (path.getParent() != null && directories.get(path.getParent()) != null && directories.get(path.getParent()).contains(path)) {
                 return null; // TODO null means dir
             } else {
@@ -143,7 +147,7 @@ Debug.println(Level.FINE, directories.get(path.getParent()));
 
     /** */
     private List<Path> getDirectoryEntries(final Path dir) throws IOException {
-Debug.println(Level.FINER, "dir: " + dir + " ---------");
+logger.log(Level.TRACE, "dir: " + dir + " ---------");
         List<Path> list = new ArrayList<>();
 
         if (!directories.containsKey(dir)) {
@@ -151,7 +155,7 @@ Debug.println(Level.FINER, "dir: " + dir + " ---------");
         }
 
         for (Entry entry : archive.entries()) {
-//Debug.println(Level.FINE, "entry: " + entry.getName() + ", root?: " + (dir.getNameCount() == 0));
+//logger.log(Level.TRACE, "entry: " + entry.getName() + ", root?: " + (dir.getNameCount() == 0));
             if (dir.getNameCount() == 0) {
 
                 String[] names = entry.getName().split("/");
@@ -160,9 +164,9 @@ Debug.println(Level.FINER, "dir: " + dir + " ---------");
                     list.add(childPath);
                 if (names.length > 1) {
                     directories.get(dir).add(childPath);
-Debug.println(Level.FINER, "root +: " + childPath);
+logger.log(Level.TRACE, "root +: " + childPath);
                 } else {
-Debug.println(Level.FINER, "root *: " + childPath);
+logger.log(Level.TRACE, "root *: " + childPath);
                 }
             } else {
                 String dirString = toArchiveString(dir) + "/";
@@ -175,9 +179,9 @@ Debug.println(Level.FINER, "root *: " + childPath);
                             list.add(childPath);
                         if (names.length > 1) {
                             directories.get(dir).add(childPath);
-Debug.println(Level.FINER, dir + " +: " + childPath);
+logger.log(Level.TRACE, dir + " +: " + childPath);
                         } else {
-Debug.println(Level.FINER, dir + " *: " + childPath);
+logger.log(Level.TRACE, dir + " *: " + childPath);
                         }
                     }
                 }

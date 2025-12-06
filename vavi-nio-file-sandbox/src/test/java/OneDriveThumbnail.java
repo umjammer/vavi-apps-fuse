@@ -10,7 +10,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -293,7 +292,7 @@ Debug.println("asin: " + asin);
 Debug.println("url: " + url);
 
 
-        InputStream in = new BufferedInputStream(new URL(url).openStream());
+        InputStream in = new BufferedInputStream(URI.create(url).toURL().openStream());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         byte[] buffer = new byte[8024];
         int l = 0;
@@ -330,7 +329,7 @@ Debug.println("asin: " + asin);
 Debug.println("url: " + url);
 
 
-        InputStream in = new BufferedInputStream(new URL(url).openStream());
+        InputStream in = new BufferedInputStream(URI.create(url).toURL().openStream());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         byte[] buffer = new byte[8024];
         int l = 0;
@@ -381,5 +380,3 @@ Debug.println("image: " + bytes.length);
         Files.setAttribute(file, "user:thumbnail", bytes);
     }
 }
-
-/* */

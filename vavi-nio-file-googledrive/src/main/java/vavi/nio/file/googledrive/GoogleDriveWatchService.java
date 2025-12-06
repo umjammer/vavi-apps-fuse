@@ -7,6 +7,8 @@
 package vavi.nio.file.googledrive;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.UUID;
 
 import com.google.api.client.googleapis.notifications.UnparsedNotification;
@@ -18,8 +20,8 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.StartPageToken;
 
 import vavi.nio.file.watch.webhook.WebHookBaseWatchService;
-import vavi.util.Debug;
 
+import static java.lang.System.getLogger;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
@@ -46,6 +48,8 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
  */
 public class GoogleDriveWatchService extends WebHookBaseWatchService<UnparsedNotification> {
 
+    private static final Logger logger = getLogger(GoogleDriveWatchService.class.getName());
+
     private static final String WEBHOOK_NOTIFICATION_PROVIDER =
             System.getProperty("vavi.nio.file.watch.webhook.NotificationProvider.googledrive", ".googledrive.webhook.websocket");
 
@@ -67,7 +71,7 @@ public class GoogleDriveWatchService extends WebHookBaseWatchService<UnparsedNot
 
         StartPageToken response = drive.changes().getStartPageToken().execute();
         savedStartPageToken = response.getStartPageToken();
-Debug.println("GOOGLE: start token: " + savedStartPageToken);
+logger.log(Level.DEBUG, "GOOGLE: start token: " + savedStartPageToken);
 
         Channel content = new Channel()
                 .setId(uuid.toString())
@@ -76,7 +80,7 @@ Debug.println("GOOGLE: start token: " + savedStartPageToken);
                 .setAddress(webhooktUrl);
 
         channel = drive.changes().watch(savedStartPageToken, content).execute();
-Debug.println("GOOGLE: channel: " + channel);
+logger.log(Level.DEBUG, "GOOGLE: channel: " + channel);
     }
 
     /**
@@ -93,17 +97,17 @@ Debug.println("GOOGLE: channel: " + channel);
         }
      */
     protected void onNotifyMessage(UnparsedNotification notification) throws IOException {
-Debug.println(">> notification: " + notification.getResourceState());
+logger.log(Level.DEBUG, ">> notification: " + notification.getResourceState());
 
         if (!channel.getId().equals(notification.getChannelId())) {
-Debug.println(">> notification is not for this channel: " + notification.getChannelId());
+logger.log(Level.DEBUG, ">> notification is not for this channel: " + notification.getChannelId());
 
 //try { // *** STOP ANOTHER CHANNEL ***
 // Channel c = new Channel();
 // c.setId(notification.getChannelId());
 // c.setResourceId(notification.getResourceId());
 // drive.channels().stop(c).execute();
-// Debug.println(">> notification: stop another channel: " + c.getId());
+// logger.log(Level.DEBUG, ">> notification: stop another channel: " + c.getId());
 //} catch (IOException e) {
 // e.printStackTrace();
 //}
@@ -113,7 +117,7 @@ Debug.println(">> notification is not for this channel: " + notification.getChan
 
         switch (notification.getResourceState()) {
         case "sync":
-Debug.println(">> synched");
+logger.log(Level.DEBUG, ">> synched");
             break;
         case "change":
             // Begin with our last saved start token for this user or the
@@ -123,7 +127,7 @@ Debug.println(">> synched");
                 ChangeList changes = drive.changes().list(pageToken).execute();
                 for (Change change : changes.getChanges()) {
                     // Process change
-Debug.println(">> " + (change.getFile() == null ? "id" : isFolder(change.getFile()) ? "folder" : "file") +
+logger.log(Level.DEBUG, ">> " + (change.getFile() == null ? "id" : isFolder(change.getFile()) ? "folder" : "file") +
               "[" + (change.getFile() != null ? change.getFile().getName() : change.getFileId()) + "] " + (change.getRemoved() ? "deleted" : "updated?"));
 
                     listener.accept(change.getFileId(), change.getRemoved() ? ENTRY_DELETE : ENTRY_MODIFY);
@@ -136,11 +140,11 @@ Debug.println(">> " + (change.getFile() == null ? "id" : isFolder(change.getFile
             }
             break;
         default:
-Debug.println(">> unhandled state: " + notification.getResourceState());
+logger.log(Level.DEBUG, ">> unhandled state: " + notification.getResourceState());
             break;
         }
 
-Debug.println(">> notification: done");
+logger.log(Level.DEBUG, ">> notification: done");
     }
 
     @Override
@@ -149,7 +153,7 @@ Debug.println(">> notification: done");
             super.close();
 
             drive.channels().stop(channel).execute();
-Debug.println("GOOGLE: channel deleted: " + channel);
+logger.log(Level.DEBUG, "GOOGLE: channel deleted: " + channel);
         }
     }
 

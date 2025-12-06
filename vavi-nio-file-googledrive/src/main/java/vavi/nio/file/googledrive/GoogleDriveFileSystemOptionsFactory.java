@@ -27,5 +27,3 @@ public class GoogleDriveFileSystemOptionsFactory extends FileSystemOptionsFactor
         addWriteOpenOption(GoogleDriveOpenOption.IMPORT_AS_NEW_REVISION);
     }
 }
-
-/* */

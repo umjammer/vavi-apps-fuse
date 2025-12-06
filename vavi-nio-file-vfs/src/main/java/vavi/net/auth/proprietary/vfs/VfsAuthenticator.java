@@ -35,5 +35,3 @@ public interface VfsAuthenticator extends Authenticator<VfsCredential, FileSyste
         };
     }
 }
-
-/* */

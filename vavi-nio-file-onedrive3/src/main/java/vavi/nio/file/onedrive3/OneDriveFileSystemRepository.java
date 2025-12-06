@@ -87,7 +87,7 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
         // 3. process
         MicrosoftGraphOAuth2 oAuth2 = new MicrosoftGraphOAuth2(appCredential, true);
         String accessToken = oAuth2.authorize(userCredential);
-//Debug.println("accessToken: " + accessToken);
+//logger.log(Level.TRACE, "accessToken: " + accessToken);
 
         RequestExecutor executor = new JavaNetRequestExecutor(accessToken) {
             @Override
@@ -123,12 +123,12 @@ public final class OneDriveFileSystemRepository extends FileSystemRepositoryBase
 
             @Override
             public String getBaseURL() {
-                return String.format("https://graph.microsoft.com%s", "/v1.0");
+                return "https://graph.microsoft.com%s".formatted("/v1.0");
             }
 
             @Override
             public String getEmailURL() {
-                return String.format("https://graph.microsoft.com%s", "/v1.0/me");
+                return "https://graph.microsoft.com%s".formatted("/v1.0/me");
             }
         };
 

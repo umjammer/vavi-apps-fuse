@@ -147,5 +147,3 @@ System.out.println("rmdir " + newFolder.getName());
         Files.delete(DriveItem.class.cast(newFolder));
     }
 }
-
-/* */
