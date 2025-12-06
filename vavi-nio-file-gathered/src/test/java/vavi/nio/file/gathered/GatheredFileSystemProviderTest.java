@@ -132,9 +132,9 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
         Map<String, FileSystem> fileSystems = new HashMap<>();
         NameMap nameMap = new NameMap();
         Arrays.asList(
-            "googledrive:umjammer@gmail.com",
-            "onedrive:snaohide@hotmail.com",
-            "onedrive:vavivavi@live.jp"
+            "googledrive:umjammer@gmail.com"
+//            "onedrive:snaohide@hotmail.com", // temporary, why?
+//            "onedrive:vavivavi@live.jp"
         ).forEach(id -> {
             try {
                 fileSystems.put(id, getFileSystem(id));
