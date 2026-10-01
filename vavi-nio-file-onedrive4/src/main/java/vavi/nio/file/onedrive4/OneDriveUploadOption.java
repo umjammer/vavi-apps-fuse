@@ -27,7 +27,6 @@ import java.nio.file.Path;
  */
 public class OneDriveUploadOption implements OpenOption, CopyOption, Serializable {
 
-    /** */
     @Serial
     private static final long serialVersionUID = -3760090552182064957L;
 

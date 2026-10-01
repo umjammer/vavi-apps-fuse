@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 
@@ -128,13 +129,14 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
     }
 
     @Test
+    @DisplayName("test gathered fs")
     void test() throws IOException {
         Map<String, FileSystem> fileSystems = new HashMap<>();
         NameMap nameMap = new NameMap();
         Arrays.asList(
-            "googledrive:umjammer@gmail.com"
-//            "onedrive:snaohide@hotmail.com", // temporary, why?
-//            "onedrive:vavivavi@live.jp"
+            "googledrive:umjammer@gmail.com",
+            "onedrive:snaohide@hotmail.com",
+            "onedrive:vavivavi@live.jp"
         ).forEach(id -> {
             try {
                 fileSystems.put(id, getFileSystem(id));
@@ -169,6 +171,7 @@ System.err.println("ADD: " + id + ", " + nameMap.get(id));
     }
 
     @Test
+    @DisplayName("test path functions works")
     void test01() throws IOException {
         Path path = Paths.get("/onedrive%3Avavivavi%40live.jp/sub1/sub2");
         assertEquals(3, path.getNameCount());
