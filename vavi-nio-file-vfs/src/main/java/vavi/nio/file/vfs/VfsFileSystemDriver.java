@@ -163,7 +163,7 @@ public final class VfsFileSystemDriver extends ExtendedFileSystemDriver<FileObje
 
     @Override
     protected FileObject moveEntry(FileObject sourceEntry, FileObject targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
-        FileObject targetEntry = getEntry(targetIsParent ? target.resolve(toFilenameString(source)) : target, false);
+        FileObject targetEntry = getEntry(target, false);
         sourceEntry.moveTo(targetEntry);
         return targetEntry;
     }

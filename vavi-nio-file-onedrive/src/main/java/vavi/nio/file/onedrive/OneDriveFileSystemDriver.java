@@ -206,12 +206,14 @@ logger.log(Level.DEBUG, newEntry.getParentFolder().getName() + "/" + newEntry.ge
 
     @Override
     protected OneItem moveEntry(OneItem sourceEntry, OneItem targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
-        return asFile(sourceEntry).move(asFolder(targetParentEntry));
+        // rename() patches both the parent and the name
+        return sourceEntry.rename(asFolder(targetParentEntry), toFilenameString(target));
     }
 
     @Override
     protected OneItem moveFolderEntry(OneItem sourceEntry, OneItem targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
-        OneItem newEntry = asFolder(sourceEntry).move(asFolder(targetParentEntry));
+        // rename() patches both the parent and the name
+        OneItem newEntry = sourceEntry.rename(asFolder(targetParentEntry), toFilenameString(target));
 logger.log(Level.DEBUG, newEntry.getParentFolder().getName() + "/" + newEntry.getName());
         return newEntry;
     }
