@@ -225,17 +225,13 @@ logger.log(Level.DEBUG, "target: " + targetParentEntry.getName());
     @Override
     protected DriveItem.Metadata moveEntry(DriveItem.Metadata sourceEntry, DriveItem.Metadata targetParentEntry, Path source, Path target, boolean targetIsParent) throws IOException {
         PatchOperation operation = new PatchOperation();
-        operation.rename(targetIsParent ? toFilenameString(source) : toFilenameString(target));
+        operation.rename(toFilenameString(target));
         operation.move(asDriveItem(targetParentEntry));
         final FileSystemInfo info = new FileSystemInfo();
         info.setLastModifiedDateTime(Instant.ofEpochMilli(sourceEntry.getLastModifiedDateTime().toEpochSecond()).atOffset(ZoneOffset.UTC));
         operation.facet("fileSystemInfo", info);
         Files.patch(asDriveItem(sourceEntry), operation);
-        if (targetIsParent) {
-            return getEntry(null, target.resolve(source.getFileName()));
-        } else {
-            return getEntry(null, target);
-        }
+        return getEntry(null, target);
     }
 
     @Override

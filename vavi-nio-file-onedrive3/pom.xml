@@ -4,7 +4,7 @@
   <parent>
     <artifactId>vavi-apps-fuse</artifactId>
     <groupId>vavi</groupId>
-    <version>0.1.11</version>
+    <version>0.1.12</version>
   </parent>
 
   <artifactId>vavi-nio-file-onedrive3</artifactId>
@@ -53,7 +53,7 @@
 <dependency>
   <groupId>commons-io</groupId>
   <artifactId>commons-io</artifactId>
-  <version>2.21.0</version>
+  <version>2.22.0</version>
 </dependency>
 
     <dependency>

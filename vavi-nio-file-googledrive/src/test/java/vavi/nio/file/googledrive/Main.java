@@ -11,6 +11,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.util.Collections;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static vavi.nio.file.Base.testAll;
@@ -29,6 +30,7 @@ import static vavi.nio.file.Base.testAll;
 public class Main {
 
     @Test
+    @DisplayName("total test ⚠️ if you get `invalid_grant` error, remove '~/.vavifuse/googledrive/StoredCredential'")
     void test01() throws Exception {
         String email = System.getenv("GOOGLE_TEST_ACCOUNT");
 
