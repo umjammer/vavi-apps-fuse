@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2021/10/30 umjammer initial version <br>
  */
-public class Main7 {
+public class TestAttrRev {
 
     @Test
     void test01() throws Exception {
@@ -43,8 +43,8 @@ public class Main7 {
         URI uri = URI.create("googledrive:///?id=" + email);
         FileSystem fs = new GoogleDriveFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
-        Path src = Paths.get(Main7.class.getResource("/Hello.java").toURI());
-        Path dst = fs.getPath("/tmp/vavi.nio.file.googledrive.Main7-" + System.currentTimeMillis());
+        Path src = Paths.get(TestAttrRev.class.getResource("/Hello.java").toURI());
+        Path dst = fs.getPath("/tmp/vavi.nio.file.googledrive.TestAttrRev-" + System.currentTimeMillis());
 
         // revision 1
         Files.copy(src, dst);

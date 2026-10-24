@@ -41,7 +41,7 @@ import vavi.util.Debug;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/04/03 umjammer initial version <br>
  */
-public class Main {
+public class TestCase {
 
     /**
      * environment variable

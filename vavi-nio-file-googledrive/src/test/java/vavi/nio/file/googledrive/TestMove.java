@@ -21,7 +21,7 @@ import static vavi.nio.file.Base.testMoveFolder;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/04/05 umjammer initial version <br>
  */
-public final class Main3 {
+public final class TestMove {
 
     /**
      * caution! google drive api quota is small for repeating tests.

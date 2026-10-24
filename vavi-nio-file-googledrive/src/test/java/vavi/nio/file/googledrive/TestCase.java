@@ -18,7 +18,7 @@ import static vavi.nio.file.Base.testAll;
 
 
 /**
- * Main. (java fs, google drive)
+ * TestCase. (java fs, google drive)
  * <p>
  * When you got "invalid_grant" during authoring,
  * remove "~/.vavifuse/googledrive/StoredCredential".
@@ -27,7 +27,7 @@ import static vavi.nio.file.Base.testAll;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/04/03 umjammer initial version <br>
  */
-public class Main {
+public class TestCase {
 
     @Test
     @DisplayName("total test ⚠️ if you get `invalid_grant` error, remove '~/.vavifuse/googledrive/StoredCredential'")

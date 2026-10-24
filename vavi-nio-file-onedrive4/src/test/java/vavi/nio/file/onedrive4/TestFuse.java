@@ -4,11 +4,12 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.file.onedrive;
+package vavi.nio.file.onedrive4;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,13 +23,13 @@ import vavi.net.fuse.Fuse;
 
 
 /**
- * Main4. (fuse)
+ * TestFuse. (fuse)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2017/03/19 umjammer initial version <br>
  */
 @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
-public class Main4 {
+public class TestFuse {
 
     String mountPoint;
     FileSystem fs;
@@ -44,7 +45,7 @@ public class Main4 {
         Map<String, Object> env = new HashMap<>();
         env.put("ignoreAppleDouble", true);
 
-        fs = new OneDriveFileSystemProvider().newFileSystem(uri, env);
+        fs = FileSystems.newFileSystem(uri, env);
 
         options = new HashMap<>();
         options.put("fsname", "onedrive_fs" + "@" + System.currentTimeMillis());
@@ -70,23 +71,24 @@ public class Main4 {
 
     //
 
-    public static void main(final String... args) throws IOException {
+    public static void main(String[] args) throws IOException {
         String email = args[1];
 
         Map<String, Object> env = new HashMap<>();
         env.put("ignoreAppleDouble", true);
 
-        URI uri = URI.create("onedrive1:///?id=" + email);
+        URI uri = URI.create("onedrive:///?id=" + email);
 
         FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, env);
 
+        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.fusejna.FuseJnaFuseProvider");
 //        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
 //        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
 
         Map<String, Object> options = new HashMap<>();
         options.put("fsname", "onedrive_fs" + "@" + System.currentTimeMillis());
         options.put("noappledouble", null);
-        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, true);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, false);
         options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
 
         Fuse.getFuse().mount(fs, args[0], options);

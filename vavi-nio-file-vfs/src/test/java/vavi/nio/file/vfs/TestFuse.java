@@ -25,13 +25,13 @@ import vavi.net.fuse.Fuse;
 
 
 /**
- * Main4. (fuse)
+ * TestFuse. (fuse)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2017/03/19 umjammer initial version <br>
  */
 @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
-public class Main4 {
+public class TestFuse {
 
     String mountPoint;
     FileSystem fs;

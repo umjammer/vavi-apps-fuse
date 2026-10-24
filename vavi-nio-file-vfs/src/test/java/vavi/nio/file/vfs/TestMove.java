@@ -14,16 +14,16 @@ import java.util.Collections;
 
 import org.junit.jupiter.api.Test;
 
-import static vavi.nio.file.Base.testLargeFile;
+import static vavi.nio.file.Base.testMoveFolder;
 
 
 /**
- * Vfs. (sftp)
+ * Vfs. move folder (sftp)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/xx umjammer initial version <br>
  */
-public class Main2 {
+public class TestMove {
 
     /**
      * environment variable
@@ -47,6 +47,6 @@ public class Main2 {
 
         FileSystem fs = new VfsFileSystemProvider().newFileSystem(uri, Collections.emptyMap());
 
-        testLargeFile(fs, null);
+        testMoveFolder(fs);
     }
 }

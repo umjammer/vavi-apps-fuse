@@ -21,7 +21,7 @@ import static vavi.nio.file.Base.testMoveFolder;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2020/05/31 umjammer initial version <br>
  */
-public class Main3 {
+public class TestMove {
 
     @Test
     void test01() throws Exception {

@@ -4,12 +4,11 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.file.onedrive4;
+package vavi.nio.file.onedrive3;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,18 +17,20 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import vavi.net.auth.oauth2.OAuth2AppCredential;
+import vavi.net.auth.oauth2.microsoft.MicrosoftGraphLocalAppCredential;
 import vavi.net.fuse.Base;
 import vavi.net.fuse.Fuse;
 
 
 /**
- * Main4. (fuse)
+ * TestFuse. (fuse)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2017/03/19 umjammer initial version <br>
  */
 @DisabledIfEnvironmentVariable(named = "GITHUB_WORKFLOW", matches = ".*")
-public class Main4 {
+public class TestFuse {
 
     String mountPoint;
     FileSystem fs;
@@ -45,7 +46,7 @@ public class Main4 {
         Map<String, Object> env = new HashMap<>();
         env.put("ignoreAppleDouble", true);
 
-        fs = FileSystems.newFileSystem(uri, env);
+        fs = new OneDriveFileSystemProvider().newFileSystem(uri, env);
 
         options = new HashMap<>();
         options.put("fsname", "onedrive_fs" + "@" + System.currentTimeMillis());
@@ -71,24 +72,26 @@ public class Main4 {
 
     //
 
-    public static void main(String[] args) throws IOException {
+    public static void main(final String... args) throws IOException {
         String email = args[1];
 
-        Map<String, Object> env = new HashMap<>();
-        env.put("ignoreAppleDouble", true);
+        URI uri = URI.create("onedrive3:///?id=" + email);
 
-        URI uri = URI.create("onedrive:///?id=" + email);
+        OAuth2AppCredential appCredential = new MicrosoftGraphLocalAppCredential();
+
+        Map<String, Object> env = new HashMap<>();
+        env.put(OneDriveFileSystemProvider.ENV_APP_CREDENTIAL, appCredential);
+        env.put("ignoreAppleDouble", true);
 
         FileSystem fs = new OneDriveFileSystemProvider().newFileSystem(uri, env);
 
-        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.fusejna.FuseJnaFuseProvider");
 //        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
 //        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
 
         Map<String, Object> options = new HashMap<>();
         options.put("fsname", "onedrive_fs" + "@" + System.currentTimeMillis());
         options.put("noappledouble", null);
-        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, false);
+        options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, true);
         options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_READ_ONLY, false);
 
         Fuse.getFuse().mount(fs, args[0], options);

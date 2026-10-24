@@ -131,7 +131,7 @@ Debug.println("fs: " + fs.getClass().getName());
         XPathFactory factory = XPathFactory.instance();
         Path p = Paths.get(Test1.class.getResource("/log4j2.xml").toURI());
         org.jdom2.Document document = builder.build(Files.newInputStream(p));
-Debug.println("conatiner: " + document);
+Debug.println("container: " + document);
 
         XPathExpression<org.jdom2.Element> expression =
                 factory.compile("/Configuration", Filters.element());

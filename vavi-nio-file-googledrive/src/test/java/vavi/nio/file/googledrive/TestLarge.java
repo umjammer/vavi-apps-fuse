@@ -22,7 +22,7 @@ import static vavi.nio.file.Base.testLargeFile;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/xx umjammer initial version <br>
  */
-public class Main2 {
+public class TestLarge {
 
     /**
      * caution! google drive api quota is small for repeating tests.

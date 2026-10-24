@@ -21,7 +21,7 @@ import static vavi.nio.file.Base.testMoveFolder;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
  * @version 0.00 2016/03/20 umjammer initial version <br>
  */
-public final class Main3 {
+public final class TestMove {
 
     // TODO after move directory, child's name is changed. wtf ???
     @Test

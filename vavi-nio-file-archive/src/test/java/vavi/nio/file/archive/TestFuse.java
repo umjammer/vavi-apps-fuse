@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.nio.file.hfs;
+package vavi.nio.file.archive;
 
 import java.net.URI;
 import java.nio.file.FileSystem;
@@ -28,14 +28,14 @@ import vavi.util.properties.annotation.PropsEntity;
 
 
 /**
- * Main4. (fuse)
+ * TestFuse. (fuse)
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (umjammer)
- * @version 0.00 2021/11/23 umjammer initial version <br>
+ * @version 0.00 2021/11/24 umjammer initial version <br>
  */
 @EnabledIf("localPropertiesExists")
 @PropsEntity(url = "file://${user.dir}/local.properties")
-public class Main4 {
+public class TestFuse {
 
     static boolean localPropertiesExists() {
         return Files.exists(Paths.get("local.properties"));
@@ -53,7 +53,7 @@ public class Main4 {
     public void before() throws Exception {
         PropsEntity.Util.bind(this);
 
-        URI uri = URI.create("hfs:file:" + diskImage);
+        URI uri = URI.create("archive:file:" + diskImage);
 
         Map<String, Object> env = new HashMap<>();
         env.put(CachedFileSystemDriver.ENV_IGNORE_APPLE_DOUBLE, true); // mandatory
@@ -62,7 +62,7 @@ public class Main4 {
 //Files.list(fs.getRootDirectories().iterator().next()).forEach(System.err::println);
 
         options = new HashMap<>();
-        options.put("fsname", "hfs_fs" + "@" + System.currentTimeMillis());
+        options.put("fsname", "archive_fs" + "@" + System.currentTimeMillis());
         options.put("noappledouble", null);
 //        options.put("noapplexattr", null);
         options.put(vavi.net.fuse.javafs.JavaFSFuse.ENV_DEBUG, false);
@@ -87,10 +87,10 @@ public class Main4 {
 
     public static void main(String[] args) throws Exception {
 //        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.javafs.JavaFSFuseProvider");
-        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
-//        System.setProperty("//vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.fusejna.FuseJnaFuseProvider");
+//        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.jnrfuse.JnrFuseFuseProvider");
+        System.setProperty("vavi.net.fuse.FuseProvider.class", "vavi.net.fuse.fusejna.FuseJnaFuseProvider");
 
-        Main4 app = new Main4();
+        TestFuse app = new TestFuse();
         app.before();
 
         try (Fuse fuse = Fuse.getFuse()) {
