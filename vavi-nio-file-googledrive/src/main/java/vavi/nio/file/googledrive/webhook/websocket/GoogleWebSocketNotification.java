@@ -8,6 +8,8 @@ package vavi.nio.file.googledrive.webhook.websocket;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import javax.websocket.ClientEndpoint;
@@ -43,7 +45,34 @@ public class GoogleWebSocketNotification extends WebSocketNotification<UnparsedN
 
     private static final URI uri = URI.create(websocketBaseUrl + websocketPath);
 
+    private static final String COMMAND = "GOOGLE_DRIVE_CHANGE";
+
+    /** channel ids to be notified, those are registered to the server again when reconnected */
+    private static final Set<String> channelIds = ConcurrentHashMap.newKeySet();
+
+    /** opened sessions */
+    private static final Set<Session> sessions = ConcurrentHashMap.newKeySet();
+
     private final Consumer<UnparsedNotification> callback;
+
+    /**
+     * registers a channel id to the server.
+     * a notification instance is shared by watch services, so use this for channels other than the first one.
+     */
+    public static void addChannel(String channelId) throws IOException {
+        if (channelIds.add(channelId)) {
+            for (Session session : sessions) {
+                if (session.isOpen()) {
+                    session.getBasicRemote().sendText(String.join(" ", COMMAND, channelId));
+                }
+            }
+        }
+    }
+
+    /** the server has no unregister command, just forget it locally */
+    public static void removeChannel(String channelId) {
+        channelIds.remove(channelId);
+    }
 
     /**
      * @param args 0: uuid for channel id
@@ -55,7 +84,11 @@ public class GoogleWebSocketNotification extends WebSocketNotification<UnparsedN
 
     @Override
     public void onOpenImpl(Session session) throws IOException {
-        session.getBasicRemote().sendText(String.join(" ", "GOOGLE_DRIVE_CHANGE", args[0].toString()));
+        sessions.add(session);
+        channelIds.add(args[0].toString());
+        for (String channelId : channelIds) {
+            session.getBasicRemote().sendText(String.join(" ", COMMAND, channelId));
+        }
     }
 
     @Override
@@ -65,5 +98,6 @@ public class GoogleWebSocketNotification extends WebSocketNotification<UnparsedN
 
     @Override
     protected void onCloseImpl(Session session) throws IOException {
+        sessions.remove(session);
     }
 }

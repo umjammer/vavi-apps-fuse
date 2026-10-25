@@ -366,6 +366,9 @@ logger.log(Level.DEBUG, newEntry.id + ", " + newEntry.name + ", folder: " + isFo
 
     @Override
     public void close() throws IOException {
+        if (systemWatcher != null) {
+            systemWatcher.close();
+        }
         closer.run();
     }
 

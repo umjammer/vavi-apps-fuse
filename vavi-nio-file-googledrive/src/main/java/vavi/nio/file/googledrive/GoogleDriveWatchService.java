@@ -9,7 +9,12 @@ package vavi.nio.file.googledrive;
 import java.io.IOException;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.google.api.client.googleapis.notifications.UnparsedNotification;
 import com.google.api.services.drive.Drive;
@@ -19,6 +24,7 @@ import com.google.api.services.drive.model.Channel;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.StartPageToken;
 
+import vavi.nio.file.googledrive.webhook.websocket.GoogleWebSocketNotification;
 import vavi.nio.file.watch.webhook.WebHookBaseWatchService;
 
 import static java.lang.System.getLogger;
@@ -56,10 +62,25 @@ public class GoogleDriveWatchService extends WebHookBaseWatchService<UnparsedNot
     private static final String VAVI_APPS_WEBHOOK_SECRET = System.getenv("VAVI_APPS_WEBHOOK_SECRET");
     private static final String webhooktUrl = System.getenv("VAVI_APPS_WEBHOOK_WEBHOOK_GOOGLE_URL");
 
+    /** channel lifetime in hours (max is 1 week for changes), renewed at the half of it */
+    private static final int CHANNEL_EXPIRATION_HOURS = 24;
+
+    /**
+     * a notification is delivered only to the first instance's callback (see {@link WebHookBaseWatchService#setupNotification}),
+     * so dispatch it to the instance by channel id.
+     */
+    private static final Map<String, GoogleDriveWatchService> services = new ConcurrentHashMap<>();
+
     private final Drive drive;
     private Channel channel = null;
 
     private String savedStartPageToken;
+
+    private final ScheduledExecutorService renewer = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread thread = new Thread(r, "googledrive-channel-renewer");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     /** */
     public GoogleDriveWatchService(Drive drive) throws IOException {
@@ -73,14 +94,53 @@ public class GoogleDriveWatchService extends WebHookBaseWatchService<UnparsedNot
         savedStartPageToken = response.getStartPageToken();
 logger.log(Level.DEBUG, "GOOGLE: start token: " + savedStartPageToken);
 
+        channel = watch(uuid.toString());
+
+        renewer.scheduleAtFixedRate(this::renewChannel,
+                CHANNEL_EXPIRATION_HOURS / 2, CHANNEL_EXPIRATION_HOURS / 2, TimeUnit.HOURS);
+    }
+
+    /** creates a channel and registers it */
+    private Channel watch(String channelId) throws IOException {
+        // the notification is shared by instances, so register channels other than the first one
+        GoogleWebSocketNotification.addChannel(channelId);
+
         Channel content = new Channel()
-                .setId(uuid.toString())
+                .setId(channelId)
                 .setType("web_hook")
                 .setToken(VAVI_APPS_WEBHOOK_SECRET)
-                .setAddress(webhooktUrl);
+                .setAddress(webhooktUrl)
+                .setExpiration(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(CHANNEL_EXPIRATION_HOURS));
 
-        channel = drive.changes().watch(savedStartPageToken, content).execute();
+        services.put(channelId, this);
+        try {
+            Channel channel = drive.changes().watch(savedStartPageToken, content).execute();
 logger.log(Level.DEBUG, "GOOGLE: channel: " + channel);
+            return channel;
+        } catch (IOException e) {
+            services.remove(channelId);
+            GoogleWebSocketNotification.removeChannel(channelId);
+            throw e;
+        }
+    }
+
+    /** stops and unregisters the channel */
+    private void stop(Channel channel) throws IOException {
+        services.remove(channel.getId());
+        GoogleWebSocketNotification.removeChannel(channel.getId());
+        drive.channels().stop(channel).execute();
+logger.log(Level.DEBUG, "GOOGLE: channel deleted: " + channel);
+    }
+
+    /** a channel cannot be extended, so create a new one then stop the old one */
+    private synchronized void renewChannel() {
+        try {
+            Channel oldChannel = channel;
+            channel = watch(UUID.randomUUID().toString());
+            stop(oldChannel);
+        } catch (IOException e) {
+            logger.log(Level.ERROR, e.getMessage(), e);
+        }
     }
 
     /**
@@ -99,7 +159,8 @@ logger.log(Level.DEBUG, "GOOGLE: channel: " + channel);
     protected void onNotifyMessage(UnparsedNotification notification) throws IOException {
 logger.log(Level.DEBUG, ">> notification: " + notification.getResourceState());
 
-        if (!channel.getId().equals(notification.getChannelId())) {
+        GoogleDriveWatchService service = notification.getChannelId() != null ? services.get(notification.getChannelId()) : null;
+        if (service == null) {
 logger.log(Level.DEBUG, ">> notification is not for this channel: " + notification.getChannelId());
 
 //try { // *** STOP ANOTHER CHANNEL ***
@@ -112,6 +173,21 @@ logger.log(Level.DEBUG, ">> notification is not for this channel: " + notificati
 // e.printStackTrace();
 //}
 
+            return;
+        }
+        if (VAVI_APPS_WEBHOOK_SECRET != null && !VAVI_APPS_WEBHOOK_SECRET.equals(notification.getChannelToken())) {
+logger.log(Level.WARNING, ">> notification: channel token mismatch: " + notification.getChannelId());
+            return;
+        }
+
+        service.processNotification(notification);
+
+logger.log(Level.DEBUG, ">> notification: done");
+    }
+
+    /** */
+    private synchronized void processNotification(UnparsedNotification notification) throws IOException {
+        if (!isOpen()) {
             return;
         }
 
@@ -143,8 +219,6 @@ logger.log(Level.DEBUG, ">> " + (change.getFile() == null ? "id" : isFolder(chan
 logger.log(Level.DEBUG, ">> unhandled state: " + notification.getResourceState());
             break;
         }
-
-logger.log(Level.DEBUG, ">> notification: done");
     }
 
     @Override
@@ -152,8 +226,10 @@ logger.log(Level.DEBUG, ">> notification: done");
         if (isOpen()) {
             super.close();
 
-            drive.channels().stop(channel).execute();
-logger.log(Level.DEBUG, "GOOGLE: channel deleted: " + channel);
+            renewer.shutdownNow();
+            synchronized (this) {
+                stop(channel);
+            }
         }
     }
 

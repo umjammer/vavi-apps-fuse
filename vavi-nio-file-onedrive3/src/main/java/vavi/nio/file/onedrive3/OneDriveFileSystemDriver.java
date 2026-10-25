@@ -86,7 +86,7 @@ public final class OneDriveFileSystemDriver extends DoubleCachedFileSystemDriver
         boolean useSystemWatcher = (Boolean) ((Map<String, Object>) env).getOrDefault(ENV_USE_SYSTEM_WATCHER, false);
 
         if (useSystemWatcher) {
-            systemWatcher = new OneDriveWatchService(client);
+            systemWatcher = new OneDriveWatchService(client, drive.getId());
             systemWatcher.setNotificationListener(this::processNotification);
         }
     }
@@ -108,12 +108,11 @@ logger.log(Level.DEBUG, "NOTIFICATION: maybe updated: " + path);
                     cache.removeEntry(path);
                     cache.getEntry(path);
                 } catch (NoSuchElementException e) {
-// TODO impl
-//                    OneDriveItem.Metadata entry = drive.getApi().getMetadata(id);
-//                    Path parent = cache.getEntry(f -> entry.getParentReference().getId().equals(f.getId()));
-//                    Path path = parent.resolve(entry.getName());
-//logger.log(Level.TRACE, "NOTIFICATION: maybe created: " + path);
-//                    cache.addEntry(path, entry);
+                    DriveItem.Metadata entry = new DriveItem(new Drive(client, drive.getId()), id).getMetadata();
+                    Path parent = cache.getEntry(f -> entry.getParentReference().getId().equals(f.getId()));
+                    Path path = parent.resolve(entry.getName());
+logger.log(Level.DEBUG, "NOTIFICATION: maybe created: " + path);
+                    cache.addEntry(path, entry);
                 }
             } catch (NoSuchElementException e) {
 logger.log(Level.DEBUG, "NOTIFICATION: parent not found: " + e);
@@ -256,6 +255,9 @@ logger.log(Level.DEBUG, "target: " + targetParentEntry.getName());
 
     @Override
     public void close() throws IOException {
+        if (systemWatcher != null) {
+            systemWatcher.close();
+        }
         closer.run();
     }
 
@@ -263,7 +265,7 @@ logger.log(Level.DEBUG, "target: " + targetParentEntry.getName());
     @Override
     public WatchService newWatchService() {
         try {
-            return new OneDriveWatchService(client);
+            return new OneDriveWatchService(client, drive.getId());
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }

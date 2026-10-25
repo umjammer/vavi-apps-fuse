@@ -225,6 +225,9 @@ logger.log(Level.DEBUG, newEntry.getParentFolder().getName() + "/" + newEntry.ge
 
     @Override
     public void close() throws IOException {
+        if (systemWatcher != null) {
+            systemWatcher.close();
+        }
         client.disconnect();
     }
 

@@ -365,7 +365,10 @@ logger.log(Level.DEBUG, "file: %1$s, %2$tF %2$tT.%2$tL, %3$d\n".formatted(newEnt
     }
 
     @Override
-    public void close() {
+    public void close() throws IOException {
+        if (systemWatcher != null) {
+            systemWatcher.close();
+        }
         fileSearcher = null;
     }
 
